@@ -1,10 +1,11 @@
 {
   inputs,
-  pkgs,
+  stdenv,
+  python3,
 }:
 
 let
-  system = pkgs.stdenv.hostPlatform.system;
+  system = stdenv.hostPlatform.system;
   upstream = inputs.swe-pruner-mcp.packages.${system}.default;
 in
 upstream.overrideAttrs (old: {
@@ -12,7 +13,7 @@ upstream.overrideAttrs (old: {
     (old.postPatch or "")
     + ''
       python_file=src/swe_pruner_mcp/server.py
-      ${pkgs.python3}/bin/python - "$python_file" <<'PY'
+      ${python3}/bin/python - "$python_file" <<'PY'
 from pathlib import Path
 import sys
 

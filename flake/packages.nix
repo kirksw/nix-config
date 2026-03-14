@@ -16,9 +16,9 @@ let
   packages = builtins.listToAttrs (
     map (name: {
       inherit name;
-      value = pkgs.callPackage (packagesDir + "/${name}") {
-        inherit inputs;
-      };
+      value = pkgs.callPackage (packagesDir + "/${name}") (
+        if name == "swe-pruner-mcp" then { inherit inputs; } else { }
+      );
     }) packageNames
   );
 in
