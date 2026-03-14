@@ -1,0 +1,84 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$cmd_duration\
+$line_break\
+$python\
+$character"""
+
+right_format = """
+$nix_shell
+$kubernetes
+$aws"""
+
+[directory]
+style = "blue"
+truncation_length = 2
+truncate_to_repo = false
+
+[character]
+success_symbol = "[❯](purple)"
+error_symbol = "[❯](red)"
+vimcmd_symbol = "[❮](green)"
+
+[git_branch]
+format = "[$branch]($style)"
+style = "bright-black"
+
+[git_status]
+format = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](218) ($ahead_behind$stashed)]($style)"
+style = "cyan"
+conflicted = "×"
+untracked = "?"
+modified = "!"
+staged = "+"
+renamed = "→"
+deleted = "-"
+stashed = "≡"
+
+[git_state]
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+style = "bright-black"
+
+[cmd_duration]
+format = "[ $duration]($style) "
+style = "yellow"
+
+[python]
+format = "[$virtualenv]($style) "
+style = "bright-black"
+detect_extensions = []
+detect_files = []
+
+[nix_shell]
+format = "[$symbol$name]($style) "
+style = "bright-black"
+symbol = "󱄅 "
+impure_msg = ""
+pure_msg = ""
+
+[kubernetes]
+format = "[$symbol$context]($style) "
+style = "bright-black"
+symbol = " "
+disabled = false
+
+[aws]
+format = "[$symbol$profile]($style) "
+style = "bright-black"
+symbol = " "
+
+[aws.profile_aliases]
+"aws-sso-Lunar-Test(Staging)-OktaDevLogin" = "staging"
+aws-sso-LunarWay-Production-OktaDevLogin = "prod"
+aws-sso-LunarWay-Dev-OktaDevLogin = "dev"
+aws-sso-LunarWay-Development-Data-OktaAdminLogin = "dev-data-admin"
+aws-sso-LunarWay-Development-Data-OktaDataLogin = "dev-data"
+aws-sso-LunarWay-Production-Data-OktaDataLogin = "prod-data"
+aws-sso-LunarWay-Production-Data-OktaAdminLogin = "prod-data-admin"

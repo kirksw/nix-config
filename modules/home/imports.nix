@@ -1,0 +1,28 @@
+[
+  ./programs/ai.nix
+  ./programs/baseline.nix
+  ./programs/claude-code.nix
+  ./programs/codex.nix
+  ./programs/colima.nix
+  ./programs/communication.nix
+  ./programs/cursor.nix
+  ./programs/developer.nix
+  ./programs/devops.nix
+  ./programs/gcloud.nix
+  ./programs/ghostty.nix
+  ./programs/lunar.nix
+  ./programs/neovim.nix
+  ./programs/opencode.nix
+  ./programs/qemu.nix
+  ./programs/sketchybar.nix
+  ./programs/sops.nix
+  ./programs/swe-pruner-mcp.nix
+  ./programs/tmux.nix
+  ./programs/treekanga.nix
+  ./programs/vscode.nix
+  ./programs/wezterm.nix
+  ./programs/youtube.nix
+  ./programs/zellij.nix
+  ./programs/zsh.nix
+  ./services/homerow.nix
+]

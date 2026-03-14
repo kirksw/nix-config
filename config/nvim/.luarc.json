@@ -1,0 +1,11 @@
+{
+  "runtime.version": "LuaJIT",
+  "runtime.path": ["?.lua", "?/?.lua"],
+  "diagnostics.globals": ["vim", "LazyVim", "Snacks"],
+  "workspace.library": ["$VIMRUNTIME"],
+  "workspace.checkThirdParty": false,
+  "workspace.ignoreDir": [".git"],
+  "workspace.maxPreload": 2000,
+  "workspace.useGitIgnore": false,
+  "telemetry.enable": false
+}

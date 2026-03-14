@@ -1,0 +1,12 @@
+# Copy this to the k8s-config repository as .sops.yaml
+# Replace the existing .sops.yaml with this content
+
+keys:
+  - &flux age1m5rg75r4ysaz5drgz6d5flnwajnhtyc5u2ce4c59uf2tvlnyxp2s477lv0
+
+creation_rules:
+  - path_regex: secrets/.*
+    encrypted_regex: '^(data|stringData|password|token|key|secret)$'
+    key_groups:
+      - age:
+          - *flux

@@ -1,0 +1,40 @@
+self: super: {
+  amp-cli = super.buildNpmPackage rec {
+    pname = "amp-cli";
+    version = "0.0.1753171358-gd0cbe8d";
+
+    src = super.fetchurl {
+      url = "https://registry.npmjs.org/@sourcegraph/amp/-/amp-${version}.tgz";
+      hash = "sha256-y50R/Uut8Bizdc3sqiIj1V6gwVuLV4d5g+NjWaZTme0=";
+    };
+
+    npmDeps = super.importNpmLock {
+      npmRoot = src;
+    };
+
+    #npmDepsHash = "";
+
+    nativeBuildInputs = [ super.makeWrapper ];
+    propagatedBuildInputs = [ super.ripgrep ];
+
+    npmFlags = [
+      "--no-audit"
+      "--no-fund"
+      "--ignore-scripts"
+    ];
+
+    dontNpmBuild = true;
+
+    postInstall = ''
+      wrapProgram $out/bin/amp \
+        --prefix PATH : ${super.lib.makeBinPath [ super.ripgrep ]}
+    '';
+
+    meta = {
+      description = "Amp is an AI coding agent, in research preview from Sourcegraph. This is the CLI for Amp.";
+      homepage = "https://ampcode.com/";
+      license = super.lib.licenses.unfree;
+      mainProgram = "amp";
+    };
+  };
+}

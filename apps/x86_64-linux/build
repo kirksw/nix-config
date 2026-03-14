@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m'
+
+if ! command -v nix &>/dev/null; then
+  echo -e "${RED}nix not found in PATH${NC}" >&2
+  exit 1
+fi
+
+if [[ $# -lt 1 ]]; then
+  echo -e "${YELLOW}Usage:${NC} $0 <hostname> [--] [extra nix build args]"
+  echo -e "Example: $0 nixos-ry6a"
+  exit 2
+fi
+
+HOSTNAME="$1"; shift || true
+TARGET=".#nixosConfigurations.${HOSTNAME}.config.system.build.toplevel"
+
+echo -e "${GREEN}Building NixOS system: ${HOSTNAME}${NC}"
+nix build "$TARGET" "$@"
+echo -e "${GREEN}Build complete.${NC}"

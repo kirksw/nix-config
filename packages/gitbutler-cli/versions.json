@@ -1,0 +1,18 @@
+{
+  "gitbutlerCliVersions": {
+    "version": "0.19.3",
+    "build": "2869",
+    "urls": {
+      "macos": {
+        "aarch64": {
+          "url": "https://releases.gitbutler.com/releases/release/0.19.3-2869/macos/aarch64/GitButler.app.tar.gz",
+          "hash": "0zmf331fbbn7qxh0kzwpcf5lglmslkjyrfv3y7y4f4yf4h4b5hj5"
+        },
+        "x86_64": {
+          "url": "https://releases.gitbutler.com/releases/release/0.19.3-2869/macos/x86_64/GitButler.app.tar.gz",
+          "hash": "0l948cysizjxra41z6w6lv9khv88wmbj6w93cfv7fnimfwgbx0q2"
+        }
+      }
+    }
+  }
+}

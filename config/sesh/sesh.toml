@@ -1,0 +1,33 @@
+[[session]]
+name = "notes"
+path = "~/git/github.com/kirksw/notes"
+startup_command = "nvim"
+preview_command = "bat --color=always ~/git/github.com/kirksw/notes/README.md"
+
+[[session]]
+name = "scratchpad"
+path = "~/git/github.com/kirksw/scratchpad"
+startup_command = "opencode"
+preview_command = "bat --color=always ~/git/github.com/kirksw/scratchpad/README.md"
+
+[[session]]
+name = "downloads 📥"
+path = "~/Downloads"
+preview_command = "la"
+
+[[session]]
+name = "nix-config ⚙️"
+path = "~/git/github.com/kirksw/nix-config"
+startup_command = "lv ."
+preview_command = "bat --color=always ~/git/github.com/kirksw/nix-config/flake.md"
+
+[[session]]
+name = "scratchpad 🗒️"
+path = "~/git/github.com/kirksw/scratchpad"
+startup_command = "lv ."
+preview_command = "bat --color=always ~/git/github.com/kirksw/scratchpad/README.md"
+
+[[session]]
+name = "hubble-continuum/review"
+path = "~/git/github.com/lunarway/hubble-continuum/review"
+startup_command = "gh-dash"

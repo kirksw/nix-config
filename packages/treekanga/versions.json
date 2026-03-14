@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "treekangaVersions": {
+    "version": "1.1.3",
+    "urls": {
+      "macos": {
+        "aarch64": {
+          "url": "https://github.com/garrettkrohn/treekanga/releases/download/v1.1.3/treekanga_Darwin_arm64.tar.gz",
+          "hash": "Zej0jACU9yo6tkeDNV6p2oNxlcQVhVoLYakTh8E6W7c="
+        }
+      }
+    }
+  }
+}

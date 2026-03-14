@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m'
+
+if [[ $# -lt 1 ]]; then
+  echo "${YELLOW}Usage:${NC} $0 <hostname> [generation]"
+  echo "${YELLOW}Example:${NC} $0 lunar 123"
+  exit 2
+fi
+
+HOSTNAME="$1"; shift || true
+GEN_NUM="${1:-}"
+
+echo "${YELLOW}Available generations:${NC}"
+/run/current-system/sw/bin/darwin-rebuild --list-generations
+
+if [ -z "${GEN_NUM}" ]; then
+  echo "${YELLOW}Enter the generation number for rollback:${NC}"
+  read -r GEN_NUM
+fi
+
+if [ -z "$GEN_NUM" ]; then
+  echo "${RED}No generation number entered. Aborting rollback.${NC}"
+  exit 1
+fi
+
+echo "${YELLOW}Rolling back to generation $GEN_NUM...${NC}"
+/run/current-system/sw/bin/darwin-rebuild switch --flake ".#${HOSTNAME}" --switch-generation "$GEN_NUM"
+
+echo "${GREEN}Rollback to generation $GEN_NUM complete!${NC}"

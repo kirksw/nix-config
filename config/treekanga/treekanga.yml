@@ -1,0 +1,8 @@
+repos:
+  hubble-continuum:
+    defaultBranch: master
+    worktreeTargetDir: /git/github.com/lunarway/hubble-continuum
+    listDisplayMode: branch
+    zoxideFolders:
+      - app/
+      - ops/
