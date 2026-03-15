@@ -101,6 +101,13 @@ let
       openai = {
         name = "openai";
       };
+
+      minimax = {
+        name = "minimax";
+        options = {
+          apiKey = "{env:MINIMAX_API_KEY}";
+        };
+      };
     };
 
     agent = {
@@ -173,6 +180,7 @@ let
     set -euo pipefail
 
     ZAI_SECRET_PATH="${config.sops.secrets."zai".path}"
+    MINIMAX_SECRET_PATH="${config.sops.secrets."minimax".path}"
     LUNAR_OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
     OPENCODE_BIN="${pkgs.llm-agents.opencode}/bin/opencode"
 
@@ -199,6 +207,7 @@ let
       export XDG_CONFIG_HOME="${profileBase}/personal"
       export XDG_DATA_HOME="${dataProfileBase}/personal"
       export zai_token="$(cat "$ZAI_SECRET_PATH")"
+      export MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
       echo "opencode: using personal profile" >&2
       exec -a opencode "$OPENCODE_BIN" "$@"
     fi
@@ -214,6 +223,11 @@ in
       "zai" = {
         sopsFile = "${self}/secrets/api/default.yaml";
         key = "zai";
+        mode = "0400";
+      };
+      "minimax" = {
+        sopsFile = "${self}/secrets/api/default.yaml";
+        key = "minimax";
         mode = "0400";
       };
       "api/lunar/openai" = {

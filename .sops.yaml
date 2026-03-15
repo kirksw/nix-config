@@ -1,0 +1,24 @@
+keys:
+  - &main age15p8k9vll4k7uqgmqydcn5n09dzc4dlw4nq6zwlnunnurpxg8wqlsyu9mlz
+  - &k8s age1e4scgj83r7yddwk96sm8ghdes309e7lze2rq73ufmngkhpaa74vsqndxsx
+
+creation_rules:
+  - path_regex: secrets/ssh/ry(4a|6a|6b)-root\.yaml$
+    key_groups:
+      - age:
+          - *main
+          - *k8s
+  - path_regex: secrets/k8s/.*\.yaml$
+    key_groups:
+      - age:
+          - *main
+          - *k8s
+  - path_regex: secrets/cloudflare/.*\.yaml$
+    key_groups:
+      - age:
+          - *main
+          - *k8s
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *main

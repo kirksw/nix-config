@@ -2,6 +2,7 @@
   self,
   lib,
   config,
+  pkgs,
   git,
   ssh,
   ...
@@ -89,10 +90,33 @@ in
   };
 
   config = lib.mkIf config.homeModules.sops.enable {
+    home.activation.retrieveSopsAgeKey = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+      SOPS_KEY_DIR="$HOME/.config/sops/age"
+      SOPS_KEY_FILE="$SOPS_KEY_DIR/keys.txt"
+
+      mkdir -p "$SOPS_KEY_DIR"
+
+      if ! ${pkgs.proton-pass-cli}/bin/pass-cli item view \
+          --vault-name macos \
+          --item-title nix-sops-age \
+          --field note > "$SOPS_KEY_FILE" 2>&1; then
+        echo "ERROR: Failed to retrieve SOPS age key from Proton Pass"
+        echo "Ensure pass-cli is logged in: pass-cli login"
+        rm -f "$SOPS_KEY_FILE"
+        exit 1
+      fi
+
+      chmod 400 "$SOPS_KEY_FILE"
+      echo "Retrieved SOPS age key from Proton Pass"
+    '';
+
+    home.sessionVariables = {
+      SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+    };
+
     sops = {
       defaultSopsFormat = "yaml";
       age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
-
       # define the required secrets for git profiles
       secrets =
         generateGitSecrets {

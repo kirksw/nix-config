@@ -12,7 +12,6 @@
       fastfetch
       nerd-fonts.fira-code
       nerd-fonts.fira-mono
-      pi-coding-agent
     ];
     sessionVariables = {
       LANG = "en_US.UTF-8";
@@ -46,6 +45,7 @@
   homeModules.aiDev.enable = true;
   homeModules.treekanga.enable = true;
   homeModules.opencode.enable = true;
+  homeModules.piCodingAgent.enable = true;
   homeModules.codex.enable = true;
   homeModules.swePrunerMcp.enable = true;
   homeModules.cursor.enable = true;
