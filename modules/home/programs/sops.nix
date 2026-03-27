@@ -95,6 +95,7 @@ in
       SOPS_KEY_FILE="$SOPS_KEY_DIR/keys.txt"
 
       mkdir -p "$SOPS_KEY_DIR"
+      rm -f "$SOPS_KEY_FILE"
 
       if ! ${pkgs.proton-pass-cli}/bin/pass-cli item view \
           --vault-name macos \

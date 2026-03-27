@@ -142,6 +142,7 @@ in
 
         tools = {
           # none!
+          uv = "latest";
         };
       };
     };
