@@ -25,6 +25,7 @@
   # security
   homeModules.sops.enable = true;
   # dev tooling
+  homeModules.appearanceSync.enable = true;
   homeModules.zsh.enable = true;
   homeModules.developer.enable = true;
   homeModules.colima.enable = true;

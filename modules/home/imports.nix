@@ -1,5 +1,6 @@
 [
   ./programs/ai.nix
+  ./programs/appearance-sync.nix
   ./programs/baseline.nix
   ./programs/claude-code.nix
   ./programs/codex.nix

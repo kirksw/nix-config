@@ -88,7 +88,6 @@
 
     defaults = {
       NSGlobalDomain = {
-        AppleInterfaceStyle = "Dark";
         AppleShowAllExtensions = true;
         ApplePressAndHoldEnabled = false;
         NSWindowShouldDragOnGesture = true;

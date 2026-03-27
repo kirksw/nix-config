@@ -6,6 +6,25 @@
   ...
 }:
 
+let
+  appearanceModeFile = "${config.xdg.stateHome}/appearance/mode";
+  applyAppearanceScript = pkgs.writeShellScript "tmux-apply-appearance" ''
+    set -eu
+
+    mode="$(${pkgs.coreutils}/bin/cat ${lib.escapeShellArg appearanceModeFile} 2>/dev/null || printf 'dark')"
+
+    case "$mode" in
+      light)
+        variant="dawn"
+        ;;
+      *)
+        variant="main"
+        ;;
+    esac
+
+    ${pkgs.tmux}/bin/tmux set -g @rose_pine_variant "$variant"
+  '';
+in
 {
   options = {
     homeModules.tmux.enable = lib.mkEnableOption "enables tmux";
@@ -45,8 +64,6 @@
       ];
 
       extraConfig = ''
-        set -g @rose_pine_variant 'main' # Options are 'main', 'moon' or 'dawn'
-
         set -g @rose_pine_host 'on'
         set -g @rose_pine_hostname_short 'on'
         set -g @rose_pine_user 'on'
@@ -129,13 +146,13 @@
         set -g extended-keys always
         set -as terminal-features 'xterm*:extkeys'
 
-        # Clear stale plugin append state from older configs to avoid duplicate git segment.
-        set -gu @rose_pine_status_right_append_section
+        # Keep git branch visible after rose-pine rebuilds status-right.
+        set -g @rose_pine_status_right_append_section '#[fg=#9ccfd8]  #(git -C "#{pane_current_path}" rev-parse --abbrev-ref HEAD 2>/dev/null)'
 
+        # Sync rose-pine variant with the shared macOS appearance state.
+        run-shell ${applyAppearanceScript}
         # Load rose-pine after theme options so first startup matches reload behavior.
         run-shell ${pkgs.tmuxPlugins.rose-pine}/share/tmux-plugins/rose-pine/rose-pine.tmux
-        # Keep git branch visible even if rose-pine rewrites/trims status-right.
-        set -ag status-right '#[fg=#9ccfd8]  #(git -C "#{pane_current_path}" rev-parse --abbrev-ref HEAD 2>/dev/null)'
 
         # reload config
         bind r run-shell "tmux source-file ~/.config/tmux/tmux.conf && tmux display-message 'Config reloaded'"
