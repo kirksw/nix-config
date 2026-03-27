@@ -1,7 +1,10 @@
 {
   inputs,
+  lib,
   stdenv,
   python3,
+  writeShellScript,
+  nix,
 }:
 
 let
@@ -9,6 +12,16 @@ let
   upstream = inputs.swe-pruner-mcp.packages.${system}.default;
 in
 upstream.overrideAttrs (old: {
+  passthru =
+    (old.passthru or { })
+    // {
+      updateScript = writeShellScript "update-swe-pruner-mcp" ''
+        set -euo pipefail
+
+        cd "$repo_root"
+        ${lib.getExe nix} flake lock --update-input swe-pruner-mcp
+      '';
+    };
   postPatch =
     (old.postPatch or "")
     + ''
