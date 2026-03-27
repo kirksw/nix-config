@@ -44,7 +44,7 @@
   # ai tooling
   homeModules.claudeCode.enable = true;
   homeModules.aiDev.enable = true;
-  homeModules.treekanga.enable = true;
+  homeModules.treekanga.enable = false;
   homeModules.opencode.enable = true;
   homeModules.piCodingAgent.enable = true;
   homeModules.codex.enable = true;
