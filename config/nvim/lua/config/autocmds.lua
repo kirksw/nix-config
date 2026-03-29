@@ -18,6 +18,13 @@ vim.api.nvim_create_autocmd("VimEnter", {
   end,
 })
 
+vim.api.nvim_create_autocmd({ "FocusGained", "VimResume" }, {
+  group = group,
+  callback = function()
+    appearance.apply_theme()
+  end,
+})
+
 local watcher = uv and uv.new_fs_event and uv.new_fs_event() or nil
 if watcher then
   local ok = pcall(watcher.start, watcher, appearance.state_dir(), {}, vim.schedule_wrap(function(err, filename)

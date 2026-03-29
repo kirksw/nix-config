@@ -26,12 +26,23 @@ let
 
     apply_mode() {
       local mode
+      local variant
       mode="$(read_mode)"
+
+      case "$mode" in
+        light)
+          variant="dawn"
+          ;;
+        *)
+          variant="main"
+          ;;
+      esac
 
       /bin/mkdir -p "$state_dir"
       printf '%s\n' "$mode" > "$state_file"
 
       if "$tmux_bin" ls >/dev/null 2>&1; then
+        "$tmux_bin" set -g @rose_pine_variant "$variant" >/dev/null 2>&1 || true
         "$tmux_bin" run-shell "$rose_pine_tmux" >/dev/null 2>&1 || true
         "$tmux_bin" refresh-client -S >/dev/null 2>&1 || true
       fi
