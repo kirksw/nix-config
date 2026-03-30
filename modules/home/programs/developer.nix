@@ -161,6 +161,7 @@ in
       enable = true;
       package = pkgs.gitFull;
       ignores = [ "*.swp" ];
+      signing.format = null;
       includes =
         (
           if fallbackProfileName != null && fallbackProfileName != "" then
