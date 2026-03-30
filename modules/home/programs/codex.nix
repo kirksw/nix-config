@@ -60,6 +60,7 @@ let
         exit 1
       fi
       export CODEX_HOME="${workHome}"
+      export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
       export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GITHUB_PAT_PATH")"
       echo "codex: using work profile (lunar)" >&2
       if ! "$CODEX_BIN" login status; then
