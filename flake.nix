@@ -48,6 +48,8 @@
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
   };
 
   outputs =
@@ -61,6 +63,7 @@
       nix-agents,
       yazi,
       git-hooks,
+      neovim-nightly-overlay,
       ...
     }:
     let
@@ -119,6 +122,7 @@
               llm-agents
               nix-agents
               yazi
+              neovim-nightly-overlay
               ;
           };
         in
@@ -200,12 +204,15 @@
 
           checks = {
             inherit pre-commit-check;
-            wezterm-config-syntax = pkgs.runCommand "wezterm-config-syntax" {
-              nativeBuildInputs = [ pkgs.lua ];
-            } ''
-              ${pkgs.lua}/bin/luac -p ${./config/wezterm/wezterm.lua}
-              touch $out
-            '';
+            wezterm-config-syntax =
+              pkgs.runCommand "wezterm-config-syntax"
+                {
+                  nativeBuildInputs = [ pkgs.lua ];
+                }
+                ''
+                  ${pkgs.lua}/bin/luac -p ${./config/wezterm/wezterm.lua}
+                  touch $out
+                '';
           };
 
           devShells.default = pkgs.mkShell {
