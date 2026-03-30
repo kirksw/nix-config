@@ -20,11 +20,20 @@ let
     ''
   else "";
 
-  codexConfig = ''
-    model = "gpt-5.3-codex"
+  commonCodexConfig = ''
+    model = "gpt-5.4"
     model_reasoning_effort = "high"
 
     ${codexMcpSection}
+  '';
+
+  personalCodexConfig = commonCodexConfig + ''
+    [features]
+    multi_agent = true
+  '';
+
+  workCodexConfig = commonCodexConfig + ''
+    openai_base_url = "https://eu.api.openai.com/v1"
 
     [features]
     multi_agent = true
@@ -50,7 +59,6 @@ let
         echo "Error: Missing API key at $LUNAR_KEY_PATH" >&2
         exit 1
       fi
-      export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
       export CODEX_HOME="${workHome}"
       export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GITHUB_PAT_PATH")"
       echo "codex: using work profile (lunar)" >&2
@@ -94,9 +102,9 @@ in
     ];
 
     # personal profile config
-    xdg.configFile."codex/profiles/personal/config.toml".text = codexConfig;
+    xdg.configFile."codex/profiles/personal/config.toml".text = personalCodexConfig;
 
     # work profile config (same config, different auth state managed at runtime)
-    xdg.configFile."codex/profiles/work/config.toml".text = codexConfig;
+    xdg.configFile."codex/profiles/work/config.toml".text = workCodexConfig;
   };
 }
