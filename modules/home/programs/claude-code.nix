@@ -8,9 +8,6 @@
 }:
 
 let
-  homeDir = config.home.homeDirectory;
-  swePrunerCommand = config.homeModules.swePrunerMcp.command;
-
   claudeBin = "${pkgs.llm-agents.claude-code}/bin/claude";
 
   mkClaudeWrapper = pkgs.writeShellScriptBin "claude" ''
@@ -38,19 +35,6 @@ let
       exec "$CLAUDE_BIN" "$@"
     fi
   '';
-
-  # MCP config for swe-pruner (written to ~/.claude.json mcpServers section)
-  swePrunerMcpConfig = lib.optionalAttrs
-    (config.homeModules.swePrunerMcp.enable && swePrunerCommand != null)
-    {
-      swe-pruner = {
-        command = swePrunerCommand;
-        env = {
-          MODEL_PATH = "${homeDir}/.cache/swe-pruner/models/code-pruner";
-          STATS_FILE = "${homeDir}/.cache/swe-pruner/stats.json";
-        };
-      };
-    };
 in
 {
   options = {
