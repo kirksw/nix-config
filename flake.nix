@@ -167,44 +167,54 @@
         inherit self deploy-rs;
       };
 
-      checks = import ./flake/checks.nix {
+      deployChecks = import ./flake/checks.nix {
         inherit deploy-rs deploy;
       };
     in
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        packageData = mkPackageData system;
-        pre-commit-check = git-hooks.lib.${system}.run {
-          src = ./.;
-          hooks = {
-            nix-flake-check = {
-              enable = true;
-              entry = "nix flake check --no-build";
-              files = "\\.nix$";
-              pass_filenames = false;
+    let
+      systemOutputs = flake-utils.lib.eachDefaultSystem (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          packageData = mkPackageData system;
+          pre-commit-check = git-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              nix-flake-check = {
+                enable = true;
+                entry = "nix flake check --no-build";
+                files = "\\.nix$";
+                pass_filenames = false;
+              };
             };
           };
-        };
-      in
-      {
-        packages = packageData.packages;
+        in
+        {
+          packages = packageData.packages;
 
-        apps = mkApps {
-          inherit system;
-          appCommands = appCommandsBySystem.${system} or [ ];
-          inherit (packageData) packageNames packages;
-        };
+          apps = mkApps {
+            inherit system;
+            appCommands = appCommandsBySystem.${system} or [ ];
+            inherit (packageData) packageNames packages;
+          };
 
-        checks = {
-          inherit pre-commit-check;
-        };
+          checks = {
+            inherit pre-commit-check;
+            wezterm-config-syntax = pkgs.runCommand "wezterm-config-syntax" {
+              nativeBuildInputs = [ pkgs.lua ];
+            } ''
+              ${pkgs.lua}/bin/luac -p ${./config/wezterm/wezterm.lua}
+              touch $out
+            '';
+          };
 
-        devShells.default = (import nixpkgs { inherit system; }).mkShell {
-          inherit (pre-commit-check) shellHook;
-        };
-      }
-    )
+          devShells.default = pkgs.mkShell {
+            inherit (pre-commit-check) shellHook;
+          };
+        }
+      );
+    in
+    systemOutputs
     // {
       darwinConfigurations = builtins.mapAttrs mylibs.darwin.mkDarwinSystem darwinSystems;
     }
@@ -212,6 +222,7 @@
       nixosConfigurations = builtins.mapAttrs mylibs.nixos.mkNixosSystem nixosSystems;
     }
     // {
-      inherit deploy checks;
+      inherit deploy;
+      checks = nixpkgs.lib.recursiveUpdate (systemOutputs.checks or { }) deployChecks;
     };
 }

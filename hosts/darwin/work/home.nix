@@ -38,7 +38,7 @@
   homeModules.tmux.enable = true;
   homeModules.zellij.enable = false;
   # terminal
-  homeModules.ghostty.enable = false;
+  homeModules.ghostty.enable = true;
   homeModules.wezterm.enable = true;
   homeModules.qemu.enable = true;
   # ai tooling

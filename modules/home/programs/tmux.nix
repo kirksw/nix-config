@@ -147,7 +147,7 @@ in
         set -as terminal-features 'xterm*:extkeys'
 
         # Keep git branch visible after rose-pine rebuilds status-right.
-        set -g @rose_pine_status_right_append_section '#[fg=#9ccfd8]  #(git -C "#{pane_current_path}" rev-parse --abbrev-ref HEAD 2>/dev/null)'
+        set -g @rose_pine_status_right_append_section '#[fg=#9ccfd8]  #(git -C "#{pane_current_path}" rev-parse --abbrev-ref HEAD 2>/dev/null) #[fg=#908caa]#(cat ${appearanceModeFile} 2>/dev/null)'
 
         # Sync rose-pine variant with the shared macOS appearance state.
         run-shell ${applyAppearanceScript}

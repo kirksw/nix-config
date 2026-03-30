@@ -46,12 +46,31 @@ let
         "$tmux_bin" run-shell "$rose_pine_tmux" >/dev/null 2>&1 || true
         "$tmux_bin" refresh-client -S >/dev/null 2>&1 || true
       fi
+
+      local claude_config="$HOME/.claude.json"
+      if [ -f "$claude_config" ]; then
+        /usr/bin/python3 -c "
+import json
+with open('$claude_config') as f:
+    d = json.load(f)
+d['theme'] = '$mode'
+with open('$claude_config', 'w') as f:
+    json.dump(d, f, indent=2)
+print()
+" 2>/dev/null || true
+      fi
     }
 
     apply_mode
+    prev_mode="$(read_mode)"
 
-    while ${pkgs.dark-mode-notify}/bin/dark-mode-notify; do
-      apply_mode
+    while true; do
+      sleep 1
+      mode="$(read_mode)"
+      if [ "$mode" != "$prev_mode" ]; then
+        prev_mode="$mode"
+        apply_mode
+      fi
     done
   '';
 in
@@ -63,7 +82,6 @@ in
   config = lib.mkIf (config.homeModules.appearanceSync.enable && pkgs.stdenv.isDarwin) {
     home.activation.appearanceSyncState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       mkdir -p ${lib.escapeShellArg stateDir}
-      /usr/bin/defaults delete -g AppleInterfaceStyle >/dev/null 2>&1 || true
     '';
 
     launchd.agents.appearance-sync = {
