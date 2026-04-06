@@ -28,7 +28,6 @@
   homeModules.appearanceSync.enable = true;
   homeModules.zsh.enable = true;
   homeModules.developer.enable = true;
-  homeModules.colima.enable = true;
   homeModules.devops.enable = true;
   # company
   homeModules.lunar.enable = true;
@@ -58,4 +57,5 @@
   homeModules.homerow.enable = false;
   homeModules.gcloud.enable = false;
   homeModules.vscode.enable = false;
+  homeModules.colima.enable = false;
 }

@@ -14,6 +14,7 @@ let
     set -euo pipefail
 
     ANTHROPIC_KEY_PATH="${config.sops.secrets."api/lunar/anthropic".path}"
+    OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
     CLAUDE_BIN="${claudeBin}"
 
     is_work_project() {
@@ -26,7 +27,20 @@ let
         echo "add 'anthropic' key to secrets/api/lunar.yaml with sops" >&2
         exit 1
       fi
-      export ANTHROPIC_API_KEY="$(cat "$ANTHROPIC_KEY_PATH")"
+      export AWS_BEARER_TOKEN_BEDROCK="$(cat "$ANTHROPIC_KEY_PATH")"
+      export CLAUDE_CODE_USE_BEDROCK=1
+      export AWS_REGION=eu-west-1
+      export ANTHROPIC_MODEL='eu.anthropic.claude-sonnet-4-6'
+      export ANTHROPIC_DEFAULT_OPUS_MODEL='eu.anthropic.claude-opus-4-6-v1'
+      export ANTHROPIC_SMALL_FAST_MODEL='eu.anthropic.claude-haiku-4-5-20251001-v1:0'
+
+      # Codex plugin (codex-plugin-cc) inherits env from Claude Code;
+      # export OpenAI credentials so the app-server/broker can use them.
+      if [[ -f "$OPENAI_KEY_PATH" ]]; then
+        export OPENAI_API_KEY="$(cat "$OPENAI_KEY_PATH")"
+        export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
+      fi
+
       echo "claude: using work profile (lunar, API key)" >&2
       exec "$CLAUDE_BIN" "$@"
     else
@@ -46,6 +60,11 @@ in
       "api/lunar/anthropic" = {
         sopsFile = "${self}/secrets/api/lunar.yaml";
         key = "anthropic";
+        mode = "0400";
+      };
+      "api/lunar/openai" = {
+        sopsFile = "${self}/secrets/api/lunar.yaml";
+        key = "openai";
         mode = "0400";
       };
     };

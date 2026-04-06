@@ -3,7 +3,6 @@
   yazi,
   llm-agents,
   nix-agents,
-  neovim-nightly-overlay,
   ...
 }:
 {
@@ -44,8 +43,6 @@
     yazi.overlays.default
     llm-agents.overlays.default
     nix-agents.overlays.default
-    neovim-nightly-overlay.overlays.default
-
   ];
   enableHomebrew = true;
   enableLunar = true;
