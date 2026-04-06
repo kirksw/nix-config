@@ -12,7 +12,8 @@ let
 
   profileBase = "${homeDir}/.config/pi/profiles";
   dataProfileBase = "${homeDir}/.local/share/pi/profiles";
-  nixAgentsPiProfilesDir = "${homeDir}/.local/share/nix-agents/pi/profiles";
+  nixAgentsPiProfilesDir = "${homeDir}/.config/nix-agents/pi/profiles";
+  legacyNixAgentsPiProfilesDir = "${homeDir}/.local/share/nix-agents/pi/profiles";
   livePiAgentDir = "${homeDir}/.pi/agent";
 
   mkPiWrapper = pkgs.writeShellScriptBin "pi" ''
@@ -28,15 +29,28 @@ let
       [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
     }
 
-    sync_pi_assets() {
+    resolve_pi_assets_dir() {
       local profile_name="$1"
-      local source_dir="${nixAgentsPiProfilesDir}/$profile_name"
+      local preferred_dir="${nixAgentsPiProfilesDir}/$profile_name"
+      local legacy_dir="${legacyNixAgentsPiProfilesDir}/$profile_name"
 
-      if [[ ! -d "$source_dir" ]]; then
-        echo "error: missing Pi agent assets at $source_dir" >&2
+      if [[ -d "$preferred_dir" ]]; then
+        printf '%s\n' "$preferred_dir"
+      elif [[ -d "$legacy_dir" ]]; then
+        printf '%s\n' "$legacy_dir"
+      else
+        echo "error: missing Pi agent assets at $preferred_dir" >&2
+        echo "checked legacy path $legacy_dir as well" >&2
         echo "run 'nix run .#sync-agents' to populate profile-specific nix-agents assets" >&2
         exit 1
       fi
+    }
+
+    sync_pi_assets() {
+      local profile_name="$1"
+      local source_dir
+
+      source_dir="$(resolve_pi_assets_dir "$profile_name")"
 
       mkdir -p "${livePiAgentDir}"
       ln -sfn "$source_dir/agents" "${livePiAgentDir}/agents"

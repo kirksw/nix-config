@@ -13,8 +13,7 @@ This is a Nix flake-based mono-repo for macOS (`nix-darwin`) and Linux (`NixOS`)
 - `apps/<system>/`: operational wrappers (`build`, `switch`, `rollback`).
 - `scripts/check-structure.sh`: enforces module-manifest and namespace conventions.
 - `secrets/`: SOPS-encrypted YAML secrets.
-- `agents/opencode/agents/`: OpenCode subagent definitions (markdown files synced to `~/.config/opencode/agents/`).
-- `agents/skills/`: OpenCode skill definitions (synced to `~/.config/opencode/skills/`).
+- `nix-agents` flake input: upstream agent, skill, and tool config assets synced locally into `~/.config/nix-agents/<tool>/profiles/<profile>/`.
 - `docs/agents/`: feature plans (`feat-*.md`) and completed summaries (`completed/`).
 
 ## Build, Test, and Development Commands
@@ -63,7 +62,7 @@ Every agent-related change follows a plan-implement-test-complete cycle:
 4. **Complete**: fill in the summary section of the plan doc and move it to `docs/agents/completed/feat-<name>.md`.
 5. **Backlog**: any remaining follow-up items or new ideas discovered during the work must be added to `docs/BACKLOG.md` with an effort estimate and priority.
 
-Sync agents/skills to local OpenCode config: `nix run .#sync-agents`.
+Sync agent assets to local profile roots: `nix run .#sync-agents`.
 
 ## Backlog Management
 All todo items are tracked in `docs/BACKLOG.md`. Each item must include:

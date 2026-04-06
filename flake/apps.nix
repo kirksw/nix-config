@@ -89,20 +89,33 @@ let
       ${pkgs.coreutils}/bin/cp -R "$source_dir"/. "$target_dir"/
     }
 
+    sync_file() {
+      source_file="$1"
+      target_file="$2"
+
+      ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$target_file")"
+      if [ -f "$source_file" ]; then
+        ${pkgs.coreutils}/bin/cp "$source_file" "$target_file"
+      else
+        ${pkgs.coreutils}/bin/rm -f "$target_file"
+      fi
+    }
+
     repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel 2>/dev/null || ${pkgs.coreutils}/bin/pwd)"
     source_backend_skills="${inputs.backend-engineering-practices}/skills"
+    target_nix_agents_base="$HOME/.config/nix-agents"
 
-    target_opencode_personal="$HOME/.config/opencode/profiles/personal/opencode"
-    target_opencode_work="$HOME/.config/opencode/profiles/work/opencode"
+    target_opencode_personal="$target_nix_agents_base/opencode/profiles/personal"
+    target_opencode_work="$target_nix_agents_base/opencode/profiles/work"
 
-    target_claude_personal="$HOME/.local/share/nix-agents/claude/profiles/personal"
-    target_claude_work="$HOME/.local/share/nix-agents/claude/profiles/work"
+    target_claude_personal="$target_nix_agents_base/claude/profiles/personal"
+    target_claude_work="$target_nix_agents_base/claude/profiles/work"
 
-    target_codex_personal="$HOME/.local/share/nix-agents/codex/profiles/personal"
-    target_codex_work="$HOME/.local/share/nix-agents/codex/profiles/work"
+    target_codex_personal="$target_nix_agents_base/codex/profiles/personal"
+    target_codex_work="$target_nix_agents_base/codex/profiles/work"
 
-    target_pi_personal="$HOME/.local/share/nix-agents/pi/profiles/personal"
-    target_pi_work="$HOME/.local/share/nix-agents/pi/profiles/work"
+    target_pi_personal="$target_nix_agents_base/pi/profiles/personal"
+    target_pi_work="$target_nix_agents_base/pi/profiles/work"
 
     ${pkgs.coreutils}/bin/mkdir -p \
       "$target_opencode_personal/agents" \
@@ -126,11 +139,11 @@ let
     echo "Syncing OpenCode from nix-agents..."
     sync_tree "${nixAgentsConfigs.opencode.personal}/agents" "$target_opencode_personal/agents"
     sync_tree "${nixAgentsConfigs.opencode.personal}/skills" "$target_opencode_personal/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.opencode.personal}/AGENTS.md" "$target_opencode_personal/AGENTS.md" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.opencode.personal}/AGENTS.md" "$target_opencode_personal/AGENTS.md"
 
     sync_tree "${nixAgentsConfigs.opencode.work}/agents" "$target_opencode_work/agents"
     sync_tree "${nixAgentsConfigs.opencode.work}/skills" "$target_opencode_work/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.opencode.work}/AGENTS.md" "$target_opencode_work/AGENTS.md" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.opencode.work}/AGENTS.md" "$target_opencode_work/AGENTS.md"
 
     if [ -d "$source_backend_skills" ]; then
       sync_tree "$source_backend_skills" "$target_opencode_work/skills"
@@ -141,31 +154,33 @@ let
     echo "Syncing Claude from nix-agents..."
     sync_tree "${nixAgentsConfigs.claude.personal}/agents" "$target_claude_personal/agents"
     sync_tree "${nixAgentsConfigs.claude.personal}/skills" "$target_claude_personal/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.claude.personal}/CLAUDE.md" "$target_claude_personal/CLAUDE.md" 2>/dev/null || true
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.claude.personal}/settings.json" "$target_claude_personal/settings.json" 2>/dev/null || true
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.claude.personal}/.mcp.json" "$target_claude_personal/.mcp.json" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.claude.personal}/CLAUDE.md" "$target_claude_personal/CLAUDE.md"
+    sync_file "${nixAgentsConfigs.claude.personal}/settings.json" "$target_claude_personal/settings.json"
+    sync_file "${nixAgentsConfigs.claude.personal}/.mcp.json" "$target_claude_personal/.mcp.json"
 
     sync_tree "${nixAgentsConfigs.claude.work}/agents" "$target_claude_work/agents"
     sync_tree "${nixAgentsConfigs.claude.work}/skills" "$target_claude_work/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.claude.work}/CLAUDE.md" "$target_claude_work/CLAUDE.md" 2>/dev/null || true
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.claude.work}/settings.json" "$target_claude_work/settings.json" 2>/dev/null || true
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.claude.work}/.mcp.json" "$target_claude_work/.mcp.json" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.claude.work}/CLAUDE.md" "$target_claude_work/CLAUDE.md"
+    sync_file "${nixAgentsConfigs.claude.work}/settings.json" "$target_claude_work/settings.json"
+    sync_file "${nixAgentsConfigs.claude.work}/.mcp.json" "$target_claude_work/.mcp.json"
 
     # Codex from nix-agents
     echo "Syncing Codex from nix-agents..."
     sync_tree "${nixAgentsConfigs.codex.personal}/agents" "$target_codex_personal/agents"
     sync_tree "${nixAgentsConfigs.codex.personal}/skills" "$target_codex_personal/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.codex.personal}/AGENTS.md" "$target_codex_personal/AGENTS.md" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.codex.personal}/AGENTS.md" "$target_codex_personal/AGENTS.md"
+    sync_file "${nixAgentsConfigs.codex.personal}/mcp.json" "$target_codex_personal/mcp.json"
 
     sync_tree "${nixAgentsConfigs.codex.work}/agents" "$target_codex_work/agents"
     sync_tree "${nixAgentsConfigs.codex.work}/skills" "$target_codex_work/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.codex.work}/AGENTS.md" "$target_codex_work/AGENTS.md" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.codex.work}/AGENTS.md" "$target_codex_work/AGENTS.md"
+    sync_file "${nixAgentsConfigs.codex.work}/mcp.json" "$target_codex_work/mcp.json"
 
     # Pi from nix-agents
     echo "Syncing Pi from nix-agents..."
     sync_tree "${nixAgentsConfigs.pi.personal}/agents" "$target_pi_personal/agents"
     sync_tree "${nixAgentsConfigs.pi.personal}/skills" "$target_pi_personal/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.pi.personal}/AGENTS.md" "$target_pi_personal/AGENTS.md" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.pi.personal}/AGENTS.md" "$target_pi_personal/AGENTS.md"
     if [ -d "${nixAgentsConfigs.pi.personal}/extensions" ]; then
       sync_tree "${nixAgentsConfigs.pi.personal}/extensions" "$target_pi_personal/extensions"
     fi
@@ -175,7 +190,7 @@ let
 
     sync_tree "${nixAgentsConfigs.pi.work}/agents" "$target_pi_work/agents"
     sync_tree "${nixAgentsConfigs.pi.work}/skills" "$target_pi_work/skills"
-    ${pkgs.coreutils}/bin/cp "${nixAgentsConfigs.pi.work}/AGENTS.md" "$target_pi_work/AGENTS.md" 2>/dev/null || true
+    sync_file "${nixAgentsConfigs.pi.work}/AGENTS.md" "$target_pi_work/AGENTS.md"
     if [ -d "${nixAgentsConfigs.pi.work}/extensions" ]; then
       sync_tree "${nixAgentsConfigs.pi.work}/extensions" "$target_pi_work/extensions"
     fi

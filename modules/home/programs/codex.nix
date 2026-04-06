@@ -42,8 +42,10 @@ let
   # --- profile paths ---
   personalHome = "${homeDir}/.config/codex/profiles/personal";
   workHome = "${homeDir}/.config/codex/profiles/work";
-  personalAgentsHome = "${homeDir}/.local/share/nix-agents/codex/profiles/personal";
-  workAgentsHome = "${homeDir}/.local/share/nix-agents/codex/profiles/work";
+  personalAgentsHome = "${homeDir}/.config/nix-agents/codex/profiles/personal";
+  workAgentsHome = "${homeDir}/.config/nix-agents/codex/profiles/work";
+  legacyPersonalAgentsHome = "${homeDir}/.local/share/nix-agents/codex/profiles/personal";
+  legacyWorkAgentsHome = "${homeDir}/.local/share/nix-agents/codex/profiles/work";
 
   mkCodexWrapper = pkgs.writeShellScriptBin "codex" ''
     set -euo pipefail
@@ -56,13 +58,29 @@ let
       [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
     }
 
+    resolve_codex_config_dir() {
+      local preferred_dir="$1"
+      local legacy_dir="$2"
+
+      if [[ -d "$preferred_dir" ]]; then
+        printf '%s\n' "$preferred_dir"
+      elif [[ -d "$legacy_dir" ]]; then
+        printf '%s\n' "$legacy_dir"
+      else
+        echo "error: missing Codex agent assets at $preferred_dir" >&2
+        echo "checked legacy path $legacy_dir as well" >&2
+        echo "run 'nix run .#sync-agents' to populate profile-specific nix-agents assets" >&2
+        exit 1
+      fi
+    }
+
     if is_work_project; then
       if [[ ! -f "$LUNAR_KEY_PATH" ]]; then
         echo "Error: Missing API key at $LUNAR_KEY_PATH" >&2
         exit 1
       fi
       export CODEX_HOME="${workHome}"
-      export CODEX_CONFIG_DIR="${workAgentsHome}"
+      export CODEX_CONFIG_DIR="$(resolve_codex_config_dir "${workAgentsHome}" "${legacyWorkAgentsHome}")"
       export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
       export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GITHUB_PAT_PATH")"
       echo "codex: using work profile (lunar)" >&2
@@ -72,7 +90,7 @@ let
       exec "$CODEX_BIN" "$@"
     else
       export CODEX_HOME="${personalHome}"
-      export CODEX_CONFIG_DIR="${personalAgentsHome}"
+      export CODEX_CONFIG_DIR="$(resolve_codex_config_dir "${personalAgentsHome}" "${legacyPersonalAgentsHome}")"
       export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GITHUB_PAT_PATH")"
       echo "codex: using personal profile (ChatGPT account)" >&2
       if ! "$CODEX_BIN" login status; then

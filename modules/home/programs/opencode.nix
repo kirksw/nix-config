@@ -178,6 +178,8 @@ let
   # --- profile paths ---
   profileBase = "${homeDir}/.config/opencode/profiles";
   dataProfileBase = "${homeDir}/.local/share/opencode/profiles";
+  nixAgentsProfileBase = "${homeDir}/.config/nix-agents/opencode/profiles";
+  legacyNixAgentsProfileBase = "${homeDir}/.local/share/nix-agents/opencode/profiles";
 
   # --- wrapper ---
   mkOpencodeWrapper = pkgs.writeShellScriptBin "opencode" ''
@@ -193,6 +195,23 @@ let
       [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
     }
 
+    resolve_opencode_config_dir() {
+      local profile_name="$1"
+      local preferred_dir="${nixAgentsProfileBase}/$profile_name"
+      local legacy_dir="${legacyNixAgentsProfileBase}/$profile_name"
+
+      if [[ -d "$preferred_dir" ]]; then
+        printf '%s\n' "$preferred_dir"
+      elif [[ -d "$legacy_dir" ]]; then
+        printf '%s\n' "$legacy_dir"
+      else
+        echo "error: missing OpenCode agent assets at $preferred_dir" >&2
+        echo "checked legacy path $legacy_dir as well" >&2
+        echo "run 'nix run .#sync-agents' to populate profile-specific nix-agents assets" >&2
+        exit 1
+      fi
+    }
+
     if is_work_project; then
       if [[ ! -f "$LUNAR_OPENAI_KEY_PATH" ]]; then
         echo "error: missing work API key at $LUNAR_OPENAI_KEY_PATH" >&2
@@ -205,6 +224,7 @@ let
       fi
       export XDG_CONFIG_HOME="${profileBase}/work"
       export XDG_DATA_HOME="${dataProfileBase}/work"
+      export OPENCODE_CONFIG_DIR="$(resolve_opencode_config_dir work)"
       export OPENAI_API_KEY="$(cat "$LUNAR_OPENAI_KEY_PATH")"
       export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
       export ANTHROPIC_API_KEY="$(cat "$LUNAR_ANTHROPIC_KEY_PATH")"
@@ -218,6 +238,7 @@ let
       fi
       export XDG_CONFIG_HOME="${profileBase}/personal"
       export XDG_DATA_HOME="${dataProfileBase}/personal"
+      export OPENCODE_CONFIG_DIR="$(resolve_opencode_config_dir personal)"
       export zai_token="$(cat "$ZAI_SECRET_PATH")"
       export MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
       echo "opencode: using personal profile" >&2

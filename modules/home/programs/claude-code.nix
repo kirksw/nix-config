@@ -9,7 +9,8 @@
 
 let
   homeDir = config.home.homeDirectory;
-  claudeProfilesDir = "${homeDir}/.local/share/nix-agents/claude/profiles";
+  claudeProfilesDir = "${homeDir}/.config/nix-agents/claude/profiles";
+  legacyClaudeProfilesDir = "${homeDir}/.local/share/nix-agents/claude/profiles";
   claudeBin = "${pkgs.llm-agents.claude-code}/bin/claude";
 
   mkClaudeWrapper = pkgs.writeShellScriptBin "claude" ''
@@ -23,8 +24,25 @@ let
       [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
     }
 
+    resolve_claude_config_dir() {
+      local profile_name="$1"
+      local preferred_dir="${claudeProfilesDir}/$profile_name"
+      local legacy_dir="${legacyClaudeProfilesDir}/$profile_name"
+
+      if [[ -d "$preferred_dir" ]]; then
+        printf '%s\n' "$preferred_dir"
+      elif [[ -d "$legacy_dir" ]]; then
+        printf '%s\n' "$legacy_dir"
+      else
+        echo "error: missing Claude agent assets at $preferred_dir" >&2
+        echo "checked legacy path $legacy_dir as well" >&2
+        echo "run 'nix run .#sync-agents' to populate profile-specific nix-agents assets" >&2
+        exit 1
+      fi
+    }
+
     if is_work_project; then
-      CLAUDE_CONFIG_DIR="${claudeProfilesDir}/work"
+      CLAUDE_CONFIG_DIR="$(resolve_claude_config_dir work)"
       if [[ ! -f "$ANTHROPIC_KEY_PATH" ]]; then
         echo "error: missing Anthropic API key at $ANTHROPIC_KEY_PATH" >&2
         echo "add 'anthropic' key to secrets/api/lunar.yaml with sops" >&2
@@ -52,7 +70,7 @@ let
       export CLAUDE_CONFIG_DIR
       exec "$CLAUDE_BIN" "$@"
     else
-      CLAUDE_CONFIG_DIR="${claudeProfilesDir}/personal"
+      CLAUDE_CONFIG_DIR="$(resolve_claude_config_dir personal)"
       unset ANTHROPIC_API_KEY 2>/dev/null || true
       echo "claude: using personal profile (subscription)" >&2
       set -- --settings "$CLAUDE_CONFIG_DIR/settings.json" "$@"
