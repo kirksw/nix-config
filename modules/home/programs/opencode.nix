@@ -140,6 +140,10 @@ let
     "$schema" = "https://opencode.ai/config.json";
 
     provider = {
+      anthropic = {
+        name = "anthropic";
+      };
+
       openai = {
         name = "openai";
         options = {
@@ -182,6 +186,7 @@ let
     ZAI_SECRET_PATH="${config.sops.secrets."zai".path}"
     MINIMAX_SECRET_PATH="${config.sops.secrets."minimax".path}"
     LUNAR_OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
+    LUNAR_ANTHROPIC_KEY_PATH="${config.sops.secrets."api/lunar/anthropic".path}"
     OPENCODE_BIN="${pkgs.llm-agents.opencode}/bin/opencode"
 
     is_work_project() {
@@ -193,9 +198,16 @@ let
         echo "error: missing work API key at $LUNAR_OPENAI_KEY_PATH" >&2
         exit 1
       fi
+      if [[ ! -f "$LUNAR_ANTHROPIC_KEY_PATH" ]]; then
+        echo "error: missing Claude API key at $LUNAR_ANTHROPIC_KEY_PATH" >&2
+        echo "add 'anthropic' key to secrets/api/lunar.yaml with sops" >&2
+        exit 1
+      fi
       export XDG_CONFIG_HOME="${profileBase}/work"
       export XDG_DATA_HOME="${dataProfileBase}/work"
       export OPENAI_API_KEY="$(cat "$LUNAR_OPENAI_KEY_PATH")"
+      export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
+      export ANTHROPIC_API_KEY="$(cat "$LUNAR_ANTHROPIC_KEY_PATH")"
       echo "opencode: using work profile (lunar)" >&2
       exec -a opencode "$OPENCODE_BIN" "$@"
     else
@@ -233,6 +245,11 @@ in
       "api/lunar/openai" = {
         sopsFile = "${self}/secrets/api/lunar.yaml";
         key = "openai";
+        mode = "0400";
+      };
+      "api/lunar/anthropic" = {
+        sopsFile = "${self}/secrets/api/lunar.yaml";
+        key = "anthropic";
         mode = "0400";
       };
     };
