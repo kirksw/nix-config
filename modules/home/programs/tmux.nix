@@ -144,6 +144,7 @@ in
 
         # ensure can handle commands
         set -g extended-keys always
+        set -g extended-keys-format csi-u
         set -as terminal-features 'xterm*:extkeys'
 
         # Keep git branch visible after rose-pine rebuilds status-right.
