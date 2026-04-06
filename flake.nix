@@ -37,7 +37,6 @@
     nix-agents.url = "github:kirksw/nix-agents";
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
-    yazi.url = "github:sxyazi/yazi";
 
     backend-engineering-practices = {
       url = "github:lunarway/backend-engineering-practices/master";
@@ -61,7 +60,6 @@
       lunar-tools,
       llm-agents,
       nix-agents,
-      yazi,
       git-hooks,
       neovim-nightly-overlay,
       ...
@@ -121,7 +119,6 @@
               lunar-tools
               llm-agents
               nix-agents
-              yazi
               neovim-nightly-overlay
               ;
           };

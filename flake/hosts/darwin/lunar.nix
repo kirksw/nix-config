@@ -1,6 +1,5 @@
 {
   lunar-tools,
-  yazi,
   llm-agents,
   nix-agents,
   ...
@@ -40,7 +39,6 @@
   };
   overlays = [
     lunar-tools.overlays.default
-    yazi.overlays.default
     llm-agents.overlays.default
     nix-agents.overlays.default
   ];
