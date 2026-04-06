@@ -36,7 +36,16 @@ in
         gitmux
       ];
 
-      file.".config/gitmux/gitmux.conf".source = "${self}/config/gitmux/gitmux.conf";
+      file = {
+        ".config/gitmux/gitmux.conf".source = "${self}/config/gitmux/gitmux.conf";
+
+        ".tmux.conf".text = ''
+          # Some tools still probe ~/.tmux.conf even when tmux loads the XDG config path.
+          set -g extended-keys always
+          set -g extended-keys-format csi-u
+          source-file ~/.config/tmux/tmux.conf
+        '';
+      };
     };
 
     programs.tmux = {
@@ -156,7 +165,7 @@ in
         run-shell ${pkgs.tmuxPlugins.rose-pine}/share/tmux-plugins/rose-pine/rose-pine.tmux
 
         # reload config
-        bind r run-shell "tmux source-file ~/.config/tmux/tmux.conf && tmux display-message 'Config reloaded'"
+        bind r run-shell "tmux source-file ~/.tmux.conf && tmux display-message 'Config reloaded'"
       '';
     };
   };
