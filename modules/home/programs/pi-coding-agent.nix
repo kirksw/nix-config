@@ -12,6 +12,8 @@ let
 
   profileBase = "${homeDir}/.config/pi/profiles";
   dataProfileBase = "${homeDir}/.local/share/pi/profiles";
+  nixAgentsPiProfilesDir = "${homeDir}/.local/share/nix-agents/pi/profiles";
+  livePiAgentDir = "${homeDir}/.pi/agent";
 
   mkPiWrapper = pkgs.writeShellScriptBin "pi" ''
     set -euo pipefail
@@ -26,6 +28,36 @@ let
       [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
     }
 
+    sync_pi_assets() {
+      local profile_name="$1"
+      local source_dir="${nixAgentsPiProfilesDir}/$profile_name"
+
+      if [[ ! -d "$source_dir" ]]; then
+        echo "error: missing Pi agent assets at $source_dir" >&2
+        echo "run 'nix run .#sync-agents' to populate profile-specific nix-agents assets" >&2
+        exit 1
+      fi
+
+      mkdir -p "${livePiAgentDir}"
+      ln -sfn "$source_dir/agents" "${livePiAgentDir}/agents"
+      ln -sfn "$source_dir/skills" "${livePiAgentDir}/skills"
+      if [[ -f "$source_dir/AGENTS.md" ]]; then
+        ln -sfn "$source_dir/AGENTS.md" "${livePiAgentDir}/AGENTS.md"
+      else
+        rm -f "${livePiAgentDir}/AGENTS.md"
+      fi
+      if [[ -d "$source_dir/extensions" ]]; then
+        ln -sfn "$source_dir/extensions" "${livePiAgentDir}/extensions"
+      else
+        rm -f "${livePiAgentDir}/extensions"
+      fi
+      if [[ -d "$source_dir/prompts" ]]; then
+        ln -sfn "$source_dir/prompts" "${livePiAgentDir}/prompts"
+      else
+        rm -f "${livePiAgentDir}/prompts"
+      fi
+    }
+
     if is_work_project; then
       if [[ ! -f "$LUNAR_OPENAI_KEY_PATH" ]]; then
         echo "error: missing work API key at $LUNAR_OPENAI_KEY_PATH" >&2
@@ -36,6 +68,7 @@ let
         echo "add 'anthropic' key to secrets/api/lunar.yaml with sops" >&2
         exit 1
       fi
+      sync_pi_assets work
       export XDG_CONFIG_HOME="${profileBase}/work"
       export XDG_DATA_HOME="${dataProfileBase}/work"
       export OPENAI_API_KEY="$(cat "$LUNAR_OPENAI_KEY_PATH")"
@@ -49,6 +82,7 @@ let
         echo "make sure sops is enabled and secrets are activated" >&2
         exit 1
       fi
+      sync_pi_assets personal
       export XDG_CONFIG_HOME="${profileBase}/personal"
       export XDG_DATA_HOME="${dataProfileBase}/personal"
       export ZAI_API_KEY="$(cat "$ZAI_SECRET_PATH")"

@@ -42,6 +42,8 @@ let
   # --- profile paths ---
   personalHome = "${homeDir}/.config/codex/profiles/personal";
   workHome = "${homeDir}/.config/codex/profiles/work";
+  personalAgentsHome = "${homeDir}/.local/share/nix-agents/codex/profiles/personal";
+  workAgentsHome = "${homeDir}/.local/share/nix-agents/codex/profiles/work";
 
   mkCodexWrapper = pkgs.writeShellScriptBin "codex" ''
     set -euo pipefail
@@ -60,6 +62,7 @@ let
         exit 1
       fi
       export CODEX_HOME="${workHome}"
+      export CODEX_CONFIG_DIR="${workAgentsHome}"
       export OPENAI_BASE_URL="https://eu.api.openai.com/v1"
       export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GITHUB_PAT_PATH")"
       echo "codex: using work profile (lunar)" >&2
@@ -69,6 +72,7 @@ let
       exec "$CODEX_BIN" "$@"
     else
       export CODEX_HOME="${personalHome}"
+      export CODEX_CONFIG_DIR="${personalAgentsHome}"
       export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GITHUB_PAT_PATH")"
       echo "codex: using personal profile (ChatGPT account)" >&2
       if ! "$CODEX_BIN" login status; then

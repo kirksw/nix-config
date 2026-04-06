@@ -8,6 +8,8 @@
 }:
 
 let
+  homeDir = config.home.homeDirectory;
+  claudeProfilesDir = "${homeDir}/.local/share/nix-agents/claude/profiles";
   claudeBin = "${pkgs.llm-agents.claude-code}/bin/claude";
 
   mkClaudeWrapper = pkgs.writeShellScriptBin "claude" ''
@@ -22,6 +24,7 @@ let
     }
 
     if is_work_project; then
+      CLAUDE_CONFIG_DIR="${claudeProfilesDir}/work"
       if [[ ! -f "$ANTHROPIC_KEY_PATH" ]]; then
         echo "error: missing Anthropic API key at $ANTHROPIC_KEY_PATH" >&2
         echo "add 'anthropic' key to secrets/api/lunar.yaml with sops" >&2
@@ -42,10 +45,21 @@ let
       fi
 
       echo "claude: using work profile (lunar, API key)" >&2
+      set -- --settings "$CLAUDE_CONFIG_DIR/settings.json" "$@"
+      if [[ -f "$CLAUDE_CONFIG_DIR/.mcp.json" ]]; then
+        set -- --mcp-config "$CLAUDE_CONFIG_DIR/.mcp.json" "$@"
+      fi
+      export CLAUDE_CONFIG_DIR
       exec "$CLAUDE_BIN" "$@"
     else
+      CLAUDE_CONFIG_DIR="${claudeProfilesDir}/personal"
       unset ANTHROPIC_API_KEY 2>/dev/null || true
       echo "claude: using personal profile (subscription)" >&2
+      set -- --settings "$CLAUDE_CONFIG_DIR/settings.json" "$@"
+      if [[ -f "$CLAUDE_CONFIG_DIR/.mcp.json" ]]; then
+        set -- --mcp-config "$CLAUDE_CONFIG_DIR/.mcp.json" "$@"
+      fi
+      export CLAUDE_CONFIG_DIR
       exec "$CLAUDE_BIN" "$@"
     fi
   '';
