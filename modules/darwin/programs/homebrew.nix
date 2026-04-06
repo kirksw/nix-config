@@ -28,7 +28,7 @@
     # $ nix shell nixpkgs#mas
     # $ mas search <app name>
     masApps = {
-      "xcode" = 497799835;
+      # "xcode" = 497799835;
     };
   };
 

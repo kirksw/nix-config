@@ -130,23 +130,6 @@ in
       gitbutler-cli
     ];
 
-    # tooling management
-    programs.mise = {
-      enable = true;
-      enableZshIntegration = false;
-      globalConfig = {
-        settings = {
-          pipx_uvx = true;
-          idiomatic_version_file_enable_tools = [ ];
-        };
-
-        tools = {
-          # none!
-          uv = "latest";
-        };
-      };
-    };
-
     # SSH configuration using git profiles
     programs.ssh = {
       enable = true;
