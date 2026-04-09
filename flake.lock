@@ -780,11 +780,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1775511125,
-        "narHash": "sha256-SaBXkT3L9qCOxLR71JlSdsgWaECna5s7ocXb2E/XqYw=",
+        "lastModified": 1775542734,
+        "narHash": "sha256-xB3fBA/RE7htCJ2DMhuDgb+OjLjjc+HnWx0aZd2MGz0=",
         "owner": "kirksw",
         "repo": "nix-agents",
-        "rev": "426a7537b440b523ff284c7c45c2397843a77327",
+        "rev": "db284ed96bfd385c48426d64d6320ec7a24cc81b",
         "type": "github"
       },
       "original": {

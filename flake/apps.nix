@@ -145,11 +145,6 @@ let
     sync_tree "${nixAgentsConfigs.opencode.work}/skills" "$target_opencode_work/skills"
     sync_file "${nixAgentsConfigs.opencode.work}/AGENTS.md" "$target_opencode_work/AGENTS.md"
 
-    if [ -d "$source_backend_skills" ]; then
-      sync_tree "$source_backend_skills" "$target_opencode_work/skills"
-      echo "Synced backend-engineering-practices skills to work profile"
-    fi
-
     # Claude from nix-agents
     echo "Syncing Claude from nix-agents..."
     sync_tree "${nixAgentsConfigs.claude.personal}/agents" "$target_claude_personal/agents"
@@ -196,6 +191,15 @@ let
     fi
     if [ -d "${nixAgentsConfigs.pi.work}/prompts" ]; then
       sync_tree "${nixAgentsConfigs.pi.work}/prompts" "$target_pi_work/prompts"
+    fi
+
+    # Sync backend-engineering-practices skills to all work profiles
+    if [ -d "$source_backend_skills" ]; then
+      sync_tree "$source_backend_skills" "$target_opencode_work/skills"
+      sync_tree "$source_backend_skills" "$target_claude_work/skills"
+      sync_tree "$source_backend_skills" "$target_codex_work/skills"
+      sync_tree "$source_backend_skills" "$target_pi_work/skills"
+      echo "Synced backend-engineering-practices skills to all work profiles"
     fi
 
     echo ""
