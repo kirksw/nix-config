@@ -135,6 +135,15 @@ let
       "$target_pi_work/agents" \
       "$target_pi_work/skills"
 
+    # Sync backend-engineering-practices skills first (nix-agents skills overlay on top)
+    if [ -d "$source_backend_skills" ]; then
+      sync_tree "$source_backend_skills" "$target_opencode_work/skills"
+      sync_tree "$source_backend_skills" "$target_claude_work/skills"
+      sync_tree "$source_backend_skills" "$target_codex_work/skills"
+      sync_tree "$source_backend_skills" "$target_pi_work/skills"
+      echo "Synced backend-engineering-practices skills to all work profiles"
+    fi
+
     # OpenCode from nix-agents
     echo "Syncing OpenCode from nix-agents..."
     sync_tree "${nixAgentsConfigs.opencode.personal}/agents" "$target_opencode_personal/agents"
@@ -142,7 +151,7 @@ let
     sync_file "${nixAgentsConfigs.opencode.personal}/AGENTS.md" "$target_opencode_personal/AGENTS.md"
 
     sync_tree "${nixAgentsConfigs.opencode.work}/agents" "$target_opencode_work/agents"
-    sync_tree "${nixAgentsConfigs.opencode.work}/skills" "$target_opencode_work/skills"
+    ${pkgs.coreutils}/bin/cp -R "${nixAgentsConfigs.opencode.work}/skills"/. "$target_opencode_work/skills/"
     sync_file "${nixAgentsConfigs.opencode.work}/AGENTS.md" "$target_opencode_work/AGENTS.md"
 
     # Claude from nix-agents
@@ -154,7 +163,7 @@ let
     sync_file "${nixAgentsConfigs.claude.personal}/.mcp.json" "$target_claude_personal/.mcp.json"
 
     sync_tree "${nixAgentsConfigs.claude.work}/agents" "$target_claude_work/agents"
-    sync_tree "${nixAgentsConfigs.claude.work}/skills" "$target_claude_work/skills"
+    ${pkgs.coreutils}/bin/cp -R "${nixAgentsConfigs.claude.work}/skills"/. "$target_claude_work/skills/"
     sync_file "${nixAgentsConfigs.claude.work}/CLAUDE.md" "$target_claude_work/CLAUDE.md"
     sync_file "${nixAgentsConfigs.claude.work}/settings.json" "$target_claude_work/settings.json"
     sync_file "${nixAgentsConfigs.claude.work}/.mcp.json" "$target_claude_work/.mcp.json"
@@ -167,7 +176,7 @@ let
     sync_file "${nixAgentsConfigs.codex.personal}/mcp.json" "$target_codex_personal/mcp.json"
 
     sync_tree "${nixAgentsConfigs.codex.work}/agents" "$target_codex_work/agents"
-    sync_tree "${nixAgentsConfigs.codex.work}/skills" "$target_codex_work/skills"
+    ${pkgs.coreutils}/bin/cp -R "${nixAgentsConfigs.codex.work}/skills"/. "$target_codex_work/skills/"
     sync_file "${nixAgentsConfigs.codex.work}/AGENTS.md" "$target_codex_work/AGENTS.md"
     sync_file "${nixAgentsConfigs.codex.work}/mcp.json" "$target_codex_work/mcp.json"
 
@@ -184,22 +193,13 @@ let
     fi
 
     sync_tree "${nixAgentsConfigs.pi.work}/agents" "$target_pi_work/agents"
-    sync_tree "${nixAgentsConfigs.pi.work}/skills" "$target_pi_work/skills"
+    ${pkgs.coreutils}/bin/cp -R "${nixAgentsConfigs.pi.work}/skills"/. "$target_pi_work/skills/"
     sync_file "${nixAgentsConfigs.pi.work}/AGENTS.md" "$target_pi_work/AGENTS.md"
     if [ -d "${nixAgentsConfigs.pi.work}/extensions" ]; then
       sync_tree "${nixAgentsConfigs.pi.work}/extensions" "$target_pi_work/extensions"
     fi
     if [ -d "${nixAgentsConfigs.pi.work}/prompts" ]; then
       sync_tree "${nixAgentsConfigs.pi.work}/prompts" "$target_pi_work/prompts"
-    fi
-
-    # Sync backend-engineering-practices skills to all work profiles
-    if [ -d "$source_backend_skills" ]; then
-      sync_tree "$source_backend_skills" "$target_opencode_work/skills"
-      sync_tree "$source_backend_skills" "$target_claude_work/skills"
-      sync_tree "$source_backend_skills" "$target_codex_work/skills"
-      sync_tree "$source_backend_skills" "$target_pi_work/skills"
-      echo "Synced backend-engineering-practices skills to all work profiles"
     fi
 
     echo ""
