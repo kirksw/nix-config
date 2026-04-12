@@ -11,7 +11,7 @@
   ./programs/ghostty.nix
   ./programs/lunar.nix
   ./programs/neovim.nix
-  ./programs/opencode.nix
+  ./programs/ai-agents.nix
   ./programs/qemu.nix
   ./programs/sketchybar.nix
   ./programs/sops.nix

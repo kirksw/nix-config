@@ -35,6 +35,7 @@ let
 
       if [ -f "$ZAI_SECRET_PATH" ]; then
         export zai_token="$(cat "$ZAI_SECRET_PATH")"
+        export ZAI_API_KEY="$zai_token"
       fi
       if [ -f "$MINIMAX_SECRET_PATH" ]; then
         export MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
@@ -112,13 +113,13 @@ let
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "pi";
-      modules = nixAgentsModules ++ [ "${inputs.nix-agents}/presets/tiered.nix" ];
+      modules = nixAgentsModules;
       src = inputs.nix-agents;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "pi";
-      modules = nixAgentsModules ++ [ "${inputs.nix-agents}/presets/tiered.nix" ];
+      modules = nixAgentsModules;
       src = inputs.nix-agents;
     };
   };
