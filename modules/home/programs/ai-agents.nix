@@ -25,6 +25,10 @@ let
     pkgs.writeShellScriptBin target ''
       set -euo pipefail
 
+      is_lunar_project() {
+        [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
+      }
+
       # Export sops-decrypted credentials as env vars.
       # The nix-agents wrapper picks these up via providers with credentialSource = "env".
       ZAI_SECRET_PATH="${config.sops.secrets."zai".path}"
@@ -34,11 +38,10 @@ let
       GIT_PAT_PATH="${config.sops.secrets."git/pat".path}"
 
       if [ -f "$ZAI_SECRET_PATH" ]; then
-        export zai_token="$(cat "$ZAI_SECRET_PATH")"
-        export ZAI_API_KEY="$zai_token"
+        export PERSONAL_ZAI_API_KEY="$(cat "$ZAI_SECRET_PATH")"
       fi
       if [ -f "$MINIMAX_SECRET_PATH" ]; then
-        export MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
+        export PERSONAL_MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
       fi
       if [ -f "$LUNAR_OPENAI_KEY_PATH" ]; then
         export LUNAR_OPENAI_API_KEY="$(cat "$LUNAR_OPENAI_KEY_PATH")"
@@ -171,16 +174,52 @@ in
     # --- install packages ---
     home.packages = lib.mkMerge [
       (lib.mkIf config.homeModules.opencode.enable [
-        (mkCredWrapper "opencode" opencodePkg "")
+        (mkCredWrapper "opencode" opencodePkg ''
+          if is_lunar_project; then
+            if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+              export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+            fi
+            if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+              export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
+            fi
+          else
+            if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+              export zai_token="$PERSONAL_ZAI_API_KEY"
+            fi
+            if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+              export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+            fi
+          fi
+        '')
       ])
       (lib.mkIf config.homeModules.claudeCode.enable [
         (mkCredWrapper "claude" claudePkg "")
       ])
       (lib.mkIf config.homeModules.codex.enable [
-        (mkCredWrapper "codex" codexPkg "")
+        (mkCredWrapper "codex" codexPkg ''
+          if is_lunar_project && [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+            export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+          fi
+        '')
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
-        (mkCredWrapper "pi" piPkg "")
+        (mkCredWrapper "pi" piPkg ''
+          if is_lunar_project; then
+            if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+              export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+            fi
+            if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+              export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
+            fi
+          else
+            if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+              export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
+            fi
+            if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+              export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+            fi
+          fi
+        '')
       ])
     ];
   };
