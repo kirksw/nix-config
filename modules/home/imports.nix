@@ -2,8 +2,6 @@
   ./programs/ai.nix
   ./programs/appearance-sync.nix
   ./programs/baseline.nix
-  ./programs/claude-code.nix
-  ./programs/codex.nix
   ./programs/colima.nix
   ./programs/communication.nix
   ./programs/cursor.nix
@@ -14,7 +12,6 @@
   ./programs/lunar.nix
   ./programs/neovim.nix
   ./programs/opencode.nix
-  ./programs/pi-coding-agent.nix
   ./programs/qemu.nix
   ./programs/sketchybar.nix
   ./programs/sops.nix
