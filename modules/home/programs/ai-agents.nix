@@ -133,6 +133,7 @@ in
     homeModules.opencode.enable = lib.mkEnableOption "enables opencode";
     homeModules.codex.enable = lib.mkEnableOption "enables codex";
     homeModules.piCodingAgent.enable = lib.mkEnableOption "enables pi-coding-agent";
+    homeModules.multica.enable = lib.mkEnableOption "enables multica";
   };
 
   config = {
@@ -220,6 +221,9 @@ in
             fi
           fi
         '')
+      ])
+      (lib.mkIf config.homeModules.multica.enable [
+        inputs.nix-agents.packages.${system}.multica
       ])
     ];
   };
