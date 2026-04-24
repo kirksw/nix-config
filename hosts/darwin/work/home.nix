@@ -47,6 +47,7 @@
   homeModules.opencode.enable = true;
   homeModules.piCodingAgent.enable = true;
   homeModules.codex.enable = true;
+  homeModules.multica.enable = true;
   homeModules.swePrunerMcp.enable = true;
   homeModules.cursor.enable = true;
   # misc

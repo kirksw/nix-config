@@ -32,7 +32,6 @@
           inherit config nixDirectory;
           path = "sketchybar";
         };
-        recursive = true;
       };
     };
   };

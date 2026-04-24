@@ -142,7 +142,7 @@ in
     # every programmers best friend
     programs.git = {
       enable = true;
-      package = pkgs.gitFull;
+      package = pkgs.git;
       ignores = [ "*.swp" ];
       signing.format = null;
       includes =

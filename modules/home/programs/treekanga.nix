@@ -21,7 +21,6 @@
           inherit config nixDirectory;
           path = "treekanga";
         };
-        recursive = true;
       };
     };
   };
