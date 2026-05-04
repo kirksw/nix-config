@@ -51,7 +51,7 @@
   homeModules.swePrunerMcp.enable = true;
   homeModules.cursor.enable = true;
   # misc
-  homeModules.youtube.enable = true;
+  homeModules.youtube.enable = false;
 
   # disabled custom modules
   homeModules.communication.enable = false;
