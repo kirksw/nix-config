@@ -1,9 +1,147 @@
 {
   self,
+  pkgs,
   lib,
   config,
   ...
 }:
+
+let
+  aerospaceCli = "${config.services.aerospace.package}/bin/aerospace";
+  primaryUser = config.system.primaryUser;
+  userHome = config.users.users.${primaryUser}.home or "/Users/${primaryUser}";
+  stateDir = "${userHome}/.cache/aerospace-switch-state";
+  launchAgent = "${config.launchd.labelPrefix}.aerospace.plist";
+  builtLaunchAgent = "${config.system.build.launchd}/user/Library/LaunchAgents/${launchAgent}";
+  installedLaunchAgent = "${userHome}/Library/LaunchAgents/${launchAgent}";
+  shellPath = lib.makeBinPath [
+    pkgs.coreutils
+    pkgs.gnugrep
+  ];
+  asPrimaryUser = command: ''
+    launchctl asuser "$(id -u -- ${lib.escapeShellArg primaryUser})" sudo --user=${lib.escapeShellArg primaryUser} -- ${command}
+  '';
+  captureAerospaceState = pkgs.writeShellScript "capture-aerospace-state" ''
+    set -eu
+
+    export PATH="${shellPath}:/usr/bin:/bin"
+
+    state_dir=${lib.escapeShellArg stateDir}
+    aerospace=${lib.escapeShellArg aerospaceCli}
+    marker="$state_dir/restore-needed"
+
+    mkdir -p "$state_dir"
+
+    if ! "$aerospace" list-workspaces --all >/dev/null 2>&1; then
+      rm -f "$marker"
+      exit 0
+    fi
+
+    if "$aerospace" list-windows --all --format "%{window-id}%{tab}%{workspace}%{tab}%{window-layout}%{tab}%{window-is-fullscreen}" > "$state_dir/windows.tsv.tmp"; then
+      mv "$state_dir/windows.tsv.tmp" "$state_dir/windows.tsv"
+    else
+      rm -f "$state_dir/windows.tsv.tmp" "$marker"
+      exit 0
+    fi
+
+    "$aerospace" list-workspaces --focused --format "%{workspace}" > "$state_dir/focused-workspace.tmp" 2>/dev/null \
+      && mv "$state_dir/focused-workspace.tmp" "$state_dir/focused-workspace" \
+      || rm -f "$state_dir/focused-workspace.tmp" "$state_dir/focused-workspace"
+
+    "$aerospace" list-workspaces --all --format "%{workspace}%{tab}%{monitor-id}%{tab}%{workspace-is-visible}" > "$state_dir/workspaces.tsv.tmp" 2>/dev/null \
+      && mv "$state_dir/workspaces.tsv.tmp" "$state_dir/workspaces.tsv" \
+      || rm -f "$state_dir/workspaces.tsv.tmp" "$state_dir/workspaces.tsv"
+
+    "$aerospace" list-windows --focused --format "%{window-id}" > "$state_dir/focused-window.tmp" 2>/dev/null \
+      && mv "$state_dir/focused-window.tmp" "$state_dir/focused-window" \
+      || rm -f "$state_dir/focused-window.tmp" "$state_dir/focused-window"
+
+    touch "$marker"
+  '';
+  restoreAerospaceState = pkgs.writeShellScript "restore-aerospace-state" ''
+    set -eu
+
+    export PATH="${shellPath}:/usr/bin:/bin"
+
+    state_dir=${lib.escapeShellArg stateDir}
+    aerospace=${lib.escapeShellArg aerospaceCli}
+    marker="$state_dir/restore-needed"
+    windows="$state_dir/windows.tsv"
+    workspaces="$state_dir/workspaces.tsv"
+    current_windows="$state_dir/current-windows"
+
+    [ -f "$marker" ] || exit 0
+
+    attempts=0
+    until "$aerospace" list-workspaces --all >/dev/null 2>&1; do
+      attempts=$((attempts + 1))
+      if [ "$attempts" -ge 15 ]; then
+        rm -f "$marker"
+        exit 0
+      fi
+      sleep 1
+    done
+
+    sleep 1
+    "$aerospace" list-windows --all --format "%{window-id}" > "$current_windows" 2>/dev/null || true
+
+    window_exists() {
+      [ -s "$current_windows" ] && grep -Fxq -- "$1" "$current_windows"
+    }
+
+    if [ -s "$windows" ]; then
+      while IFS="$(printf '\t')" read -r window_id workspace layout fullscreen; do
+        [ -n "$window_id" ] || continue
+        window_exists "$window_id" || continue
+        [ -n "$workspace" ] && "$aerospace" move-node-to-workspace "$workspace" --window-id "$window_id" >/dev/null 2>&1 || true
+      done < "$windows"
+
+      while IFS="$(printf '\t')" read -r window_id workspace layout fullscreen; do
+        [ -n "$window_id" ] || continue
+        window_exists "$window_id" || continue
+
+        case "$layout" in
+          floating|h_tiles|v_tiles|h_accordion|v_accordion)
+            "$aerospace" layout "$layout" --window-id "$window_id" >/dev/null 2>&1 || true
+            ;;
+        esac
+
+        case "$fullscreen" in
+          true)
+            "$aerospace" fullscreen on --window-id "$window_id" >/dev/null 2>&1 || true
+            ;;
+          false)
+            "$aerospace" fullscreen off --window-id "$window_id" >/dev/null 2>&1 || true
+            ;;
+        esac
+      done < "$windows"
+    fi
+
+    if [ -s "$workspaces" ]; then
+      while IFS="$(printf '\t')" read -r workspace monitor_id visible; do
+        [ "$visible" = true ] || continue
+        [ -n "$workspace" ] || continue
+        [ -n "$monitor_id" ] || continue
+        "$aerospace" workspace "$workspace" >/dev/null 2>&1 || true
+        "$aerospace" move-workspace-to-monitor "$monitor_id" >/dev/null 2>&1 || true
+      done < "$workspaces"
+    fi
+
+    if [ -s "$state_dir/focused-workspace" ]; then
+      focused_workspace="$(head -n 1 "$state_dir/focused-workspace")"
+      [ -n "$focused_workspace" ] && "$aerospace" workspace "$focused_workspace" >/dev/null 2>&1 || true
+    fi
+
+    if [ -s "$state_dir/focused-window" ]; then
+      focused_window="$(head -n 1 "$state_dir/focused-window")"
+      [ -n "$focused_window" ] && "$aerospace" focus --window-id "$focused_window" >/dev/null 2>&1 || true
+    fi
+
+    "$aerospace" move-mouse window-lazy-center >/dev/null 2>&1 || "$aerospace" move-mouse monitor-lazy-center >/dev/null 2>&1 || true
+
+    rm -f "$marker" "$current_windows"
+  '';
+in
 
 {
   options = {
@@ -11,6 +149,20 @@
   };
 
   config = lib.mkIf config.darwinModules.aerospace.enable {
+    system.activationScripts.preActivation.text = lib.mkBefore ''
+      if [ -e ${lib.escapeShellArg builtLaunchAgent} ] && { [ ! -e ${lib.escapeShellArg installedLaunchAgent} ] || ! diff ${lib.escapeShellArg builtLaunchAgent} ${lib.escapeShellArg installedLaunchAgent} >/dev/null 2>&1; }; then
+        ${asPrimaryUser captureAerospaceState}
+      else
+        ${asPrimaryUser "rm -f ${lib.escapeShellArg stateDir}/restore-needed"}
+      fi
+    '';
+
+    system.activationScripts.postActivation.text = lib.mkAfter ''
+      if [ -f ${lib.escapeShellArg stateDir}/restore-needed ]; then
+        ${asPrimaryUser restoreAerospaceState}
+      fi
+    '';
+
     services.aerospace = {
       enable = true;
       settings = {
