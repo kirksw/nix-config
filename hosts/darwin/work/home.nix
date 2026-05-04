@@ -12,6 +12,7 @@
       fastfetch
       nerd-fonts.fira-code
       nerd-fonts.fira-mono
+      whatsapp-for-mac
     ];
     sessionVariables = {
       LANG = "en_US.UTF-8";
