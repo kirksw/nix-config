@@ -118,6 +118,7 @@ in
       coursier
       # doc
       pandoc
+      marp-cli
       # github cli
       gh
       # devenv
