@@ -13,7 +13,7 @@
     programs.ghostty = {
       enable = true;
       package = null; # package = inputs.ghostty.packages.${pkgs.system}.default;
-      enableZshIntegration = true;
+      enableZshIntegration = false;
       #clearDefaultKeybinds = true;
       # NOTE: these can only be used on linux
       # installVimSyntax = true;
@@ -44,6 +44,7 @@
         quick-terminal-position = "center";
         quick-terminal-animation-duration = 0;
         quick-terminal-autohide = false;
+        shell-integration = "none";
         font-feature = [
           "-liga"
           "-dlig"

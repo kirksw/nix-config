@@ -35,6 +35,7 @@
   nix-homebrew = {
     inherit user;
     enable = true;
+    enableZshIntegration = false;
     autoMigrate = true;
     mutableTaps = true;
   };
