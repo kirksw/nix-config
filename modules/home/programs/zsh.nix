@@ -46,7 +46,7 @@ in
       yazi = {
         enable = true;
         package = pkgs.yazi;
-        enableZshIntegration = false; # defer
+        enableZshIntegration = true;
       };
 
       zsh = {
@@ -126,7 +126,6 @@ in
             zsh-defer eval "$(${pkgs.zoxide}/bin/zoxide init zsh)"
             zsh-defer source "${pkgs.fzf}/share/fzf/key-bindings.zsh"
             zsh-defer source "${pkgs.fzf}/share/fzf/completion.zsh"
-            zsh-defer eval "$(${pkgs.yazi}/bin/yazi --init zsh 2>/dev/null || true)"
             zsh-defer source "${pkgs.lunar-zsh-plugin}/share/zsh/plugins/lunar-zsh-plugin/lunar.plugin.zsh"
 
             # load last

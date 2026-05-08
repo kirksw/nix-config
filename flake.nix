@@ -15,7 +15,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    homebrew-brew = {
+      url = "github:Homebrew/brew/5.1.9";
+      flake = false;
+    };
+
+    nix-homebrew = {
+      url = "github:zhaofengli/nix-homebrew";
+      inputs.brew-src.follows = "homebrew-brew";
+    };
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
     flake-utils.url = "github:numtide/flake-utils";
 
