@@ -1,6 +1,7 @@
 _:
 
 [
+  "anki"
   "vlc"
   "raycast"
   "typora"

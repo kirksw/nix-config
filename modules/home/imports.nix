@@ -1,4 +1,5 @@
 [
+  ./programs/ai-agents.nix
   ./programs/ai.nix
   ./programs/appearance-sync.nix
   ./programs/baseline.nix
@@ -11,7 +12,6 @@
   ./programs/ghostty.nix
   ./programs/lunar.nix
   ./programs/neovim.nix
-  ./programs/ai-agents.nix
   ./programs/qemu.nix
   ./programs/sketchybar.nix
   ./programs/sops.nix

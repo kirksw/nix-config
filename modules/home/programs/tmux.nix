@@ -41,8 +41,6 @@ in
 
         ".tmux.conf".text = ''
           # Some tools still probe ~/.tmux.conf even when tmux loads the XDG config path.
-          set -g extended-keys always
-          set -g extended-keys-format csi-u
           source-file ~/.config/tmux/tmux.conf
         '';
       };
