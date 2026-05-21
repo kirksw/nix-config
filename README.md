@@ -9,6 +9,7 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 - `hosts/`: concrete host modules (actual machine configuration).
 - `flake/hosts/`: host inventory records consumed by flake composition.
 - `modules/*/imports.nix`: explicit module manifests (no recursive auto-import).
+- `agents/`: repo-owned AI agent definitions, skills, MCP servers, presets, and target assets.
 - `flake/`: split flake concern files (`apps.nix`, `packages.nix`, `deploy.nix`, `checks.nix`, `overlays.nix`).
 
 ## Getting Started
@@ -24,7 +25,7 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 
 - Update flake inputs: `nix flake update`
 - Update custom packages: `nix run .#update-packages`
-- Sync OpenCode, Claude, Cursor, Codex, and pi agents/skills/config assets: `nix run .#sync-agents`
+- Sync work-only skill overlays after wrapper-generated assets exist: `nix run .#sync-work-skills`
 - Check structure rules: `./scripts/check-structure.sh`
 
 ## Conventions
@@ -38,3 +39,4 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 
 - `deploy` is intentionally retained as a custom flake output for `deploy-rs` compatibility.
 - `nix flake check` may print `unknown flake output 'deploy'`; this warning is expected.
+- `nix-agents` is consumed as the reusable generator/wrapper library; concrete agent configuration lives in `agents/`.

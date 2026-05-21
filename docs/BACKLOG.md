@@ -13,6 +13,8 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P1 M Slim upstream `nix-agents` to engine/templates only after local config migration is stable (feat-local-agent-config)
+- P2 S Re-enable profile sandbox policy after upstream `nix-agents` publishes the `sandboxes` module API (feat-local-agent-config)
 - P2 XS Manually smoke-test PI todo extension in interactive session (`/todos`, branch switch/fork replay) (feat-pi-todo-extension)
 - P2 S Add frontmatter/schema validator for Claude/Cursor/Codex agent assets (feat-multi-platform-agent-support)
 - P2 S Add pi agent frontmatter validator to check `name`/`description`/`tools` consistency (feat-pi-agent-support)

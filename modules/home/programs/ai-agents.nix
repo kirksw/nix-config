@@ -10,12 +10,41 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   nixAgentsLib = inputs.nix-agents.lib.${system};
+  localAgents = import ../../../agents { inherit pkgs; };
+  localAgentsSrc = ../../../agents;
+  agentInputs = inputs // {
+    inherit self;
+  };
 
   # Modules shared across all target builds
-  nixAgentsModules = [
-    "${inputs.nix-agents}/presets/default.nix"
-    "${inputs.nix-agents}/presets/profiles.nix"
+  nixAgentsModules = localAgents.defaultModules;
+  piAgentsModules = nixAgentsModules ++ [
+    (
+      { lib, ... }:
+      {
+        profiles.work-default.tierMapping = {
+          fast = lib.mkForce "openai/gpt-5.4";
+          balanced = lib.mkForce "openai/gpt-5.4";
+          powerful = lib.mkForce "openai/gpt-5.4";
+          reasoning = lib.mkForce "openai/gpt-5.4";
+        };
+      }
+    )
   ];
+
+  piWorkSettings = builtins.toJSON {
+    defaultProvider = "openai";
+    defaultModel = "gpt-5.4";
+    defaultThinkingLevel = "medium";
+    enabledModels = [ "gpt-5.4" ];
+  };
+
+  piWorkAuth = builtins.toJSON {
+    openai = {
+      type = "api_key";
+      key = "OPENAI_API_KEY";
+    };
+  };
 
   # Thin wrapper that reads sops-decrypted secrets into env vars,
   # then execs the nix-agents wrapper which handles profile detection
@@ -26,7 +55,14 @@ let
       set -euo pipefail
 
       is_lunar_project() {
-        [[ "$(pwd)" == ~/git/github.com/lunarway?(/*) ]]
+        case "$(pwd)" in
+          "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/projects/lunar|"$HOME"/projects/lunar/*)
+            return 0
+            ;;
+          *)
+            return 1
+            ;;
+        esac
       }
 
       # Export sops-decrypted credentials as env vars.
@@ -66,14 +102,16 @@ let
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "opencode";
+      inputs = agentInputs;
       modules = nixAgentsModules;
-      src = inputs.nix-agents;
+      src = localAgentsSrc;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "opencode";
+      inputs = agentInputs;
       modules = nixAgentsModules;
-      src = inputs.nix-agents;
+      src = localAgentsSrc;
     };
   };
 
@@ -84,11 +122,13 @@ let
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "claude";
+      inputs = agentInputs;
       modules = nixAgentsModules;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "claude";
+      inputs = agentInputs;
       modules = nixAgentsModules;
     };
   };
@@ -100,11 +140,13 @@ let
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "codex";
+      inputs = agentInputs;
       modules = nixAgentsModules;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "codex";
+      inputs = agentInputs;
       modules = nixAgentsModules;
     };
   };
@@ -112,18 +154,20 @@ let
   piPkg = nixAgentsLib.mkWrappedTool {
     inherit pkgs;
     target = "pi";
-    tool = inputs.nix-agents.packages.${system}.pi-coding-agent;
+    tool = pkgs.llm-agents.pi;
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "pi";
-      modules = nixAgentsModules;
-      src = inputs.nix-agents;
+      inputs = agentInputs;
+      modules = piAgentsModules;
+      src = localAgentsSrc;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "pi";
-      modules = nixAgentsModules;
-      src = inputs.nix-agents;
+      inputs = agentInputs;
+      modules = piAgentsModules;
+      src = localAgentsSrc;
     };
   };
 in
@@ -133,6 +177,7 @@ in
     homeModules.opencode.enable = lib.mkEnableOption "enables opencode";
     homeModules.codex.enable = lib.mkEnableOption "enables codex";
     homeModules.piCodingAgent.enable = lib.mkEnableOption "enables pi-coding-agent";
+    homeModules.openshell.enable = lib.mkEnableOption "enables openshell";
     homeModules.multica.enable = lib.mkEnableOption "enables multica";
   };
 
@@ -151,18 +196,26 @@ in
           mode = "0400";
         };
       })
-      (lib.mkIf (config.homeModules.claudeCode.enable || config.homeModules.opencode.enable || config.homeModules.piCodingAgent.enable || config.homeModules.codex.enable) {
-        "api/lunar/openai" = {
-          sopsFile = "${self}/secrets/api/lunar.yaml";
-          key = "openai";
-          mode = "0400";
-        };
-        "api/lunar/anthropic" = {
-          sopsFile = "${self}/secrets/api/lunar.yaml";
-          key = "anthropic";
-          mode = "0400";
-        };
-      })
+      (lib.mkIf
+        (
+          config.homeModules.claudeCode.enable
+          || config.homeModules.opencode.enable
+          || config.homeModules.piCodingAgent.enable
+          || config.homeModules.codex.enable
+        )
+        {
+          "api/lunar/openai" = {
+            sopsFile = "${self}/secrets/api/lunar.yaml";
+            key = "openai";
+            mode = "0400";
+          };
+          "api/lunar/anthropic" = {
+            sopsFile = "${self}/secrets/api/lunar.yaml";
+            key = "anthropic";
+            mode = "0400";
+          };
+        }
+      )
       (lib.mkIf config.homeModules.codex.enable {
         "git/pat" = {
           sopsFile = "${self}/secrets/git/pat.yaml";
@@ -223,8 +276,21 @@ in
         '')
       ])
       (lib.mkIf config.homeModules.multica.enable [
-        inputs.nix-agents.packages.${system}.multica
+        self.packages.${system}.multica
+      ])
+      (lib.mkIf config.homeModules.openshell.enable [
+        inputs.nix-agents.packages.${system}.openshell
       ])
     ];
+
+    xdg.configFile = lib.mkIf config.homeModules.piCodingAgent.enable {
+      "nix-agents/pi/bases/work/settings/auth.json".text = piWorkAuth;
+      "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
+      "nix-agents/pi/bases/work/settings/env".text = ''
+        if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+          export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+        fi
+      '';
+    };
   };
 }

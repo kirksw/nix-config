@@ -12,13 +12,19 @@ let
   packageNames = builtins.filter (name: builtins.pathExists (packagesDir + "/${name}/default.nix")) (
     builtins.attrNames (builtins.readDir packagesDir)
   );
+  packageArgs =
+    name:
+    if name == "swe-pruner-mcp" then
+      { inherit inputs; }
+    else if name == "multica-selfhost" then
+      { inherit (packages) multica; }
+    else
+      { };
 
   packages = builtins.listToAttrs (
     map (name: {
       inherit name;
-      value = pkgs.callPackage (packagesDir + "/${name}") (
-        if name == "swe-pruner-mcp" then { inherit inputs; } else { }
-      );
+      value = pkgs.callPackage (packagesDir + "/${name}") (packageArgs name);
     }) packageNames
   );
 in

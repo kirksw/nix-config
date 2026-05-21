@@ -1,4 +1,8 @@
-{ nixpkgs, mylibs, inputs }:
+{
+  nixpkgs,
+  mylibs,
+  inputs,
+}:
 {
   system,
   appCommands ? [
@@ -64,7 +68,7 @@ let
     CONFIG_BASE="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents"
 
     for target in opencode claude codex pi; do
-      target_dir="$CONFIG_BASE/$target/bases/work/profiles/work-stable/skills"
+      target_dir="$CONFIG_BASE/$target/bases/work/profiles/work-default/skills"
       if [ -d "$target_dir" ]; then
         ${pkgs.coreutils}/bin/cp -R "$source_skills"/. "$target_dir/"
         echo "  -> $target_dir"
@@ -74,14 +78,12 @@ let
     echo "Done!"
   '';
 in
-(
-  builtins.listToAttrs (
-    map (name: {
-      inherit name;
-      value = mylibs.app.mkApp name system;
-    }) appCommands
-  )
-)
+(builtins.listToAttrs (
+  map (name: {
+    inherit name;
+    value = mylibs.app.mkApp name system;
+  }) appCommands
+))
 // {
   update-packages = {
     type = "app";
