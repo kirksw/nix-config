@@ -39,6 +39,10 @@ let
     enabledModels = [ "gpt-5.4" ];
   };
 
+  piWorkModels = builtins.toJSON {
+    providers.openai.baseUrl = "https://eu.api.openai.com/v1";
+  };
+
   piWorkAuth = builtins.toJSON {
     openai = {
       type = "api_key";
@@ -353,6 +357,7 @@ in
       })
       (lib.mkIf config.homeModules.piCodingAgent.enable {
         "nix-agents/pi/bases/work/settings/auth.json".text = piWorkAuth;
+        "nix-agents/pi/bases/work/settings/models.json".text = piWorkModels;
         "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
         "nix-agents/pi/bases/work/settings/env".text = ''
           if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
