@@ -68,6 +68,7 @@ _: {
       agents = [ ]; # empty = all
       skills = [
         "add-module"
+        "grill-me"
         "nix-agents"
         "parallel-reviews"
         "secrets-management"
@@ -95,7 +96,9 @@ _: {
         "scribe"
       ];
       skills = [
+        "grill-me"
         "nix-agents"
+        "parallel-reviews"
         "system-context"
       ];
       mcpServers = [ ];

@@ -34,6 +34,7 @@ Canonical naming is `<base>/<profile>`.
 - agents: all
 - skills:
   - `add-module`
+  - `grill-me`
   - `nix-agents`
   - `parallel-reviews`
   - `secrets-management`
@@ -46,7 +47,9 @@ Canonical naming is `<base>/<profile>`.
 - base: `work`
 - restricted agent set
 - skills:
+  - `grill-me`
   - `nix-agents`
+  - `parallel-reviews`
   - `system-context`
 - webfetch denied by default
 

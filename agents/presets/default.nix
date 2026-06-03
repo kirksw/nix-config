@@ -16,6 +16,7 @@
     ../defs/skills/session-resume.nix
     ../defs/skills/add-module
     ../defs/skills/parallel-reviews
+    ../defs/skills/grill-me
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/swe-pruner.nix
     # NOTE: session-write hooks require pkgs and must be wired in flake.nix:

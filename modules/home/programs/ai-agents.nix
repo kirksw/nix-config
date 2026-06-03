@@ -46,6 +46,69 @@ let
     };
   };
 
+  codexPersonalSettings = ''
+    approvals_reviewer = "guardian_subagent"
+  '';
+
+  codexWorkSettings = ''
+    model = "gpt-5.5"
+    model_reasoning_effort = "high"
+    openai_base_url = "https://eu.api.openai.com/v1"
+    plan_mode_reasoning_effort = "high"
+    approvals_reviewer = "guardian_subagent"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-continuum"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-dbt"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/lunar-way-hubble-transformations"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/data-agents"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-flink-platform"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-rbac-controller"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-sandbox-finance"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/aws-lunar-data-prod-resources"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-wiki"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-starrocks"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/hubble-async-schema-ingestion"]
+    trust_level = "trusted"
+
+    [projects."/Users/kisw/git/github.com/lunarway/capi-workload-clusters"]
+    trust_level = "trusted"
+
+    [notice.model_migrations]
+    "gpt-5.3-codex" = "gpt-5.4"
+
+    [tui]
+    theme = "catppuccin-latte"
+
+    [tui.model_availability_nux]
+    "gpt-5.5" = 4
+
+    [mcp_servers.linear]
+    url = "https://mcp.linear.app/mcp"
+
+    [mcp_servers.sourcegraph]
+    url = "https://lunar.sourcegraph.com/.api/mcp"
+  '';
+
   # Thin wrapper that reads sops-decrypted secrets into env vars,
   # then execs the nix-agents wrapper which handles profile detection
   # and credential resolution.
@@ -283,14 +346,20 @@ in
       ])
     ];
 
-    xdg.configFile = lib.mkIf config.homeModules.piCodingAgent.enable {
-      "nix-agents/pi/bases/work/settings/auth.json".text = piWorkAuth;
-      "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
-      "nix-agents/pi/bases/work/settings/env".text = ''
-        if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-          export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-        fi
-      '';
-    };
+    xdg.configFile = lib.mkMerge [
+      (lib.mkIf config.homeModules.codex.enable {
+        "nix-agents/codex/bases/personal/settings/config.toml".text = codexPersonalSettings;
+        "nix-agents/codex/bases/work/settings/config.toml".text = codexWorkSettings;
+      })
+      (lib.mkIf config.homeModules.piCodingAgent.enable {
+        "nix-agents/pi/bases/work/settings/auth.json".text = piWorkAuth;
+        "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
+        "nix-agents/pi/bases/work/settings/env".text = ''
+          if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+            export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+          fi
+        '';
+      })
+    ];
   };
 }
