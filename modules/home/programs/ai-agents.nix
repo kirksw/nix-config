@@ -18,25 +18,19 @@ let
 
   # Modules shared across all target builds
   nixAgentsModules = localAgents.defaultModules;
-  piAgentsModules = nixAgentsModules ++ [
-    (
-      { lib, ... }:
-      {
-        profiles.work-default.tierMapping = {
-          fast = lib.mkForce "openai/gpt-5.4";
-          balanced = lib.mkForce "openai/gpt-5.4";
-          powerful = lib.mkForce "openai/gpt-5.4";
-          reasoning = lib.mkForce "openai/gpt-5.4";
-        };
-      }
-    )
-  ];
+  piAgentsModules = nixAgentsModules;
 
   piWorkSettings = builtins.toJSON {
     defaultProvider = "openai";
     defaultModel = "gpt-5.4";
     defaultThinkingLevel = "medium";
-    enabledModels = [ "gpt-5.4" ];
+    enabledModels = [
+      "gpt-5.5"
+      "gpt-5.4"
+      "gpt-5.4-mini"
+      "claude-opus-4-8"
+      "claude-sonnet-4-6"
+    ];
   };
 
   piWorkModels = builtins.toJSON {
@@ -47,6 +41,10 @@ let
     openai = {
       type = "api_key";
       key = "OPENAI_API_KEY";
+    };
+    anthropic = {
+      type = "api_key";
+      key = "ANTHROPIC_API_KEY";
     };
   };
 
@@ -362,6 +360,9 @@ in
         "nix-agents/pi/bases/work/settings/env".text = ''
           if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
             export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+          fi
+          if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+            export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
           fi
         '';
       })

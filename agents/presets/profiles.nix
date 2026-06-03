@@ -103,8 +103,10 @@ _: {
       ];
       mcpServers = [ ];
       tierMapping = {
-        powerful = "anthropic/claude-sonnet-4-6";
-        reasoning = "anthropic/claude-opus-4-6";
+        fast = "openai/gpt-5.4-mini";
+        balanced = "anthropic/claude-sonnet-4-6";
+        powerful = "anthropic/claude-opus-4-8";
+        reasoning = "openai/gpt-5.5";
       };
       permissions = {
         edit = null;
