@@ -9,6 +9,7 @@
     ../defs/agents/code-red.nix
     ../defs/agents/scribe.nix
     ../defs/agents/explore.nix
+    ../defs/agents/scout.nix
     ../defs/skills/nix-agents
     ../defs/skills/system-context
     ../defs/skills/secrets-management.nix

@@ -2,7 +2,7 @@
   agents.orchestrator = {
     description = "Routes user requests to the right manager. Does no work itself.";
     mode = "primary";
-    model = "fast";
+    model = "balanced";
     tier = "orchestrator";
     temperature = 0.1;
     prompt = ''

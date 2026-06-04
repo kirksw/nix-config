@@ -28,6 +28,7 @@ let
       "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
+      "gpt-5.3-codex-spark"
       "claude-opus-4-8"
       "claude-sonnet-4-6"
     ];

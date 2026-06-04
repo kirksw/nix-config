@@ -38,7 +38,7 @@
 
       Be direct, opinionated, and relentless about forward progress.
     '';
-    delegatesTo = [ "explore" ];
+    delegatesTo = [ "explore" "scout" ];
     permissions = {
       edit = "allow";
       bash = "allow";
@@ -46,6 +46,7 @@
         default = "deny";
         rules = {
           "explore" = "allow";
+          "scout" = "allow";
         };
       };
       webfetch = "allow";

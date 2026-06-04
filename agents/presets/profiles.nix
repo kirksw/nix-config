@@ -76,7 +76,10 @@ _: {
         "skill-creator"
       ];
       mcpServers = [ ]; # empty = all
-      tierMapping = { };
+      tierMapping = {
+        ultrafast = "minimax/minimax-m2.7-highspeed";
+        fast = "openai/gpt-5.4-mini";
+      };
     };
 
     # --- work profiles ---
@@ -90,6 +93,7 @@ _: {
         "the-architect"
         "code-monkey"
         "explore"
+        "scout"
         "bottleneck"
         "chaos-demon"
         "code-red"
@@ -103,6 +107,7 @@ _: {
       ];
       mcpServers = [ ];
       tierMapping = {
+        ultrafast = "openai/gpt-5.3-codex-spark";
         fast = "openai/gpt-5.4-mini";
         balanced = "anthropic/claude-sonnet-4-6";
         powerful = "openai/gpt-5.5";

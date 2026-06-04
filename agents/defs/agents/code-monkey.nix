@@ -42,6 +42,7 @@
       "chaos-demon"
       "scribe"
       "explore"
+      "scout"
     ];
     permissions = {
       edit = "allow";
@@ -54,6 +55,7 @@
           "chaos-demon" = "allow";
           "scribe" = "allow";
           "explore" = "allow";
+          "scout" = "allow";
         };
       };
       webfetch = "allow";
