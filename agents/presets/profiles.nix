@@ -75,7 +75,10 @@ _: {
         "session-resume"
         "skill-creator"
       ];
-      mcpServers = [ ]; # empty = all
+      mcpServers = [
+        "agent-observe"
+        "swe-pruner"
+      ];
       tierMapping = {
         ultrafast = "minimax/minimax-m2.7-highspeed";
         fast = "openai/gpt-5.4-mini";
@@ -105,7 +108,11 @@ _: {
         "parallel-reviews"
         "system-context"
       ];
-      mcpServers = [ ];
+      mcpServers = [
+        "agent-observe"
+        "swe-pruner"
+        "granola"
+      ];
       tierMapping = {
         ultrafast = "openai/gpt-5.3-codex-spark";
         fast = "openai/gpt-5.4-mini";
