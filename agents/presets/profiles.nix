@@ -105,8 +105,8 @@ _: {
       tierMapping = {
         fast = "openai/gpt-5.4-mini";
         balanced = "anthropic/claude-sonnet-4-6";
-        powerful = "anthropic/claude-opus-4-8";
-        reasoning = "openai/gpt-5.5";
+        powerful = "openai/gpt-5.5";
+        reasoning = "anthropic/claude-opus-4-8";
       };
       permissions = {
         edit = null;
