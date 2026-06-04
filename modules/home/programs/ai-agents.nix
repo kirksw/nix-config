@@ -40,10 +40,20 @@ let
   };
 
   piWorkMcp = builtins.toJSON {
-    mcpServers.granola = {
-      url = "https://mcp.granola.ai/mcp";
-      auth = "oauth";
-      lifecycle = "lazy";
+    mcpServers = {
+      granola = {
+        url = "https://mcp.granola.ai/mcp";
+        auth = "oauth";
+        lifecycle = "lazy";
+      };
+      slack = {
+        command = "npx";
+        args = [ "-y" "slack-mcp-server" ];
+        lifecycle = "lazy";
+        env = {
+          SLACK_MCP_XOXP_TOKEN = "\${LUNAR_SLACK_MCP_XOXP_TOKEN}";
+        };
+      };
     };
   };
 
