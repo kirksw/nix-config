@@ -48,11 +48,8 @@ let
       };
       slack = {
         command = "npx";
-        args = [ "-y" "slack-mcp-server" ];
+        args = [ "-y" "@jtalk22/slack-mcp" ];
         lifecycle = "lazy";
-        env = {
-          SLACK_MCP_XOXP_TOKEN = "\${LUNAR_SLACK_MCP_XOXP_TOKEN}";
-        };
       };
     };
   };
