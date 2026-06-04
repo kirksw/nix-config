@@ -32,10 +32,19 @@ let
       "claude-opus-4-8"
       "claude-sonnet-4-6"
     ];
+    packages = [ "npm:pi-mcp-adapter@2.8.0" ];
   };
 
   piWorkModels = builtins.toJSON {
     providers.openai.baseUrl = "https://eu.api.openai.com/v1";
+  };
+
+  piWorkMcp = builtins.toJSON {
+    mcpServers.granola = {
+      url = "https://mcp.granola.ai/mcp";
+      auth = "oauth";
+      lifecycle = "lazy";
+    };
   };
 
   piWorkAuth = builtins.toJSON {
@@ -356,6 +365,7 @@ in
       })
       (lib.mkIf config.homeModules.piCodingAgent.enable {
         "nix-agents/pi/bases/work/settings/auth.json".text = piWorkAuth;
+        "nix-agents/pi/bases/work/settings/mcp.json".text = piWorkMcp;
         "nix-agents/pi/bases/work/settings/models.json".text = piWorkModels;
         "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
         "nix-agents/pi/bases/work/settings/env".text = ''
