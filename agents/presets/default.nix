@@ -19,6 +19,7 @@
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
     ../defs/mcps/agent-observe.nix
+    ../defs/mcps/granola.nix
     ../defs/mcps/swe-pruner.nix
     # NOTE: session-write hooks require pkgs and must be wired in flake.nix:
     #   modules = defaultModules ++ [ (import ./defs/hooks/session-write.nix { inherit pkgs; }) ];
