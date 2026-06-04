@@ -66,15 +66,7 @@ _: {
       base = "personal";
       pathPrefixes = [ ];
       agents = [ ]; # empty = all
-      skills = [
-        "add-module"
-        "grill-me"
-        "nix-agents"
-        "parallel-reviews"
-        "secrets-management"
-        "session-resume"
-        "skill-creator"
-      ];
+      skills = [ ]; # empty = all
       mcpServers = [
         "agent-observe"
         "swe-pruner"
