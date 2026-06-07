@@ -14,7 +14,6 @@
     ../defs/skills/system-context
     ../defs/skills/secrets-management.nix
     ../defs/skills/skill-creator
-    ../defs/skills/session-resume.nix
     ../defs/skills/add-module
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
