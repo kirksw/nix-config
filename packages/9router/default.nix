@@ -5,6 +5,7 @@
   makeWrapper,
   nodejs,
   stdenv,
+  tailscale,
   testers,
 }:
 
@@ -46,6 +47,15 @@ buildNpmPackage (finalAttrs: {
 
   nativeBuildInputs = [ makeWrapper ];
 
+  # 9router's "Tailscale" tunnel feature shells out to a tailscale binary
+  # (status --json, login, funnel) and optionally spawns tailscaled. Its
+  # detection probes a hardcoded set of paths plus `which tailscale` using
+  # the inherited PATH. Bundling the nixpkgs tailscale package and
+  # prepending its bin dir to the wrapper's PATH makes `which tailscale`
+  # resolve to it, and also ensures tailscaled is on PATH for the
+  # enable/install flows.
+  buildInputs = [ tailscale ];
+
   installPhase = ''
     runHook preInstall
 
@@ -55,6 +65,7 @@ buildNpmPackage (finalAttrs: {
 
     mkdir -p $out/bin
     makeWrapper ${lib.getExe nodejs} $out/bin/9router \
+      --prefix PATH : ${lib.makeBinPath [ tailscale ]} \
       --add-flags "$out/lib/node_modules/9router/cli.js"
 
     runHook postInstall
