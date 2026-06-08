@@ -28,7 +28,7 @@ let
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
         microvm.nixosModules.host
-        microvm.nixosModules.microvm
+        # microvm guest module only imported by microvm guests, not the host
         config.hostModule
         { nixpkgs.overlays = (config.overlays or [ ]); }
       ]
