@@ -13,6 +13,7 @@ let
       self
       ;
   };
+  moduleArgs = config: builtins.removeAttrs config [ "system" ];
 
   mkDarwinSystem =
     hostname: config:
@@ -20,9 +21,11 @@ let
       specialArgs = {
         inherit inputs self;
       }
-      // config;
+      // moduleArgs config;
       modules = [
         {
+          documentation.doc.enable = false;
+          documentation.man.enable = false;
           nixpkgs.hostPlatform = config.system;
           nixpkgs.overlays = (config.overlays or [ ]);
         }

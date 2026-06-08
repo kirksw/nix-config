@@ -31,6 +31,9 @@ in
       autoUpdate = true;
       upgrade = true;
       cleanup = "none";
+      extraEnv = {
+        HOMEBREW_NO_ANALYTICS = "1";
+      };
     };
 
     brews = pkgs.callPackage ../brews.nix { };

@@ -26,12 +26,12 @@ let
       map (profileName: {
         name = "github.com-${profileName}";
         value = {
-          hostname = "github.com";
-          user = "git";
-          identityFile = "${config.sops.secrets."ssh/${profileName}/private".path}";
-          identitiesOnly = true;
-          forwardAgent = true;
-          addKeysToAgent = "yes";
+          HostName = "github.com";
+          User = "git";
+          IdentityFile = "${config.sops.secrets."ssh/${profileName}/private".path}";
+          IdentitiesOnly = true;
+          ForwardAgent = true;
+          AddKeysToAgent = "yes";
         };
       }) profileNames
     );
@@ -77,11 +77,12 @@ let
             {
               name = host.match;
               value = {
-                inherit (host) hostname user;
-                identityFile = "${config.sops.secrets."ssh/${host.key}/private".path}";
-                identitiesOnly = true;
-                forwardAgent = true;
-                addKeysToAgent = "yes";
+                HostName = host.hostname;
+                User = host.user;
+                IdentityFile = "${config.sops.secrets."ssh/${host.key}/private".path}";
+                IdentitiesOnly = true;
+                ForwardAgent = true;
+                AddKeysToAgent = "yes";
               };
             }
           else
@@ -253,8 +254,7 @@ in
       enable = true;
       enableDefaultConfig = false;
 
-      matchBlocks =
-        (generateSshMatchblocks profileNames) // (generateHomelabSshMatchblocks homelabSshHosts);
+      settings = (generateSshMatchblocks profileNames) // (generateHomelabSshMatchblocks homelabSshHosts);
     };
 
     # every programmers best friend

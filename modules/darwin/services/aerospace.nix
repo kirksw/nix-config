@@ -8,7 +8,8 @@
 
 let
   aerospaceApp = "/Applications/Nix Apps/AeroSpace.app";
-  aerospaceCli = "${aerospaceApp}/Contents/MacOS/AeroSpace";
+  aerospaceServer = "${aerospaceApp}/Contents/MacOS/AeroSpace";
+  aerospaceClient = "${pkgs.aerospace}/bin/aerospace";
   aerospaceSettings = {
     start-at-login = false;
     enable-normalization-flatten-containers = true;
@@ -122,9 +123,7 @@ let
   primaryUser = config.system.primaryUser;
   userHome = config.users.users.${primaryUser}.home or "/Users/${primaryUser}";
   stateDir = "${userHome}/.cache/aerospace-switch-state";
-  launchAgent = "${config.launchd.labelPrefix}.aerospace.plist";
-  builtLaunchAgent = "${config.system.build.launchd}/user/Library/LaunchAgents/${launchAgent}";
-  installedLaunchAgent = "${userHome}/Library/LaunchAgents/${launchAgent}";
+  launchAgentLabel = "${config.launchd.labelPrefix}.aerospace";
   shellPath = lib.makeBinPath [
     pkgs.coreutils
     pkgs.gnugrep
@@ -138,19 +137,26 @@ let
     export PATH="${shellPath}:/usr/bin:/bin"
 
     state_dir=${lib.escapeShellArg stateDir}
-    aerospace=${lib.escapeShellArg aerospaceCli}
+    aerospace=${lib.escapeShellArg aerospaceClient}
     marker="$state_dir/restore-needed"
+    error_log="$state_dir/capture-error.log"
 
     mkdir -p "$state_dir"
 
-    if ! "$aerospace" list-workspaces --all >/dev/null 2>&1; then
+    echo "AeroSpace: saving window state before switch" >&2
+
+    if ! "$aerospace" list-workspaces --all > "$state_dir/workspace-probe.tmp" 2> "$error_log"; then
+      echo "AeroSpace: skipped save; CLI cannot reach server: $(head -n 1 "$error_log")" >&2
       rm -f "$marker"
+      rm -f "$state_dir/workspace-probe.tmp"
       exit 0
     fi
+    rm -f "$state_dir/workspace-probe.tmp"
 
-    if "$aerospace" list-windows --all --format "%{window-id}%{tab}%{workspace}%{tab}%{window-layout}%{tab}%{window-is-fullscreen}" > "$state_dir/windows.tsv.tmp"; then
+    if "$aerospace" list-windows --all --format "%{window-id}%{tab}%{workspace}%{tab}%{window-layout}%{tab}%{window-is-fullscreen}" > "$state_dir/windows.tsv.tmp" 2> "$error_log"; then
       mv "$state_dir/windows.tsv.tmp" "$state_dir/windows.tsv"
     else
+      echo "AeroSpace: skipped save; failed to list windows: $(head -n 1 "$error_log")" >&2
       rm -f "$state_dir/windows.tsv.tmp" "$marker"
       exit 0
     fi
@@ -168,6 +174,7 @@ let
       || rm -f "$state_dir/focused-window.tmp" "$state_dir/focused-window"
 
     touch "$marker"
+    echo "AeroSpace: saved $(wc -l < "$state_dir/windows.tsv" | tr -d ' ') windows for restore" >&2
   '';
   restoreAerospaceState = pkgs.writeShellScript "restore-aerospace-state" ''
     set -eu
@@ -175,7 +182,8 @@ let
     export PATH="${shellPath}:/usr/bin:/bin"
 
     state_dir=${lib.escapeShellArg stateDir}
-    aerospace=${lib.escapeShellArg aerospaceCli}
+    aerospace=${lib.escapeShellArg aerospaceClient}
+    launch_agent=${lib.escapeShellArg launchAgentLabel}
     marker="$state_dir/restore-needed"
     windows="$state_dir/windows.tsv"
     workspaces="$state_dir/workspaces.tsv"
@@ -183,18 +191,29 @@ let
 
     [ -f "$marker" ] || exit 0
 
+    echo "AeroSpace: restoring window state after switch" >&2
+
+    launchctl kickstart -k "gui/$(id -u)/$launch_agent" >/dev/null 2>&1 || true
+
     attempts=0
     until "$aerospace" list-workspaces --all >/dev/null 2>&1; do
       attempts=$((attempts + 1))
-      if [ "$attempts" -ge 15 ]; then
-        rm -f "$marker"
+      if [ "$attempts" -ge 60 ]; then
+        echo "AeroSpace: restore deferred; CLI cannot reach server after 60s" >&2
         exit 0
       fi
       sleep 1
     done
 
-    sleep 1
-    "$aerospace" list-windows --all --format "%{window-id}" > "$current_windows" 2>/dev/null || true
+    attempts=0
+    until "$aerospace" list-windows --all --format "%{window-id}" > "$current_windows" 2>/dev/null && [ -s "$current_windows" ]; do
+      attempts=$((attempts + 1))
+      if [ "$attempts" -ge 10 ]; then
+        : > "$current_windows"
+        break
+      fi
+      sleep 1
+    done
 
     window_exists() {
       [ -s "$current_windows" ] && grep -Fxq -- "$1" "$current_windows"
@@ -251,6 +270,7 @@ let
     "$aerospace" move-mouse window-lazy-center >/dev/null 2>&1 || "$aerospace" move-mouse monitor-lazy-center >/dev/null 2>&1 || true
 
     rm -f "$marker" "$current_windows"
+    echo "AeroSpace: restore complete" >&2
   '';
 in
 
@@ -261,16 +281,14 @@ in
 
   config = lib.mkIf config.darwinModules.aerospace.enable {
     system.activationScripts.preActivation.text = lib.mkBefore ''
-      if [ -e ${lib.escapeShellArg builtLaunchAgent} ] && { [ ! -e ${lib.escapeShellArg installedLaunchAgent} ] || ! diff ${lib.escapeShellArg builtLaunchAgent} ${lib.escapeShellArg installedLaunchAgent} >/dev/null 2>&1; }; then
-        ${asPrimaryUser captureAerospaceState}
-      else
-        ${asPrimaryUser "rm -f ${lib.escapeShellArg stateDir}/restore-needed"}
-      fi
+      ${asPrimaryUser captureAerospaceState}
     '';
 
     system.activationScripts.postActivation.text = lib.mkAfter ''
       if [ -f ${lib.escapeShellArg stateDir}/restore-needed ]; then
         ${asPrimaryUser restoreAerospaceState}
+      else
+        echo "AeroSpace: no saved switch state to restore" >&2
       fi
     '';
 
@@ -283,7 +301,7 @@ in
         ProgramArguments = [
           "/bin/sh"
           "-c"
-          "/bin/wait4path ${lib.escapeShellArg aerospaceApp} && exec ${lib.escapeShellArg aerospaceCli} --config-path ${lib.escapeShellArg aerospaceConfig}"
+          "/bin/wait4path ${lib.escapeShellArg aerospaceApp} && exec ${lib.escapeShellArg aerospaceServer} --config-path ${lib.escapeShellArg aerospaceConfig}"
         ];
         KeepAlive = true;
         RunAtLoad = true;

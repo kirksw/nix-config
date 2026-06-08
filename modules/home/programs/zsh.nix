@@ -47,6 +47,7 @@ in
         enable = true;
         package = pkgs.yazi;
         enableZshIntegration = true;
+        shellWrapperName = "yy";
       };
 
       zsh = {

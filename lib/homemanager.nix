@@ -6,6 +6,7 @@
 
 let
   paths = import ./paths.nix { };
+  moduleArgs = config: builtins.removeAttrs config [ "system" ];
 in
 {
   mkHomeManagerModule =
@@ -20,6 +21,13 @@ in
         sharedModules = [
           inputs.sops-nix.homeManagerModules.sops
           ../modules/home
+          {
+            manual = {
+              html.enable = false;
+              json.enable = false;
+              manpages.enable = false;
+            };
+          }
         ];
         extraSpecialArgs = {
           inherit
@@ -28,7 +36,7 @@ in
             paths
             ;
         }
-        // config;
+        // moduleArgs config;
       };
     };
 }
