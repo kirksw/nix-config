@@ -118,6 +118,22 @@
     defaultCores = 2;
   };
 
+  # libvirtd in NixOS 26.11 uses LoadCredentialEncrypted which requires
+  # systemd credential encryption setup. Override to use plain LoadCredential.
+  systemd.services.libvirtd.serviceConfig = {
+    LoadCredentialEncrypted = lib.mkForce "";
+    LoadCredential = "secrets-encryption-key:/var/lib/libvirt/secrets/secrets-encryption-key";
+  };
+  system.activationScripts.libvirtSecretKey = {
+    text = ''
+      if [ ! -f /var/lib/libvirt/secrets/secrets-encryption-key ]; then
+        install -d -m 0700 /var/lib/libvirt/secrets
+        head -c 32 /dev/urandom | base64 > /var/lib/libvirt/secrets/secrets-encryption-key
+        chmod 600 /var/lib/libvirt/secrets/secrets-encryption-key
+      fi
+    '';
+  };
+
   # microvm.nix declarative microvms managed via config
   microvm.autostart = [ ];
 }
