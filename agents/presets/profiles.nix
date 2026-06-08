@@ -98,6 +98,7 @@ _: {
         "grill-me"
         "nix-agents"
         "parallel-reviews"
+        "session-heuristics"
         "system-context"
       ];
       mcpServers = [

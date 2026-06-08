@@ -13,6 +13,7 @@
     ../defs/skills/nix-agents
     ../defs/skills/system-context
     ../defs/skills/secrets-management.nix
+    ../defs/skills/session-heuristics
     ../defs/skills/skill-creator
     ../defs/skills/add-module
     ../defs/skills/parallel-reviews
