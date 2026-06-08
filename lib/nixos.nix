@@ -10,6 +10,7 @@ let
     sops-nix
     disko
     home-manager
+    microvm
     ;
   homeManagerHelpers = import ./homemanager.nix {
     inherit lib inputs self;
@@ -26,6 +27,8 @@ let
       modules = [
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
+        microvm.nixosModules.host
+        microvm.nixosModules.microvm
         config.hostModule
         { nixpkgs.overlays = (config.overlays or [ ]); }
       ]

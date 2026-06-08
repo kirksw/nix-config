@@ -110,6 +110,10 @@ in
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
 
+  # Use classic dbus instead of dbus-broker to avoid user-session reload
+  # failures during remote activation (deploy-rs over SSH).
+  services.dbus.implementation = "dbus";
+
   # Open ports in the firewall.
   networking.firewall.enable = true;
   #networking.firewall.allowedTCPPorts = [ 6443 ];

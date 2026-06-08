@@ -46,6 +46,11 @@
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 
+    microvm = {
+      url = "github:astro/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     backend-engineering-practices = {
       url = "github:lunarway/backend-engineering-practices/master";
       flake = false;

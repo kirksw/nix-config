@@ -3,6 +3,7 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -36,14 +37,6 @@
   console.keyMap = "uk";
 
   users.users = {
-    k8s = {
-      isNormalUser = true;
-      description = "k8s";
-      extraGroups = [
-        "networkmanager"
-        "wheel"
-      ];
-    };
     kisw = {
       isNormalUser = true;
       description = "my user";
@@ -61,7 +54,6 @@
     ];
     trusted-users = [
       "root"
-      "k8s"
       "kisw"
     ];
   };
@@ -72,22 +64,19 @@
     neovim
     fastfetch
     htop
-    kubectl
+    git
   ];
-
-  programs.virt-manager.enable = true;
-  users.groups.libvirtd.members = [
-    "root"
-    "k8s"
-  ];
-  virtualisation.libvirtd.enable = true;
-  virtualisation.spiceUSBRedirection.enable = true;
 
   services.openssh.enable = true;
+
+  # Classic dbus to avoid user-session reload failures during remote activation
+  services.dbus.implementation = "dbus";
+
   networking.firewall.enable = true;
 
   system.stateVersion = "25.05";
 
+  # Tailscale for all remote access
   services.tailscale.enable = true;
   systemd.services.tailscaled.restartIfChanged = false;
   networking.nameservers = [
@@ -97,17 +86,12 @@
   ];
   networking.search = [ "tail54de03.ts.net" ];
 
+  # Secrets
   sops = {
     defaultSopsFormat = "yaml";
     age.keyFile = "/root/.config/sops/age/keys.txt";
 
     secrets = {
-      "k8s/node/secret" = {
-        sopsFile = "${self}/secrets/k8s/node.yaml";
-        key = "secret";
-        mode = "0400";
-      };
-
       "ssh/root/authorizedKey" = {
         sopsFile = "${self}/secrets/ssh/ry4a-root.yaml";
         key = "authorizedKey";
@@ -120,15 +104,20 @@
     deps = [ "setupSecrets" ];
     text = ''
       install -d -m 0755 /etc/ssh/authorized_keys.d
-      install -m 0600 -o root -g root ${config.sops.secrets."ssh/root/authorizedKey".path} /etc/ssh/authorized_keys.d/root
+      install -m 0600 -o root -g root ${
+        config.sops.secrets."ssh/root/authorizedKey".path
+      } /etc/ssh/authorized_keys.d/root
     '';
   };
 
-  nixosModules.k3s = {
+  # Microvm hypervisor host
+  nixosModules.microvm-host = {
     enable = true;
-    role = "agent";
-    nodeName = "nixos-ry4a";
-    serverAddr = "https://192.168.10.66:6443";
-    tokenFile = config.sops.secrets."k8s/node/secret".path;
+    vmStoragePath = "/var/lib/microvms";
+    defaultMemoryMB = 4096;
+    defaultCores = 2;
   };
+
+  # microvm.nix declarative microvms managed via config
+  microvm.autostart = [ ];
 }
