@@ -12,8 +12,8 @@
   };
 
   config = lib.mkIf config.homeModules.aiDev.enable {
-    home.packages = with pkgs; [
-      ollama
+    home.packages = lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [
+      pkgs.ollama
     ];
   };
 }
