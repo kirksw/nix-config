@@ -13,6 +13,8 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P2 XS Add or document the missing `sync-agents` flake app referenced by the agent workflow (feat-pi-session-dir)
+- P2 S Upstream nix-agents Pi wrapper fix so generated profile sync never deletes or copies live session directories (feat-pi-session-dir)
 - P1 M Slim upstream `nix-agents` to engine/templates only after local config migration is stable (feat-local-agent-config)
 - P2 S Re-enable profile sandbox policy after upstream `nix-agents` publishes the `sandboxes` module API (feat-local-agent-config)
 - P2 XS Manually smoke-test PI todo extension in interactive session (`/todos`, branch switch/fork replay) (feat-pi-todo-extension)

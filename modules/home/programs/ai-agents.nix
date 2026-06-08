@@ -340,6 +340,29 @@ in
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         (mkCredWrapper "pi" piPkg ''
+          _pi_session_profile=""
+          _d="$PWD"
+          while [ "$_d" != "/" ] && [ -n "$_d" ]; do
+            if [ -f "$_d/.nix-agents-profile" ]; then
+              _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
+              break
+            fi
+            _d="''${_d%/*}"
+          done
+          if [ -z "$_pi_session_profile" ]; then
+            if is_lunar_project; then
+              _pi_session_profile="work-default"
+            else
+              _pi_session_profile="personal-default"
+            fi
+          fi
+          case "$_pi_session_profile" in
+            personal-default|work-default) ;;
+            *) _pi_session_profile="personal-default" ;;
+          esac
+          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
+          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
+
           if is_lunar_project; then
             if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
               export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
