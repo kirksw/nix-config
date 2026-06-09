@@ -196,17 +196,6 @@ let
     ]
   );
 
-  agentSudoApprove = pkgs.writeShellScriptBin "agent-sudo-approve" ''
-    set -euo pipefail
-    exec ${pkgs.python3}/bin/python3 ${../scripts/agent-sudo-approve.py} "$@"
-  '';
-
-  agentSudoRequest = pkgs.writeShellScriptBin "agent-sudo-request" ''
-    set -euo pipefail
-    export AGENT_SUDO_APPROVE_COMMAND=${agentSudoApprove}/bin/agent-sudo-approve
-    exec ${pkgs.python3}/bin/python3 ${../scripts/agent-sudo-request.py} "$@"
-  '';
-
   syncAgents = pkgs.writeShellScriptBin "sync-agents" ''
     set -euo pipefail
 
@@ -378,22 +367,6 @@ in
     program = "${syncSkills}/bin/sync-work-skills";
     meta = {
       description = "Sync backend-engineering-practices skills to work profile directories.";
-    };
-  };
-
-  agent-sudo-request = {
-    type = "app";
-    program = "${agentSudoRequest}/bin/agent-sudo-request";
-    meta = {
-      description = "Create a human-approved sudo workflow request for agent handoff.";
-    };
-  };
-
-  agent-sudo-approve = {
-    type = "app";
-    program = "${agentSudoApprove}/bin/agent-sudo-approve";
-    meta = {
-      description = "Approve and run an agent-created sudo workflow request.";
     };
   };
 

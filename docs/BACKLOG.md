@@ -13,7 +13,6 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
-- P2 XS Add stale-lock recovery and cleanup for agent sudo request files (feat-agent-sudo-request review)
 - P1 XS Run one final Darwin switch to install syncMode-aware wrappers on `lunar` (feat-wrapper-sync-mode)
 - P2 XS Merge nix-agents `feat/wrapper-sync-mode` upstream and point the flake input back to default branch (feat-wrapper-sync-mode)
 - P2 XS Add or document the missing `sync-agents` flake app referenced by the agent workflow (feat-pi-session-dir)
