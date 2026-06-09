@@ -24,7 +24,7 @@ let
 
   # Modules shared across all target builds
   nixAgentsModules = localAgents.defaultModules;
-  piAgentsModules = nixAgentsModules;
+  piAgentsModules = localAgents.piModules;
 
   piWorkSettings = builtins.toJSON {
     defaultProvider = "openai";

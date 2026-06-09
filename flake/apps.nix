@@ -86,13 +86,13 @@ let
     inherit self;
   };
   nixAgentsLib = inputs.nix-agents.lib.${system};
-  agentModules = localAgents.defaultModules;
+  agentModulesFor = target: if target == "pi" then localAgents.piModules else localAgents.defaultModules;
 
   profileMetaFor =
     target:
     nixAgentsLib.mkProfileMeta {
       inherit pkgs target;
-      modules = agentModules;
+      modules = agentModulesFor target;
       inputs = agentInputs;
       src = localAgentsSrc;
     };

@@ -13,6 +13,12 @@ let
     ./presets/profiles.nix
   ];
 
+  piTargetModules = [
+    ./targets/pi/provider-overrides.nix
+  ];
+
+  piModules = defaultModules ++ piTargetModules;
+
   sessionModules =
     if pkgs == null then
       [ ]
@@ -22,8 +28,9 @@ let
       ];
 in
 {
-  inherit defaultModules tieredModules sessionModules;
+  inherit defaultModules tieredModules piTargetModules piModules sessionModules;
 
   defaultModulesWithSessions = defaultModules ++ sessionModules;
   tieredModulesWithSessions = tieredModules ++ sessionModules;
+  piModulesWithSessions = piModules ++ sessionModules;
 }
