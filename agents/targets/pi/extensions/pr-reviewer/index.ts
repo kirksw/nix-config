@@ -70,7 +70,12 @@ async function runReviewer(
 
   for (let round = 1; round <= MAX_ROUNDS; round++) {
     const task = buildReviewerTask(meta, diff, extraContext);
-    const res = await runPi(`reviewer-${id}`, { cwd: ctx.cwd, model, systemPrompt: system, task, signal: ctx.signal });
+    let res: Awaited<ReturnType<typeof runPi>>;
+    try {
+      res = await runPi(`reviewer-${id}`, { cwd: ctx.cwd, model, systemPrompt: system, task, signal: ctx.signal });
+    } catch (err) {
+      return { reviewer: id, issues: collected, ok: collected.length > 0, error: (err as Error).message };
+    }
     if (res.stopReason === "aborted") return { reviewer: id, issues: collected, ok: false, error: "aborted" };
 
     const parsed = extractJson<ReviewerOutput>(res.text);
@@ -199,7 +204,7 @@ export default function (pi: ExtensionAPI) {
           signal: ctx.signal,
         });
         const sum = extractJson<SummaryOutput>(sumRes.text);
-        const summaryText = sum?.summary ?? sumRes.text.trim() ?? "(no summary available)";
+        const summaryText = sum?.summary || sumRes.text.trim() || "(no summary available)";
         const major = sum?.majorBehaviorChange ?? false;
         const tier: Tier = finalTier(base, major);
         setStatus(undefined);
@@ -257,6 +262,8 @@ export default function (pi: ExtensionAPI) {
         if (dump) {
           ctx.ui.setEditorText(buildReport(meta.number, meta.title, tier, triaged));
         }
+      } catch (err) {
+        ctx.ui.notify(`PR review failed: ${(err as Error).message}`, "error");
       } finally {
         setStatus(undefined);
       }
