@@ -45,13 +45,15 @@ def run_pi(
     prompt: str,
     cwd: Path,
     timeout_seconds: int,
+    tools: str | None = None,
 ) -> PiResult:
+    tool_args = ["--tools", tools] if tools else ["--no-tools"]
     cmd = [
         pi_bin,
         "--mode",
         "json",
         "--no-session",
-        "--no-tools",
+        *tool_args,
         "--no-context-files",
         "--no-prompt-templates",
         "--no-skills",

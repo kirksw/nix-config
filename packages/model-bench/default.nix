@@ -3,6 +3,7 @@
   stdenvNoCC,
   makeWrapper,
   python3,
+  git,
 }:
 
 stdenvNoCC.mkDerivation {
@@ -22,6 +23,7 @@ stdenvNoCC.mkDerivation {
     makeWrapper ${lib.getExe python3} "$out/bin/model-bench" \
       --set MODEL_BENCH_DATA_DIR "$out/share/model-bench" \
       --set PYTHONPATH "$out/share/model-bench/src" \
+      --prefix PATH : ${lib.makeBinPath [ git ]} \
       --add-flags "-m model_bench"
 
     runHook postInstall

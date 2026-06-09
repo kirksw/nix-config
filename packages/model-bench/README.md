@@ -14,7 +14,7 @@ nix run .#model-bench -- --tier fast --compare-models minimax/minimax-m2.7-highs
 nix run .#model-bench -- --trend
 ```
 
-By default the runner calls `pi` from `PATH`. Use `--pi-bin /path/to/pi` or set `MODEL_BENCH_PI_BIN` if you need a specific wrapper.
+By default the runner calls `pi` from `PATH`. Use `--pi-bin /path/to/pi` or set `MODEL_BENCH_PI_BIN` if you need a specific wrapper. Git-backed challenges cache repositories under `~/.cache/model-bench/repos` by default; override with `--repo-cache-dir`.
 
 The Pi invocation is non-interactive JSON mode:
 
@@ -51,13 +51,20 @@ A compact summary is also appended to `~/.local/share/model-bench/results/histor
 
 Challenges are TOML files with:
 
-- `[challenge]` — id, tier, agent, runs, timeout.
-- `[prompt]` — prompt text; supports `{{fixture:path/to/file}}` substitutions.
+- `[challenge]` — id, tier, agent, runs, timeout, optional `tools` for the candidate Pi run.
+- `[source.git]` — optional git source (`url`, pinned `rev`, optional `path`) cloned into the repo cache and used as the run cwd.
+- `[prompt]` — prompt text; supports `{{fixture:path/to/file}}` and `{{source_dir}}` substitutions.
 - `[verifier]` — verifier type and options.
+
+Quality and performance are separate:
+
+- Performance metrics (`wallSeconds`, `firstTextSeconds`, `outputChars`) are measured from the candidate model run only.
+- Quality metrics come from the verifier result (`passed`, `score`, binary criterion details).
 
 Verifier types:
 
 - `regex` — scores required/forbidden regular expressions.
+- `agent-binary` — asks a separate verifier model to judge `[[verifier.criteria]]` pass/fail items and return JSON.
 - `python-unittest` — extracts a Python code block, writes it to `solution.py`, rejects configured dangerous code patterns, and runs a stdlib unittest fixture with `python3 -I`.
 
 > Security note: `python-unittest` still executes model-generated code on the host. It is intended for trusted local evaluation only. Keep code challenges small, pure, and guarded with `forbiddenCodeRegex` patterns.

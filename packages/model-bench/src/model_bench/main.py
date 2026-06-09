@@ -8,10 +8,11 @@ import sys
 import tempfile
 from pathlib import Path
 
-from .challenges import Challenge, discover_challenges
+from .challenges import Challenge, discover_challenges, render_prompt
 from .config import data_dir, default_results_dir, load_config, parse_model_list, parse_model_overrides, resolve_model, resolve_thinking
 from .pi_runner import run_pi
 from .reporter import append_jsonl, format_trend, read_history, summarize, timestamp, write_json, write_leaderboard
+from .sources import default_repo_cache_dir, materialize_source
 from .verifiers import verification_to_json, verify
 
 
@@ -24,6 +25,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fixtures-dir", type=Path, default=None, help="fixture directory")
     parser.add_argument("--results-dir", type=Path, default=default_results_dir(), help="directory for local run results")
     parser.add_argument("--pi-bin", default=os.environ.get("MODEL_BENCH_PI_BIN", "pi"), help="Pi binary/wrapper to execute")
+    parser.add_argument("--repo-cache-dir", type=Path, default=default_repo_cache_dir(), help="cache directory for git-backed challenge sources")
+    parser.add_argument("--verifier-model", default="openai-codex/gpt-5.5", help="default model for agent-binary verifiers")
+    parser.add_argument("--verifier-thinking", default="high", help="default thinking level for agent-binary verifiers")
+    parser.add_argument("--verifier-tools", default="read,grep,find,ls", help="default tools for agent-binary verifiers")
     parser.add_argument("--models", default=None, help="comma-separated tier=model overrides")
     parser.add_argument("--compare-models", default=None, help="comma-separated model IDs to run against each selected challenge")
     parser.add_argument("--challenge", action="append", default=[], help="challenge id to run; repeatable")
@@ -158,14 +163,20 @@ def _run(args: argparse.Namespace) -> int:
     records: list[dict] = []
     run_jsonl = run_dir / "run.jsonl"
 
+    source_cwds: dict[str, Path] = {}
     with tempfile.TemporaryDirectory(prefix="model-bench-work-") as tmp:
-        cwd = Path(tmp)
+        default_cwd = Path(tmp)
+        for challenge in challenges:
+            source_cwds[challenge.challenge_id] = materialize_source(challenge.source, args.repo_cache_dir) or default_cwd
+
         total = len(planned)
         index = 0
         for challenge in challenges:
             runs = args.runs if args.runs is not None else challenge.runs
             timeout = args.timeout if args.timeout is not None else challenge.timeout_seconds
             thinking = resolve_thinking(config, challenge.tier, challenge.thinking)
+            cwd = source_cwds[challenge.challenge_id]
+            prompt = render_prompt(challenge, cwd)
             for model in _models_for_challenge(challenge, config, args):
                 for run_index in range(1, runs + 1):
                     index += 1
@@ -175,11 +186,21 @@ def _run(args: argparse.Namespace) -> int:
                             pi_bin=args.pi_bin,
                             model=model,
                             thinking=thinking,
-                            prompt=challenge.prompt,
+                            prompt=prompt,
                             cwd=cwd,
                             timeout_seconds=timeout,
+                            tools=challenge.tools,
                         )
-                        verification = verify(pi_result.output, challenge.verifier, fixtures_dir)
+                        verification = verify(
+                            pi_result.output,
+                            challenge.verifier,
+                            fixtures_dir,
+                            cwd=cwd,
+                            pi_bin=args.pi_bin,
+                            verifier_model=args.verifier_model,
+                            verifier_thinking=args.verifier_thinking,
+                            verifier_tools=args.verifier_tools,
+                        )
                         record = {
                             "runId": run_id,
                             "challengeId": challenge.challenge_id,

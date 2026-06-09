@@ -1,0 +1,89 @@
+[challenge]
+id = "scout-fluss-repo"
+tier = "fast"
+agent = "scout"
+description = "Reconnoiter the pinned Apache Fluss repository and return structured findings."
+runs = 1
+timeoutSeconds = 600
+tools = "read,grep,find,ls"
+
+[source.git]
+url = "https://github.com/apache/fluss.git"
+rev = "ba0e62744e695b00999cff0b08d50d10b5f8cbad"
+path = "."
+
+[prompt]
+text = '''
+You are scout. Inspect the Apache Fluss repository in the current working directory.
+
+Return concise structured findings only. Use bullets or tables. No prose introduction.
+
+Answer these questions:
+1. What is Apache Fluss, according to the repository?
+2. What are the major module groups? Include paths.
+3. Where do client/common/server/RPC responsibilities appear to live? Include paths.
+4. Which compute/storage integrations are present? Include paths.
+5. What build system and test/source layout conventions are visible? Include paths.
+6. What repo-structure signals or anomalies should a downstream implementer know about? Do not propose fixes.
+
+Style constraints:
+- Do not use em dashes.
+- Do not suggest implementation changes.
+- Include concrete path evidence for every substantive claim.
+
+Repository path: {{source_dir}}
+'''
+
+[verifier]
+type = "agent-binary"
+minScore = 0.90
+timeoutSeconds = 600
+tools = "read,grep,find,ls"
+
+[[verifier.criteria]]
+id = "identifies-fluss-purpose"
+question = "Did the answer correctly identify Apache Fluss as streaming storage / real-time data layer / lakehouse-oriented storage using evidence from README.md?"
+
+[[verifier.criteria]]
+id = "lists-core-module-paths"
+question = "Did the answer list core module paths including fluss-common, fluss-client, fluss-rpc, and fluss-server?"
+
+[[verifier.criteria]]
+id = "distinguishes-server-client-rpc"
+question = "Did the answer distinguish client, server, common, and RPC responsibilities rather than grouping the whole repo as one generic Java app?"
+
+[[verifier.criteria]]
+id = "lists-compute-integrations"
+question = "Did the answer identify compute or ecosystem integration module paths including Flink, Spark, Kafka, and lake modules?"
+
+[[verifier.criteria]]
+id = "lists-filesystem-metrics-groups"
+question = "Did the answer identify filesystem and metrics module groups with paths such as fluss-filesystems and fluss-metrics?"
+
+[[verifier.criteria]]
+id = "identifies-maven-build"
+question = "Did the answer identify Maven as the build system using pom.xml, .mvn, or Maven module evidence?"
+
+[[verifier.criteria]]
+id = "identifies-test-layout"
+question = "Did the answer identify Java/Maven source and test layout conventions such as src/main, src/test, or src/test/java with example paths?"
+
+[[verifier.criteria]]
+id = "mentions-versioned-connectors"
+question = "Did the answer notice versioned connector/integration submodules, for example Flink 1.18/1.19/1.20/2.2 or Spark 3.4/3.5?"
+
+[[verifier.criteria]]
+id = "structured-not-prose"
+question = "Is the answer structured as bullets/tables/sections rather than a long prose essay?"
+
+[[verifier.criteria]]
+id = "no-em-dashes"
+question = "Does the answer avoid em dash characters (—)?"
+
+[[verifier.criteria]]
+id = "no-fix-suggestions"
+question = "Does the answer avoid proposing fixes or implementation changes, staying in scout sensor mode?"
+
+[[verifier.criteria]]
+id = "path-evidence"
+question = "Does the answer include concrete repository path evidence for most substantive claims?"

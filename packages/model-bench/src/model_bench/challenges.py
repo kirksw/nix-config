@@ -19,6 +19,8 @@ class Challenge:
     runs: int
     timeout_seconds: int
     thinking: str | None
+    tools: str | None
+    source: dict | None
     prompt: str
     verifier: dict
 
@@ -36,6 +38,10 @@ def _substitute_fixtures(text: str, fixture_root: Path) -> str:
     return _FIXTURE_RE.sub(replace, text)
 
 
+def render_prompt(challenge: Challenge, cwd: Path) -> str:
+    return challenge.prompt.replace("{{source_dir}}", str(cwd))
+
+
 def load_challenge(path: Path, fixture_root: Path) -> Challenge:
     doc = load_toml(path)
     meta = doc["challenge"]
@@ -50,6 +56,8 @@ def load_challenge(path: Path, fixture_root: Path) -> Challenge:
         runs=int(meta.get("runs", 1)),
         timeout_seconds=int(meta.get("timeoutSeconds", 180)),
         thinking=meta.get("thinking"),
+        tools=meta.get("tools"),
+        source=doc.get("source"),
         prompt=prompt,
         verifier=doc.get("verifier", {"type": "regex"}),
     )
