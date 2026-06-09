@@ -1,0 +1,36 @@
+[challenge]
+id = "bottleneck-review-cache"
+tier = "powerful"
+agent = "bottleneck"
+description = "Prioritized review of a diff with correctness, maintainability, and performance issues."
+runs = 1
+timeoutSeconds = 180
+
+[prompt]
+text = '''
+You are bottleneck. Review this diff in read-only mode.
+
+Prioritize findings by severity. Explain why each issue matters and suggest concrete minimal fixes. Also call out one thing that is solid if any.
+
+Diff:
+{{fixture:bottleneck/diff.patch}}
+'''
+
+[verifier]
+type = "review-format"
+minScore = 0.75
+requiredRegex = [
+  "severity|high|medium|low",
+  "cache",
+  "invalidation|stale",
+  "latest|undefined|no orders|null",
+  "user.*null|missing user",
+  "sort",
+  "mutat",
+  "unbounded|memory",
+  "minimal|fix"
+]
+forbiddenRegex = [
+  "rewrite everything",
+  "no issues"
+]

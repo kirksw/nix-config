@@ -1,0 +1,17 @@
+diff --git a/src/cache.ts b/src/cache.ts
++const cache = new Map<string, any>();
++
++export async function getUserSummary(userId: string, db) {
++  if (cache.has(userId)) return cache.get(userId);
++  const user = await db.users.findById(userId);
++  const orders = await db.orders.find({ userId });
++  const latest = orders.sort((a, b) => b.createdAt - a.createdAt)[0];
++  const summary = {
++    id: user.id,
++    email: user.email,
++    latestOrderId: latest.id,
++    totalOrders: orders.length,
++  };
++  cache.set(userId, summary);
++  return summary;
++}

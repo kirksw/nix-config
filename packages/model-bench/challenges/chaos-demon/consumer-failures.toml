@@ -1,0 +1,39 @@
+[challenge]
+id = "chaos-demon-consumer-failures"
+tier = "balanced"
+agent = "chaos-demon"
+description = "Report failure modes for an async queue consumer without suggesting fixes."
+runs = 1
+timeoutSeconds = 180
+
+[prompt]
+text = '''
+You are chaos-demon. Find how this code breaks. Do not suggest fixes.
+
+Output each scenario with Trigger, What breaks, Loud or silent, Blast radius, and Severity.
+
+Code:
+{{fixture:chaos-demon/consumer.ts}}
+'''
+
+[verifier]
+type = "failure-modes"
+minScore = 0.75
+requiredRegex = [
+  "Trigger",
+  "What breaks",
+  "Loud or silent|Loud/Silent",
+  "Blast radius",
+  "Severity",
+  "JSON\\.parse|malformed",
+  "duplicate|idempot",
+  "ack",
+  "race|concurrent|lost update",
+  "db|database",
+  "silent"
+]
+forbiddenRegex = [
+  "fix",
+  "remediation",
+  "recommend"
+]

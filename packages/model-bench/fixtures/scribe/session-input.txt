@@ -1,0 +1,18 @@
+git log --oneline:
+abc1234 add model bench package
+def5678 wire model bench app
+987abcd document model bench workflow
+
+git diff --stat:
+packages/model-bench/default.nix                    |  32 +++
+packages/model-bench/src/model_bench/main.py       | 212 +++++++++++++++++++++
+packages/model-bench/challenges/scout/logs.toml    |  40 ++++
+docs/agents/feat-model-bench.md                    |  64 ++++++
+
+User goal:
+Create a repeatable benchmark for comparing personal Pi models by agent tier.
+
+Known validation:
+- nix build .#model-bench
+- nix run .#model-bench -- --list-challenges
+- nix run .#model-bench -- --dry-run

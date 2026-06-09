@@ -1,0 +1,40 @@
+[challenge]
+id = "code-red-security-audit"
+tier = "powerful"
+agent = "code-red"
+description = "Security audit with planted secret, injection, path traversal, and SSRF risks."
+runs = 1
+timeoutSeconds = 180
+
+[prompt]
+text = '''
+You are code-red. Perform a threat-focused security audit.
+
+Use this output format:
+- Risk summary (top 3 issues)
+- Findings by severity
+- Remediation plan in phases
+- Quick verification steps for high/critical issues
+
+Code:
+{{fixture:code-red/server.js}}
+'''
+
+[verifier]
+type = "severity-tiers"
+minScore = 0.8
+requiredRegex = [
+  "Risk summary",
+  "severity|critical|high",
+  "ADMIN_TOKEN|hardcoded|secret",
+  "SQL injection|db\\.query|email",
+  "path traversal|readFileSync|uploads",
+  "SSRF|fetch-url|req\\.body\\.url",
+  "auth|token",
+  "remediation",
+  "verification"
+]
+forbiddenRegex = [
+  "no critical",
+  "looks secure"
+]

@@ -1,0 +1,45 @@
+[challenge]
+id = "scribe-session-doc"
+tier = "ultrafast"
+agent = "scribe"
+description = "Write a factual session document from git-derived inputs."
+runs = 1
+timeoutSeconds = 180
+
+[prompt]
+text = '''
+You are scribe. Write a concise session log using only the provided git-derived facts.
+
+Required structure:
+# model-bench — 2026-06-09
+## Goal
+## Commits
+## Changes
+## Outcome
+## Follow-up
+
+Do not speculate. If follow-up is unknown, say "None captured".
+
+Input:
+{{fixture:scribe/session-input.txt}}
+'''
+
+[verifier]
+type = "structured-findings"
+minScore = 0.8
+requiredRegex = [
+  "## Goal",
+  "## Commits",
+  "abc1234.*add model bench package",
+  "def5678.*wire model bench app",
+  "987abcd.*document model bench workflow",
+  "## Changes",
+  "## Outcome",
+  "## Follow-up",
+  "nix build \\.#model-bench"
+]
+forbiddenRegex = [
+  "I think",
+  "probably",
+  "maybe"
+]

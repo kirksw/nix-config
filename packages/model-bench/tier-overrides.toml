@@ -1,0 +1,16 @@
+# Edit this file to A/B model choices per agent tier.
+# CLI `--models tier=model,...` values override this file for a single run.
+
+[tiers]
+ultrafast = "minimax/minimax-m2.7-highspeed"
+fast = "openai-codex/gpt-5.4-mini"
+balanced = "openai-codex/gpt-5.3-codex-spark"
+powerful = "openai-codex/gpt-5.5"
+reasoning = "openai-codex/gpt-5.5"
+
+[thinking]
+ultrafast = "high"
+fast = "high"
+balanced = "high"
+powerful = "high"
+reasoning = "high"

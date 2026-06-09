@@ -1,0 +1,42 @@
+[challenge]
+id = "10xBEAST-unblock-payment-plan"
+tier = "reasoning"
+agent = "10xBEAST"
+description = "Call out an overcomplicated plan and force a shippable decision."
+runs = 1
+timeoutSeconds = 240
+
+[prompt]
+text = '''
+You are 10xBEAST. The team is stuck. Cut through ambiguity, call out the bad plan directly, and produce the shippable path.
+
+Return:
+- What is wrong with the current plan
+- The decision
+- This week's execution plan
+- What can wait
+- Risks/tradeoffs
+
+Input:
+{{fixture:10xBEAST/stuck-plan.txt}}
+'''
+
+[verifier]
+type = "decision-call"
+minScore = 0.8
+requiredRegex = [
+  "wrong|bad|overcomplicat",
+  "decision",
+  "idempot",
+  "event_id",
+  "payments_events",
+  "this week|week",
+  "containment|incident",
+  "can wait|later",
+  "risk|tradeoff"
+]
+forbiddenRegex = [
+  "six weeks",
+  "rewrite.*Go.*first",
+  "replace the queue.*first"
+]

@@ -1,0 +1,28 @@
+Repository snapshot:
+
+src/main.ts
+  import { createRouter } from './http/router';
+  import { processWebhook } from './webhooks/processWebhook';
+  createRouter().post('/webhooks/payment', processWebhook);
+
+src/http/router.ts
+  export function createRouter() { return { post(path, handler) { /* registers */ } } }
+
+src/webhooks/processWebhook.ts
+  import { verifySignature } from './verifySignature';
+  import { enqueuePaymentEvent } from '../queue/payments';
+  export async function processWebhook(req, res) {
+    verifySignature(req.headers['x-signature'], req.rawBody);
+    await enqueuePaymentEvent(JSON.parse(req.body));
+    res.status(202).send('accepted');
+  }
+
+src/webhooks/verifySignature.ts
+  export function verifySignature(signature: string, rawBody: string) { /* hmac */ }
+
+src/queue/payments.ts
+  import { publish } from './publisher';
+  export async function enqueuePaymentEvent(event) { return publish('payments.events', event); }
+
+src/queue/publisher.ts
+  export async function publish(topic: string, payload: unknown) { /* sends */ }

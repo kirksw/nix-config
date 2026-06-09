@@ -1,0 +1,13 @@
+Situation:
+The team is stuck trying to ship a bug fix for duplicate payment webhook processing. A proposed plan says:
+
+1. Rewrite the whole payment ingestion service in Go.
+2. Replace the queue vendor.
+3. Add a new event-sourcing platform.
+4. Ask product to pause launches for six weeks.
+
+Reality:
+- Duplicate payments are caused by retry delivery and missing idempotency around event ids.
+- There is already a payments_events table with event_id, payment_id, processed_at.
+- The current Node service can deploy daily.
+- The incident is active and needs containment this week.

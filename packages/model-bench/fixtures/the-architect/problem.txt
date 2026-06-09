@@ -1,0 +1,9 @@
+Problem:
+A SaaS API currently has a single global Redis-backed rate limit of 10,000 requests/minute. Enterprise tenants can burst and starve smaller tenants. Product wants per-tenant limits, paid-tier burst capacity, and a migration path that does not break existing clients.
+
+Constraints:
+- Existing clients cannot change headers for the first rollout.
+- Traffic is served by 12 stateless API pods across 3 regions.
+- Redis is already deployed regionally, not globally.
+- SRE wants dashboards and rollback.
+- Finance wants usage data by tenant for billing exploration.

@@ -1,0 +1,36 @@
+[challenge]
+id = "explore-webhook-flow"
+tier = "balanced"
+agent = "explore"
+description = "Trace where a feature is implemented from a compact repo snapshot."
+runs = 1
+timeoutSeconds = 180
+
+[prompt]
+text = '''
+You are explore. Answer concisely with actionable findings.
+
+Question: Where is the payment webhook implemented, and what is the execution flow from HTTP route to queue publish?
+
+Repository snapshot:
+{{fixture:explore/repo-map.txt}}
+'''
+
+[verifier]
+type = "regex"
+minScore = 0.85
+requiredRegex = [
+  "src/main\\.ts",
+  "/webhooks/payment",
+  "processWebhook",
+  "src/webhooks/processWebhook\\.ts",
+  "verifySignature",
+  "enqueuePaymentEvent",
+  "src/queue/payments\\.ts",
+  "publish",
+  "payments\\.events"
+]
+forbiddenRegex = [
+  "unknown",
+  "cannot determine"
+]

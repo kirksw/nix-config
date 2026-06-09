@@ -1,0 +1,38 @@
+[challenge]
+id = "the-architect-rate-limit-design"
+tier = "reasoning"
+agent = "the-architect"
+description = "Design a tenant-aware rate limiting migration with options and rollback."
+runs = 1
+timeoutSeconds = 240
+
+[prompt]
+text = '''
+You are the-architect. Produce a concise implementation-aware design.
+
+Start with assumptions and constraints. Compare 2-3 viable options, recommend one with rationale, and include migration, rollback, observability, and risks.
+
+Input:
+{{fixture:the-architect/problem.txt}}
+'''
+
+[verifier]
+type = "design-options"
+minScore = 0.8
+requiredRegex = [
+  "Assumptions|Constraints",
+  "Option 1",
+  "Option 2",
+  "Recommendation|Recommend",
+  "tenant",
+  "Redis",
+  "migration|rollout",
+  "rollback",
+  "observability|dashboard|metrics",
+  "risk",
+  "billing|usage"
+]
+forbiddenRegex = [
+  "just",
+  "one simple option"
+]

@@ -1,0 +1,32 @@
+[challenge]
+id = "code-monkey-normalize-events"
+tier = "balanced"
+agent = "code-monkey"
+description = "Implement a small data normalization function that passes unit tests."
+runs = 1
+timeoutSeconds = 240
+
+[prompt]
+text = '''
+You are code-monkey. Implement the requested Python function.
+
+Return only one Python code block. Do not include prose.
+
+Function name: normalize_events(events)
+
+Requirements:
+- Input is a list of dictionaries.
+- Keep only records with id, timestamp, amount, and currency.
+- id must be a non-empty string.
+- timestamp must be an int or float.
+- amount must be convertible to float.
+- currency must be a 3-letter string and should be uppercased.
+- Deduplicate by id. If duplicate ids exist, keep the record with the highest timestamp.
+- Return a new list sorted by timestamp ascending.
+- Do not mutate the input list or its dictionaries.
+'''
+
+[verifier]
+type = "python-unittest"
+testFile = "code-monkey/test_normalize_events.py"
+timeoutSeconds = 30
