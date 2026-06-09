@@ -12,9 +12,13 @@ Use this skill for all repo-specific Nix work in `nix-agents`.
 - `references/coding-style.md`: formatting, linting, and common Nix patterns used here
 - `references/module-workflow.md`: module shapes, repository layout, and wiring rules
 - `references/flake-ops.md`: build, check, sync, and target-specific commands
+- `references/failure-triage.md`: known Nix failure signatures and first recovery actions
 
 ## Working Rules
 
 - Follow the repo's Nix style before changing `.nix` files.
 - Use the module workflow reference when adding or rewiring defs.
 - Use the flake ops reference when validating or syncing changes.
+- For Nix failures, read the failure triage reference before changing code.
+- Treat Nix daemon/socket permission errors as sandbox access problems until reproduced with normal Nix access.
+- Verify actual flake apps before running documented sync commands; this repo currently exposes `sync-work-skills`, not `sync-agents`.
