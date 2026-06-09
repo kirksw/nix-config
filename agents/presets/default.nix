@@ -18,6 +18,7 @@
     ../defs/skills/add-module
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
+    ../defs/skills/microvm-agent
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/granola.nix
     ../defs/mcps/swe-pruner.nix
