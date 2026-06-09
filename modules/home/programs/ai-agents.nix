@@ -54,7 +54,10 @@ let
       };
       slack = {
         command = "npx";
-        args = [ "-y" "@jtalk22/slack-mcp" ];
+        args = [
+          "-y"
+          "@jtalk22/slack-mcp"
+        ];
         lifecycle = "lazy";
       };
     };
@@ -74,6 +77,18 @@ let
   codexPersonalSettings = ''
     approvals_reviewer = "guardian_subagent"
   '';
+
+  codexPersonalRules = ''
+    prefix_rule(pattern=["git", "add"], decision="allow")
+    prefix_rule(pattern=["git", "clone"], decision="allow")
+    prefix_rule(pattern=["git", "fetch"], decision="allow")
+    prefix_rule(pattern=["git", "ls-remote"], decision="allow")
+    prefix_rule(pattern=["git", "pull"], decision="allow")
+    prefix_rule(pattern=["gh", "pr", "merge"], decision="allow")
+    prefix_rule(pattern=["nix", "build"], decision="allow")
+    prefix_rule(pattern=["nix", "eval", "--impure", "--expr"], decision="allow")
+  '';
+  codexPersonalRulesFile = pkgs.writeText "codex-personal-default.rules" codexPersonalRules;
 
   codexWorkSettings = ''
     model = "gpt-5.5"
@@ -133,6 +148,17 @@ let
     [mcp_servers.sourcegraph]
     url = "https://lunar.sourcegraph.com/.api/mcp"
   '';
+
+  codexWorkRules = ''
+    prefix_rule(pattern=["docker", "version"], decision="allow")
+    prefix_rule(pattern=["git", "clone"], decision="allow")
+    prefix_rule(pattern=["git", "fetch"], decision="allow")
+    prefix_rule(pattern=["git", "ls-remote"], decision="allow")
+    prefix_rule(pattern=["git", "pull"], decision="allow")
+    prefix_rule(pattern=["git", "push", "origin"], decision="allow")
+    prefix_rule(pattern=["nix", "develop", "--command", "mill"], decision="allow")
+  '';
+  codexWorkRulesFile = pkgs.writeText "codex-work-default.rules" codexWorkRules;
 
   # Thin wrapper that reads sops-decrypted secrets into env vars,
   # then execs the nix-agents wrapper which handles profile detection
@@ -414,5 +440,33 @@ in
         '';
       })
     ];
+
+    home.activation.codexGitReadApprovalRules = lib.mkIf config.homeModules.codex.enable (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        install_codex_rules() {
+          local source_file="$1"
+          local target_file="$2"
+
+          mkdir -p "$(dirname "$target_file")"
+          touch "$target_file"
+          chmod u+w "$target_file" 2>/dev/null || true
+
+          while IFS= read -r rule; do
+            [ -n "$rule" ] || continue
+            if ! grep -qxF "$rule" "$target_file" 2>/dev/null; then
+              printf '%s\n' "$rule" >> "$target_file"
+            fi
+          done < "$source_file"
+        }
+
+        install_codex_rules \
+          "${codexPersonalRulesFile}" \
+          "$HOME/.config/nix-agents/codex/bases/personal/profiles/personal-default/rules/default.rules"
+
+        install_codex_rules \
+          "${codexWorkRulesFile}" \
+          "$HOME/.config/nix-agents/codex/bases/work/profiles/work-default/rules/default.rules"
+      ''
+    );
   };
 }
