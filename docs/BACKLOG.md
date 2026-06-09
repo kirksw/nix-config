@@ -13,6 +13,7 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P2 S Calibrate `model-bench` agent-binary criteria with harder scout repos and known-good/known-bad outputs (feat-model-bench-agent-verifier)
 - P2 M Add a stronger sandbox for `model-bench` code-execution verifiers on macOS/Linux (feat-model-bench review)
 - P2 S Teach `model-bench` to import live profile tier mappings from nix-agents metadata as a fallback to `tier-overrides.toml` (feat-model-bench)
 - P3 S Add more fixture variants per agent role to reduce overfitting in `model-bench` results (feat-model-bench)

@@ -5,9 +5,9 @@
 ## Status
 
 - [x] Plan
-- [ ] Implement
-- [ ] Test
-- [ ] Complete
+- [x] Implement
+- [x] Test
+- [x] Complete
 
 ## Context
 
@@ -18,7 +18,8 @@ The initial scout benchmark used a small log fixture and regex scoring. It was u
 ### Scope
 
 - `packages/model-bench/` runner, challenge schema, verifier schema, README, and scout challenge.
-- `docs/agents/feat-model-bench-agent-verifier.md` completion notes.
+- `docs/agents/completed/feat-model-bench-agent-verifier.md` completion notes.
+- `docs/BACKLOG.md` follow-up calibration item.
 
 ### Approach
 
@@ -40,9 +41,35 @@ The initial scout benchmark used a small log fixture and regex scoring. It was u
 Commands run to validate:
 
 ```sh
-# filled during implementation
+./scripts/check-structure.sh
+nix build .#model-bench --no-link
+nix run .#model-bench -- --list-challenges
+nix run .#model-bench -- --dry-run --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.3-codex-spark
+nix run .#model-bench -- --pi-bin "$tmpdir/fake-pi" --challenge scout-fluss-repo --results-dir "$results" --repo-cache-dir "$cache" --verifier-model judge-model
+nix run .#model-bench -- --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.3-codex-spark --runs 1
+nix flake check --no-build
 ```
 
 ## Summary
 
-_Filled in after completion, before moving to `docs/agents/completed/`._
+### What changed
+
+- Added git-backed challenge sources with cached clone/fetch support.
+- Added candidate-run tool selection through challenge `tools`.
+- Added `agent-binary` verifier using a separate Pi model to judge binary criteria.
+- Replaced the toy scout log challenge with a pinned Apache Fluss repository reconnaissance challenge.
+- Added explicit binary scout criteria such as purpose identification, module path coverage, versioned connector awareness, Maven/test-layout detection, no em-dashes, no fix suggestions, and concrete path evidence.
+
+### What was tested
+
+- Nix package build.
+- Challenge discovery and dry-run planning.
+- Fake Pi execution covering git source materialization and agent-binary verifier parsing.
+- Real one-run fast/scout comparison across the three candidate models.
+- `nix flake check --no-build`.
+
+### Follow-up
+
+Added to `docs/BACKLOG.md`:
+
+- P2 S Calibrate `model-bench` agent-binary criteria with harder scout repos and known-good/known-bad outputs.
