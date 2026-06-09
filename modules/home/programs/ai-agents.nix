@@ -10,6 +10,12 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   nixAgentsLib = inputs.nix-agents.lib.${system};
+  mkWrappedToolArgs =
+    args:
+    if (builtins.functionArgs nixAgentsLib.mkWrappedTool) ? syncMode then
+      args // { syncMode = "bootstrap"; }
+    else
+      args;
   localAgents = import ../../../agents { inherit pkgs; };
   localAgentsSrc = ../../../agents;
   agentInputs = inputs // {
@@ -177,7 +183,7 @@ let
     '';
 
   # Build the nix-agents wrapped tool for each target
-  opencodePkg = nixAgentsLib.mkWrappedTool {
+  opencodePkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "opencode";
     tool = pkgs.llm-agents.opencode;
@@ -195,9 +201,9 @@ let
       modules = nixAgentsModules;
       src = localAgentsSrc;
     };
-  };
+  });
 
-  claudePkg = nixAgentsLib.mkWrappedTool {
+  claudePkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "claude";
     tool = pkgs.llm-agents.claude-code;
@@ -213,9 +219,9 @@ let
       inputs = agentInputs;
       modules = nixAgentsModules;
     };
-  };
+  });
 
-  codexPkg = nixAgentsLib.mkWrappedTool {
+  codexPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "codex";
     tool = pkgs.llm-agents.codex;
@@ -231,9 +237,9 @@ let
       inputs = agentInputs;
       modules = nixAgentsModules;
     };
-  };
+  });
 
-  piPkg = nixAgentsLib.mkWrappedTool {
+  piPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "pi";
     tool = pkgs.llm-agents.pi;
@@ -251,7 +257,7 @@ let
       modules = piAgentsModules;
       src = localAgentsSrc;
     };
-  };
+  });
 in
 {
   options = {

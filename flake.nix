@@ -42,7 +42,7 @@
     };
 
     llm-agents.url = "github:numtide/llm-agents.nix";
-    nix-agents.url = "github:kirksw/nix-agents";
+    nix-agents.url = "github:kirksw/nix-agents/feat/wrapper-sync-mode";
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 

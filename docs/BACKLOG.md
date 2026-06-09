@@ -13,7 +13,8 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
-- P2 S Teach installed nix-agents wrappers to prefer a mutable `sync-agents` generation so stale wrappers do not overwrite manual sync output (feat-sync-agents-app)
+- P1 XS Run one final Darwin switch to install syncMode-aware wrappers on `lunar` (feat-wrapper-sync-mode)
+- P2 XS Merge nix-agents `feat/wrapper-sync-mode` upstream and point the flake input back to default branch (feat-wrapper-sync-mode)
 - P2 XS Add or document the missing `sync-agents` flake app referenced by the agent workflow (feat-pi-session-dir)
 - P2 S Upstream nix-agents Pi wrapper fix so generated profile sync never deletes or copies live session directories (feat-pi-session-dir)
 - P1 M Slim upstream `nix-agents` to engine/templates only after local config migration is stable (feat-local-agent-config)
@@ -31,3 +32,5 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 ## Done
 
 _Move items here when completed, with date._
+
+- 2026-06-09 P2 S Teach installed nix-agents wrappers to prefer a mutable `sync-agents` generation so stale wrappers do not overwrite manual sync output (feat-wrapper-sync-mode)

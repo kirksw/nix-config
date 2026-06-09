@@ -109,6 +109,8 @@ let
               "skills"
             ];
             files = [
+              "hook-manifest"
+              "skill-versions.json"
               "AGENTS.md"
               "opencode.json"
             ];
@@ -119,6 +121,8 @@ let
               "skills"
             ];
             files = [
+              "hook-manifest"
+              "skill-versions.json"
               "CLAUDE.md"
               "settings.json"
               ".mcp.json"
@@ -130,6 +134,8 @@ let
               "skills"
             ];
             files = [
+              "hook-manifest"
+              "skill-versions.json"
               "AGENTS.md"
               "mcp.nix.toml"
             ];
@@ -141,7 +147,11 @@ let
               "extensions"
               "prompts"
             ];
-            files = [ "AGENTS.md" ];
+            files = [
+              "hook-manifest"
+              "skill-versions.json"
+              "AGENTS.md"
+            ];
           };
         }
         .${target};
@@ -325,7 +335,7 @@ let
       echo "Dry run complete. No files were changed."
     else
       echo "Agent config sync complete. Restart agent sessions to pick up changes."
-      echo "Note: installed wrappers from an older Darwin generation may resync their embedded generation on launch."
+      echo "Note: pre-syncMode wrappers may resync their embedded generation on launch until the next Darwin switch."
     fi
   '';
 in
