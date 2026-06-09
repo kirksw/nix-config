@@ -5,5 +5,6 @@
   profiles.personal-default.tierMapping = {
     fast = lib.mkForce "openai-codex/gpt-5.4-mini";
     balanced = lib.mkForce "openai-codex/gpt-5.3-codex";
+    reasoning = lib.mkForce "openai-codex/gpt-5.5";
   };
 }
