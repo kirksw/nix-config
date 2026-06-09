@@ -10,7 +10,7 @@ This repo uses `nix-agents` as a library. Wrapped binaries are installed through
 ```bash
 ./scripts/check-structure.sh
 nix flake check --no-build
-nix run .#sync-work-skills
+nix run .#sync-agents
 ```
 
 Before running a sync app from memory or older docs, verify the actual outputs:
@@ -41,7 +41,8 @@ After modifying `agents/`, `modules/home/programs/ai-agents.nix`, or local agent
 
 1. `./scripts/check-structure.sh`
 2. `nix flake check --no-build`
-3. Build any touched package, for example `nix build .#agent-observe`
+3. `nix run .#sync-agents`
+4. Build any touched package, for example `nix build .#agent-observe`
 
 For Darwin/Home Manager changes, prefer build-oriented validation from the agent:
 
@@ -72,6 +73,7 @@ nix flake init -t github:kirksw/nix-agents
 ## Guardrails
 
 - Run `nix flake check --no-build` before committing
+- Use `nix run .#sync-agents` to roll out agent-only changes without `darwin-rebuild switch`
 - Do not edit the `result` symlink from `nix build`
 - Do not edit generated files under `~/.config/nix-agents` as the source of truth
 - If Nix reports daemon/socket or fetcher-lock permission errors, rerun with normal Nix access before changing code

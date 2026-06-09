@@ -163,7 +163,12 @@
           ;
       };
       mkApps = import ./flake/apps.nix {
-        inherit nixpkgs mylibs inputs;
+        inherit
+          nixpkgs
+          mylibs
+          inputs
+          self
+          ;
       };
       appCommandsBySystem = {
         aarch64-darwin = [

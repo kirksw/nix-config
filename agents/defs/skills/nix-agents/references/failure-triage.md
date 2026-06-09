@@ -46,4 +46,4 @@ Before running a documented sync app, verify the current outputs:
 nix flake show --all-systems 2>/dev/null | rg 'sync'
 ```
 
-This repo currently exposes `sync-work-skills`; older docs or feature plans may still mention `sync-agents`.
+This repo exposes `sync-agents` for full generated agent config sync and `sync-work-skills` for the narrower work-skill overlay. Prefer `sync-agents` for agent-only rollout.

@@ -21,4 +21,4 @@ Use this skill for all repo-specific Nix work in `nix-agents`.
 - Use the flake ops reference when validating or syncing changes.
 - For Nix failures, read the failure triage reference before changing code.
 - Treat Nix daemon/socket permission errors as sandbox access problems until reproduced with normal Nix access.
-- Verify actual flake apps before running documented sync commands; this repo currently exposes `sync-work-skills`, not `sync-agents`.
+- Verify actual flake apps before running documented sync commands; prefer `sync-agents` for agent-only rollout.
