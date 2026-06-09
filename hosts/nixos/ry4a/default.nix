@@ -10,6 +10,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./agent-microvms.nix
     ../../../modules/shared
     ../../../modules/nixos
   ];
@@ -119,10 +120,12 @@
   };
 
   # Gateway IP for microvm tap network
-  networking.interfaces.vm-test.ipv4.addresses = [{
-    address = "10.0.0.1";
-    prefixLength = 24;
-  }];
+  networking.interfaces.vm-test.ipv4.addresses = [
+    {
+      address = "10.0.0.1";
+      prefixLength = 24;
+    }
+  ];
   # systemd credential encryption setup. Override to use plain LoadCredential.
   systemd.services.libvirtd.serviceConfig = {
     LoadCredentialEncrypted = lib.mkForce "";
@@ -145,10 +148,12 @@
     autostart = false;
     config = {
       networking.hostName = "test-vm";
-      networking.interfaces.eth0.ipv4.addresses = [{
-        address = "10.0.0.2";
-        prefixLength = 24;
-      }];
+      networking.interfaces.eth0.ipv4.addresses = [
+        {
+          address = "10.0.0.2";
+          prefixLength = 24;
+        }
+      ];
       networking.defaultGateway = {
         address = "10.0.0.1";
         interface = "eth0";
@@ -163,11 +168,13 @@
       microvm = {
         mem = 512;
         vcpu = 1;
-        interfaces = [{
-          type = "tap";
-          id = "vm-test";
-          mac = "02:00:00:00:00:01";
-        }];
+        interfaces = [
+          {
+            type = "tap";
+            id = "vm-test";
+            mac = "02:00:00:00:00:01";
+          }
+        ];
       };
     };
   };
