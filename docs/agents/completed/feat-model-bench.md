@@ -29,7 +29,7 @@ Affected files/modules:
 
 1. Add a Python stdlib-only package `model-bench` with `meta.mainProgram = "model-bench"` so `nix run .#model-bench` works.
 2. Use Pi's documented non-interactive JSON mode:
-   - `pi --mode json --no-session --no-tools --model <provider/model> --thinking <level> -- <prompt>`.
+   - `pi --mode json --no-session --no-tools --model <provider/model> --thinking <level> <prompt>`.
 3. Resolve tier models from `tier-overrides.toml`, with CLI overrides via `--models tier=model`.
 4. Add `--compare-models model1,model2,...` to run the same selected challenge(s) against candidate models in one sweep.
 5. Add one starter challenge per agent role:

@@ -60,7 +60,6 @@ def run_pi(
         model,
         "--thinking",
         thinking,
-        "--",
         prompt,
     ]
     resolved_pi = shutil.which(pi_bin) if os.sep not in pi_bin else pi_bin
