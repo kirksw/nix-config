@@ -13,6 +13,9 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P2 M Add a stronger sandbox for `model-bench` code-execution verifiers on macOS/Linux (feat-model-bench review)
+- P2 S Teach `model-bench` to import live profile tier mappings from nix-agents metadata as a fallback to `tier-overrides.toml` (feat-model-bench)
+- P3 S Add more fixture variants per agent role to reduce overfitting in `model-bench` results (feat-model-bench)
 - P1 XS Run one final Darwin switch to install syncMode-aware wrappers on `lunar` (feat-wrapper-sync-mode)
 - P2 XS Merge nix-agents `feat/wrapper-sync-mode` upstream and point the flake input back to default branch (feat-wrapper-sync-mode)
 - P2 XS Add or document the missing `sync-agents` flake app referenced by the agent workflow (feat-pi-session-dir)
