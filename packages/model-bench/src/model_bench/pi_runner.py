@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
+import tempfile
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,71 +60,81 @@ def run_pi(
         model,
         "--thinking",
         thinking,
+        "--",
         prompt,
     ]
+    resolved_pi = shutil.which(pi_bin) if os.sep not in pi_bin else pi_bin
+    if not resolved_pi or not os.access(resolved_pi, os.X_OK):
+        raise FileNotFoundError(f"Pi binary is not executable or not found: {pi_bin}")
+    cmd[0] = resolved_pi
     env = os.environ.copy()
     env.setdefault("PI_SKIP_VERSION_CHECK", "1")
     start = time.monotonic()
+    stderr_file = tempfile.TemporaryFile(mode="w+t")
     proc = subprocess.Popen(
         cmd,
         cwd=cwd,
         env=env,
         text=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=stderr_file,
         bufsize=1,
     )
+
+    timed_out = False
+
+    def kill_for_timeout() -> None:
+        nonlocal timed_out
+        timed_out = True
+        proc.kill()
+
+    timer = threading.Timer(timeout_seconds, kill_for_timeout)
+    timer.start()
 
     event_count = 0
     first_text_seconds: float | None = None
     final_text = ""
     deltas: list[str] = []
 
+    def handle_line(line: str) -> None:
+        nonlocal event_count, first_text_seconds, final_text
+        if not line.strip():
+            return
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            return
+        event_count += 1
+        if event.get("type") == "message_update":
+            assistant_event = event.get("assistantMessageEvent", {})
+            if assistant_event.get("type") == "text_delta":
+                delta = assistant_event.get("delta")
+                if isinstance(delta, str) and delta:
+                    if first_text_seconds is None:
+                        first_text_seconds = time.monotonic() - start
+                    deltas.append(delta)
+        if event.get("type") in {"message_end", "turn_end"}:
+            text = _extract_text_from_message(event.get("message", {}))
+            if text:
+                final_text = text
+
     assert proc.stdout is not None
     try:
         for line in proc.stdout:
-            if time.monotonic() - start > timeout_seconds:
-                proc.kill()
-                raise subprocess.TimeoutExpired(cmd, timeout_seconds)
-            if not line.strip():
-                continue
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            event_count += 1
-            if event.get("type") == "message_update":
-                assistant_event = event.get("assistantMessageEvent", {})
-                if assistant_event.get("type") == "text_delta":
-                    delta = assistant_event.get("delta")
-                    if isinstance(delta, str) and delta:
-                        if first_text_seconds is None:
-                            first_text_seconds = time.monotonic() - start
-                        deltas.append(delta)
-            if event.get("type") == "message_end":
-                text = _extract_text_from_message(event.get("message", {}))
-                if text:
-                    final_text = text
-            if event.get("type") == "turn_end":
-                text = _extract_text_from_message(event.get("message", {}))
-                if text:
-                    final_text = text
+            handle_line(line)
+        proc.wait(timeout=5)
     finally:
-        stdout_tail, stderr = proc.communicate(timeout=5)
-        for line in stdout_tail.splitlines():
-            if not line.strip():
-                continue
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            event_count += 1
-            if event.get("type") in {"message_end", "turn_end"}:
-                text = _extract_text_from_message(event.get("message", {}))
-                if text:
-                    final_text = text
+        timer.cancel()
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait(timeout=5)
 
     wall = time.monotonic() - start
+    stderr_file.seek(0)
+    stderr = stderr_file.read()
+    stderr_file.close()
+    if timed_out:
+        raise subprocess.TimeoutExpired(cmd, timeout_seconds)
     if not final_text and deltas:
         final_text = "".join(deltas)
 

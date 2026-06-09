@@ -9,7 +9,7 @@ from typing import Any
 
 
 def timestamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
 
 
 def write_json(path: Path, value: Any) -> None:
@@ -17,8 +17,10 @@ def write_json(path: Path, value: Any) -> None:
 
 
 def append_jsonl(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a") as fh:
         fh.write(json.dumps(value, sort_keys=True) + "\n")
+        fh.flush()
 
 
 def median(values: list[float]) -> float | None:
@@ -104,7 +106,14 @@ def read_history(path: Path, limit: int) -> list[dict]:
     if not path.exists():
         return []
     lines = path.read_text().splitlines()
-    values = [json.loads(line) for line in lines if line.strip()]
+    values = []
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            values.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
     return values[-limit:]
 
 

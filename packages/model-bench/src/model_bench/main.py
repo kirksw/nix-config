@@ -94,7 +94,47 @@ def _planned_runs(challenges: list[Challenge], config, args: argparse.Namespace)
     return planned
 
 
+def _validate_args(args: argparse.Namespace) -> None:
+    if args.runs is not None and args.runs <= 0:
+        raise ValueError("--runs must be > 0")
+    if args.timeout is not None and args.timeout <= 0:
+        raise ValueError("--timeout must be > 0")
+
+
+def _failure_record(
+    *,
+    run_id: str,
+    challenge: Challenge,
+    model: str,
+    thinking: str,
+    run_index: int,
+    wall_seconds: float,
+    error: str,
+    stderr: str,
+) -> dict:
+    return {
+        "runId": run_id,
+        "challengeId": challenge.challenge_id,
+        "tier": challenge.tier,
+        "agent": challenge.agent,
+        "model": model,
+        "thinking": thinking,
+        "runIndex": run_index,
+        "passed": False,
+        "score": 0.0,
+        "wallSeconds": round(wall_seconds, 4),
+        "firstTextSeconds": None,
+        "outputChars": 0,
+        "eventCount": 0,
+        "returncode": -1,
+        "stderr": stderr[-2000:],
+        "verification": {"passed": False, "score": 0.0, "details": {"error": error}},
+        "output": "",
+    }
+
+
 def _run(args: argparse.Namespace) -> int:
+    _validate_args(args)
     _, config_path, challenges_dir, fixtures_dir = _paths(args)
     config = load_config(config_path, parse_model_overrides(args.models))
     challenges = _filter_challenges(discover_challenges(challenges_dir, fixtures_dir), args)
@@ -160,25 +200,27 @@ def _run(args: argparse.Namespace) -> int:
                             "output": pi_result.output,
                         }
                     except subprocess.TimeoutExpired as exc:
-                        record = {
-                            "runId": run_id,
-                            "challengeId": challenge.challenge_id,
-                            "tier": challenge.tier,
-                            "agent": challenge.agent,
-                            "model": model,
-                            "thinking": thinking,
-                            "runIndex": run_index,
-                            "passed": False,
-                            "score": 0.0,
-                            "wallSeconds": timeout,
-                            "firstTextSeconds": None,
-                            "outputChars": 0,
-                            "eventCount": 0,
-                            "returncode": -1,
-                            "stderr": str(exc),
-                            "verification": {"passed": False, "score": 0.0, "details": {"error": "timeout"}},
-                            "output": "",
-                        }
+                        record = _failure_record(
+                            run_id=run_id,
+                            challenge=challenge,
+                            model=model,
+                            thinking=thinking,
+                            run_index=run_index,
+                            wall_seconds=timeout,
+                            error="timeout",
+                            stderr=str(exc),
+                        )
+                    except Exception as exc:
+                        record = _failure_record(
+                            run_id=run_id,
+                            challenge=challenge,
+                            model=model,
+                            thinking=thinking,
+                            run_index=run_index,
+                            wall_seconds=0.0,
+                            error=exc.__class__.__name__,
+                            stderr=str(exc),
+                        )
                     records.append(record)
                     append_jsonl(run_jsonl, record)
 

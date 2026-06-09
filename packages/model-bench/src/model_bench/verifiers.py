@@ -20,8 +20,13 @@ def _regex_verify(output: str, spec: dict) -> Verification:
     forbidden = list(spec.get("forbiddenRegex", []))
     flags = re.IGNORECASE | re.MULTILINE | re.DOTALL
 
-    matched = [pattern for pattern in required if re.search(pattern, output, flags)]
-    missed = [pattern for pattern in required if pattern not in matched]
+    matched: list[str] = []
+    missed: list[str] = []
+    for pattern in required:
+        if re.search(pattern, output, flags):
+            matched.append(pattern)
+        else:
+            missed.append(pattern)
     forbidden_hits = [pattern for pattern in forbidden if re.search(pattern, output, flags)]
 
     total = len(required) + len(forbidden)
@@ -50,6 +55,15 @@ def _extract_python(output: str) -> str:
 
 def _python_unittest_verify(output: str, spec: dict, fixture_root: Path) -> Verification:
     code = _extract_python(output)
+    forbidden_code = list(spec.get("forbiddenCodeRegex", []))
+    flags = re.IGNORECASE | re.MULTILINE | re.DOTALL
+    code_hits = [pattern for pattern in forbidden_code if re.search(pattern, code, flags)]
+    if code_hits:
+        return Verification(
+            passed=False,
+            score=0.0,
+            details={"error": "generated code matched forbiddenCodeRegex", "forbiddenCodeHits": code_hits},
+        )
     test_rel = spec["testFile"]
     test_path = fixture_root / test_rel
     with tempfile.TemporaryDirectory(prefix="model-bench-test-") as tmp:
@@ -57,7 +71,7 @@ def _python_unittest_verify(output: str, spec: dict, fixture_root: Path) -> Veri
         (tmp_path / "solution.py").write_text(code + "\n")
         (tmp_path / "test_solution.py").write_text(test_path.read_text())
         proc = subprocess.run(
-            ["python3", "-m", "unittest", "-v", "test_solution.py"],
+            ["python3", "-I", "-m", "unittest", "-v", "test_solution.py"],
             cwd=tmp_path,
             text=True,
             capture_output=True,

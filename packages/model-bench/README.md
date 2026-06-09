@@ -58,4 +58,6 @@ Challenges are TOML files with:
 Verifier types:
 
 - `regex` — scores required/forbidden regular expressions.
-- `python-unittest` — extracts a Python code block, writes it to `solution.py`, and runs a stdlib unittest fixture.
+- `python-unittest` — extracts a Python code block, writes it to `solution.py`, rejects configured dangerous code patterns, and runs a stdlib unittest fixture with `python3 -I`.
+
+> Security note: `python-unittest` still executes model-generated code on the host. It is intended for trusted local evaluation only. Keep code challenges small, pure, and guarded with `forbiddenCodeRegex` patterns.

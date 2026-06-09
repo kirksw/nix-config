@@ -30,3 +30,16 @@ Requirements:
 type = "python-unittest"
 testFile = "code-monkey/test_normalize_events.py"
 timeoutSeconds = 30
+forbiddenCodeRegex = [
+  "import\\s+os",
+  "import\\s+subprocess",
+  "from\\s+os\\s+import",
+  "from\\s+subprocess\\s+import",
+  "__import__",
+  "eval\\s*\\(",
+  "exec\\s*\\(",
+  "open\\s*\\(",
+  "socket",
+  "pathlib",
+  "shutil"
+]

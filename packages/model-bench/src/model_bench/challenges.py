@@ -57,4 +57,19 @@ def load_challenge(path: Path, fixture_root: Path) -> Challenge:
 
 def discover_challenges(challenges_dir: Path, fixture_root: Path) -> list[Challenge]:
     paths = sorted(challenges_dir.glob("**/*.toml"))
-    return [load_challenge(path, fixture_root) for path in paths]
+    challenges: list[Challenge] = []
+    seen: set[str] = set()
+    for path in paths:
+        try:
+            challenge = load_challenge(path, fixture_root)
+        except Exception as exc:
+            raise ValueError(f"failed to load challenge {path}: {exc}") from exc
+        if challenge.challenge_id in seen:
+            raise ValueError(f"duplicate challenge id {challenge.challenge_id!r} in {path}")
+        seen.add(challenge.challenge_id)
+        if challenge.runs <= 0:
+            raise ValueError(f"challenge {challenge.challenge_id!r} must have runs > 0")
+        if challenge.timeout_seconds <= 0:
+            raise ValueError(f"challenge {challenge.challenge_id!r} must have timeoutSeconds > 0")
+        challenges.append(challenge)
+    return challenges
