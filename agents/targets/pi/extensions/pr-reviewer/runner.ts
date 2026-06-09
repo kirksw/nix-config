@@ -212,44 +212,57 @@ function getFinalAssistantText(messages: Message[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
     if (msg.role === "assistant") {
-      for (const part of msg.content) {
-        if (part.type === "text" && part.text.trim()) return part.text;
-      }
+      const text = msg.content
+        .filter((part) => part.type === "text" && part.text.trim())
+        .map((part) => (part.type === "text" ? part.text : ""))
+        .join("\n");
+      if (text.trim()) return text;
     }
   }
   return "";
 }
 
-async function writePromptFile(name: string, prompt: string): Promise<{ dir: string; file: string }> {
-  const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "pi-prreview-"));
+async function makeTempDir(): Promise<string> {
+  return fs.promises.mkdtemp(path.join(os.tmpdir(), "pi-prreview-"));
+}
+
+async function writeTempFile(dir: string, kind: string, name: string, content: string): Promise<string> {
   const safe = name.replace(/[^\w.-]+/g, "_");
-  const file = path.join(dir, `prompt-${safe}.md`);
-  await fs.promises.writeFile(file, prompt, { encoding: "utf8", mode: 0o600 });
-  return { dir, file };
+  const file = path.join(dir, `${kind}-${safe}.md`);
+  await fs.promises.writeFile(file, content, { encoding: "utf8", mode: 0o600 });
+  return file;
 }
 
 /**
  * Run a single ephemeral pi subprocess and return its final assistant text.
  */
 export async function runPi(name: string, opts: RunPiOptions): Promise<RunPiResult> {
-  const args = ["--mode", "json", "-p", "--no-session"];
+  const args = [
+    "--mode",
+    "json",
+    "-p",
+    "--no-session",
+    "--no-context-files",
+    "--no-skills",
+    "--no-prompt-templates",
+  ];
   if (opts.model) args.push("--model", opts.model);
   if (opts.tools && opts.tools.length > 0) args.push("--tools", opts.tools.join(","));
   else args.push("--no-tools");
 
   let tmpDir: string | null = null;
-  let tmpFile: string | null = null;
   const messages: Message[] = [];
   let stderr = "";
   let stopReason: string | undefined;
   let wasAborted = false;
 
   try {
-    const tmp = await writePromptFile(name, opts.systemPrompt);
-    tmpDir = tmp.dir;
-    tmpFile = tmp.file;
-    args.push("--append-system-prompt", tmpFile);
-    args.push(opts.task);
+    tmpDir = await makeTempDir();
+    const systemPromptFile = await writeTempFile(tmpDir, "system", name, opts.systemPrompt);
+    const taskFile = await writeTempFile(tmpDir, "task", name, opts.task);
+    args.push("--append-system-prompt", systemPromptFile);
+    // Pass the PR task via @file so large diffs do not exceed OS argv limits.
+    args.push(`@${taskFile}`);
 
     const exitCode = await new Promise<number>((resolve) => {
       const proc: ChildProcess = spawn("pi", args, {
@@ -288,7 +301,10 @@ export async function runPi(name: string, opts: RunPiOptions): Promise<RunPiResu
         if (buffer.trim()) processLine(buffer);
         resolve(code ?? 0);
       });
-      proc.on("error", () => resolve(1));
+      proc.on("error", (err) => {
+        stderr += `${err.message}\n`;
+        resolve(1);
+      });
 
       if (opts.signal) {
         const kill = () => {
@@ -310,16 +326,9 @@ export async function runPi(name: string, opts: RunPiOptions): Promise<RunPiResu
       stderr,
     };
   } finally {
-    if (tmpFile) {
-      try {
-        fs.unlinkSync(tmpFile);
-      } catch {
-        /* ignore */
-      }
-    }
     if (tmpDir) {
       try {
-        fs.rmdirSync(tmpDir);
+        fs.rmSync(tmpDir, { recursive: true, force: true });
       } catch {
         /* ignore */
       }

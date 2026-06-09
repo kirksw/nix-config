@@ -56,6 +56,12 @@ function modelString(ctx: ExtensionContext): string | undefined {
   return m.provider ? `${m.provider}/${m.id}` : m.id;
 }
 
+function runPiFailure(res: Awaited<ReturnType<typeof runPi>>): string {
+  const reason = res.stopReason ?? `exit ${res.exitCode}`;
+  const stderr = res.stderr.trim();
+  return stderr ? `${reason}: ${stderr.slice(0, 500)}` : reason;
+}
+
 /** Run one reviewer with up to MAX_ROUNDS, fulfilling info requests between rounds. */
 async function runReviewer(
   ctx: ExtensionContext,
@@ -77,6 +83,9 @@ async function runReviewer(
       return { reviewer: id, issues: collected, ok: collected.length > 0, error: (err as Error).message };
     }
     if (res.stopReason === "aborted") return { reviewer: id, issues: collected, ok: false, error: "aborted" };
+    if (res.exitCode !== 0 && !res.text.trim()) {
+      return { reviewer: id, issues: collected, ok: collected.length > 0, error: runPiFailure(res) };
+    }
 
     const parsed = extractJson<ReviewerOutput>(res.text);
     if (!parsed) {
@@ -84,7 +93,7 @@ async function runReviewer(
         reviewer: id,
         issues: collected,
         ok: collected.length > 0,
-        error: collected.length > 0 ? undefined : `could not parse output (${res.stopReason ?? `exit ${res.exitCode}`})`,
+        error: collected.length > 0 ? undefined : `could not parse output (${runPiFailure(res)})`,
       };
     }
 
@@ -204,6 +213,9 @@ export default function (pi: ExtensionAPI) {
           signal: ctx.signal,
         });
         const sum = extractJson<SummaryOutput>(sumRes.text);
+        if (!sum) {
+          ctx.ui.notify(`Summary failed: ${runPiFailure(sumRes)}`, "warning");
+        }
         const summaryText = sum?.summary || sumRes.text.trim() || "(no summary available)";
         const major = sum?.majorBehaviorChange ?? false;
         const tier: Tier = finalTier(base, major);
