@@ -51,7 +51,7 @@ let
         builtins.toJSON {
           inherit (assistant) name kbRepo;
           role = "persistent-openclaw-assistant";
-          bootstrap = "Install sandboxed OpenClaw and provision GitHub/LLM credentials manually after first boot.";
+          bootstrap = "Install sandboxed OpenClaw and provision GitHub/LLM credentials manually after first boot. Persistent state lives in /var/lib/openclaw and /srv/assistant.";
         }
       );
     in
@@ -67,6 +67,12 @@ let
             "nix-command"
             "flakes"
           ];
+
+          environment.variables = {
+            OPENCLAW_HOME = "/var/lib/openclaw";
+            ASSISTANT_KB_REPO_FILE = "/etc/assistant/kb-repo";
+            ASSISTANT_WORKSPACE = "/srv/assistant/workspace";
+          };
 
           environment.systemPackages = with pkgs; [
             curl
@@ -92,6 +98,8 @@ let
             agent = {
               isNormalUser = true;
               description = "Persistent OpenClaw assistant operator";
+              home = "/srv/assistant/home";
+              createHome = true;
               extraGroups = [ "wheel" ];
               openssh.authorizedKeys.keys = [ rootSshKey ];
             };
@@ -123,7 +131,12 @@ let
 
           systemd.tmpfiles.rules = [
             "d /srv/assistant 0755 agent users -"
+            "d /srv/assistant/home 0700 agent users -"
             "d /srv/assistant/workspace 0755 agent users -"
+            "d /srv/assistant/kb 0755 agent users -"
+            "d /var/lib/openclaw 0700 agent users -"
+            "d /var/lib/openclaw/config 0700 agent users -"
+            "d /var/lib/openclaw/state 0700 agent users -"
           ];
 
           microvm = {
@@ -142,6 +155,20 @@ let
                 image = "/var/lib/microvms/${assistant.name}/assistant.img";
                 mountPoint = "/srv/assistant";
                 size = 20480;
+                fsType = "ext4";
+                autoCreate = true;
+              }
+              {
+                image = "/var/lib/microvms/${assistant.name}/tailscale.img";
+                mountPoint = "/var/lib/tailscale";
+                size = 1024;
+                fsType = "ext4";
+                autoCreate = true;
+              }
+              {
+                image = "/var/lib/microvms/${assistant.name}/openclaw.img";
+                mountPoint = "/var/lib/openclaw";
+                size = 8192;
                 fsType = "ext4";
                 autoCreate = true;
               }
