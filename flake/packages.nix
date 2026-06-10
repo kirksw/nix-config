@@ -14,7 +14,9 @@ let
   );
   packageArgs =
     name:
-    if name == "swe-pruner-mcp" then
+    if name == "backend-practices-mcp" then
+      { backendEngineeringPractices = inputs.backend-engineering-practices; }
+    else if name == "swe-pruner-mcp" then
       { inherit inputs; }
     else if name == "multica-selfhost" then
       { inherit (packages) multica; }

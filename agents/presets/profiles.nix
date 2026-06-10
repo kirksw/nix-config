@@ -103,6 +103,7 @@ _: {
       ];
       mcpServers = [
         "agent-observe"
+        "backend-practices"
         "swe-pruner"
         "granola"
       ];

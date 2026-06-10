@@ -42,8 +42,8 @@ let
     echo "Done!"
   '';
 
-  # Sync backend-engineering-practices skills to work profile directories.
-  # nix-agents wrappers handle the rest (agent config sync happens at wrapper runtime).
+  # Legacy/manual compatibility helper. The default work profile uses the
+  # backend-practices MCP server so these skills are loaded on demand.
   syncSkills = pkgs.writeShellScriptBin "sync-work-skills" ''
     set -euo pipefail
 
@@ -86,7 +86,8 @@ let
     inherit self;
   };
   nixAgentsLib = inputs.nix-agents.lib.${system};
-  agentModulesFor = target: if target == "pi" then localAgents.piModules else localAgents.defaultModules;
+  agentModulesFor =
+    target: if target == "pi" then localAgents.piModules else localAgents.defaultModules;
 
   profileMetaFor =
     target:
@@ -319,18 +320,6 @@ let
 
     ${allSyncCommands}
 
-    source_skills="${inputs.backend-engineering-practices}/skills"
-    if [ -d "$source_skills" ]; then
-      echo "Syncing backend-engineering-practices skills to work profiles"
-      for target in opencode claude codex pi; do
-        target_dir="$CONFIG_BASE/$target/bases/work/profiles/work-default/skills"
-        if [ -d "$target_dir" ]; then
-          run ${pkgs.coreutils}/bin/cp -R "$source_skills"/. "$target_dir/"
-          echo "  -> $target_dir"
-        fi
-      done
-    fi
-
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "Dry run complete. No files were changed."
     else
@@ -366,7 +355,7 @@ in
     type = "app";
     program = "${syncSkills}/bin/sync-work-skills";
     meta = {
-      description = "Sync backend-engineering-practices skills to work profile directories.";
+      description = "Legacy/manual sync for backend-engineering-practices skills.";
     };
   };
 

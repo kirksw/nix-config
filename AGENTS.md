@@ -63,7 +63,7 @@ Every agent-related change follows a plan-implement-test-complete cycle:
 4. **Complete**: fill in the summary section of the plan doc and move it to `docs/agents/completed/feat-<name>.md`.
 5. **Backlog**: any remaining follow-up items or new ideas discovered during the work must be added to `docs/BACKLOG.md` with an effort estimate and priority.
 
-Wrapped tools sync generated agent assets to local profile roots at runtime. Work skill overlays can be refreshed with `nix run .#sync-work-skills`.
+Wrapped tools sync generated agent assets to local profile roots at runtime. Work-only backend engineering practices are exposed through the `backend-practices` MCP server and loaded on demand; `sync-work-skills` is retained only as a legacy/manual overlay helper.
 
 ## Backlog Management
 All todo items are tracked in `docs/BACKLOG.md`. Each item must include:

@@ -25,7 +25,7 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 
 - Update flake inputs: `nix flake update`
 - Update custom packages: `nix run .#update-packages`
-- Sync work-only skill overlays after wrapper-generated assets exist: `nix run .#sync-work-skills`
+- Sync generated agent assets: `nix run .#sync-agents`
 - Check structure rules: `./scripts/check-structure.sh`
 
 ## Conventions
@@ -40,3 +40,4 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 - `deploy` is intentionally retained as a custom flake output for `deploy-rs` compatibility.
 - `nix flake check` may print `unknown flake output 'deploy'`; this warning is expected.
 - `nix-agents` is consumed as the reusable generator/wrapper library; concrete agent configuration lives in `agents/`.
+- Work-only backend engineering practices are exposed through the `backend-practices` MCP server and loaded on demand.

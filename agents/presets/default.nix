@@ -20,6 +20,7 @@
     ../defs/skills/grill-me
     ../defs/skills/microvm-agent
     ../defs/mcps/agent-observe.nix
+    ../defs/mcps/backend-practices.nix
     ../defs/mcps/granola.nix
     ../defs/mcps/swe-pruner.nix
     # NOTE: session-write hooks require pkgs and must be wired in flake.nix:
