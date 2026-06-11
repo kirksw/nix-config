@@ -28,6 +28,10 @@ secrets/*.key
 # Logs
 *.log
 
+# Python
+__pycache__/
+*.py[cod]
+
 # Local environment
 .env
 .env.local
