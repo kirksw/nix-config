@@ -1,0 +1,4 @@
+This directory is intentionally kept without local Pi prompt flows.
+
+External prompt packages should be wired through the Pi package registry instead
+of added here ad hoc.

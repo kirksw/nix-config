@@ -25,6 +25,12 @@ let
   # Modules shared across all target builds
   nixAgentsModules = localAgents.defaultModules;
   piAgentsModules = localAgents.piModules;
+  piPackages = import ../../../agents/external/pi-packages { inherit lib; };
+  piPackageRefs = piPackages.packageRefs;
+
+  piPersonalSettings = builtins.toJSON {
+    packages = piPackageRefs;
+  };
 
   piWorkSettings = builtins.toJSON {
     defaultProvider = "openai";
@@ -38,7 +44,7 @@ let
       "claude-opus-4-8"
       "claude-sonnet-4-6"
     ];
-    packages = [ "npm:pi-mcp-adapter@2.8.0" ];
+    packages = piPackageRefs ++ [ "npm:pi-mcp-adapter@2.8.0" ];
   };
 
   piWorkModels = builtins.toJSON {
@@ -433,6 +439,7 @@ in
         "nix-agents/codex/bases/work/settings/config.toml".text = codexWorkSettings;
       })
       (lib.mkIf config.homeModules.piCodingAgent.enable {
+        "nix-agents/pi/bases/personal/settings/settings.json".text = piPersonalSettings;
         "nix-agents/pi/bases/work/settings/mcp.json".text = piWorkMcp;
         "nix-agents/pi/bases/work/settings/models.json".text = piWorkModels;
         "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
