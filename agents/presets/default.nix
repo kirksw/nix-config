@@ -22,6 +22,8 @@
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/backend-practices.nix
     ../defs/mcps/granola.nix
+    ../defs/mcps/linear.nix
+    ../defs/mcps/sourcegraph.nix
     ../defs/mcps/swe-pruner.nix
     # NOTE: session-write hooks require pkgs and must be wired in flake.nix:
     #   modules = defaultModules ++ [ (import ./defs/hooks/session-write.nix { inherit pkgs; }) ];

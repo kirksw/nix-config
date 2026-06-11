@@ -23,6 +23,7 @@ Canonical naming is `<base>/<profile>`.
 
 - path prefixes:
   - `~/git/github.com/lunarway/`
+  - `~/git/github.com/kirksw/lunar-notes`
   - `~/projects/lunar/`
 - default profile: `default`
 

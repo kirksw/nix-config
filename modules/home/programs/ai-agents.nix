@@ -52,6 +52,14 @@ let
         auth = "oauth";
         lifecycle = "lazy";
       };
+      linear = {
+        url = "https://mcp.linear.app/mcp";
+        lifecycle = "lazy";
+      };
+      sourcegraph = {
+        url = "https://lunar.sourcegraph.com/.api/mcp";
+        lifecycle = "lazy";
+      };
       slack = {
         command = "npx";
         args = [
@@ -133,6 +141,9 @@ let
     [projects."/Users/kisw/git/github.com/lunarway/capi-workload-clusters"]
     trust_level = "trusted"
 
+    [projects."/Users/kisw/git/github.com/kirksw/lunar-notes"]
+    trust_level = "trusted"
+
     [notice.model_migrations]
     "gpt-5.3-codex" = "gpt-5.4"
 
@@ -142,11 +153,6 @@ let
     [tui.model_availability_nux]
     "gpt-5.5" = 4
 
-    [mcp_servers.linear]
-    url = "https://mcp.linear.app/mcp"
-
-    [mcp_servers.sourcegraph]
-    url = "https://lunar.sourcegraph.com/.api/mcp"
   '';
 
   codexWorkRules = ''
@@ -170,7 +176,7 @@ let
 
       is_lunar_project() {
         case "$(pwd)" in
-          "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/projects/lunar|"$HOME"/projects/lunar/*)
+          "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunar-notes|"$HOME"/git/github.com/kirksw/lunar-notes/*|"$HOME"/projects/lunar|"$HOME"/projects/lunar/*)
             return 0
             ;;
           *)

@@ -46,6 +46,7 @@ _: {
     work = {
       pathPrefixes = [
         "~/git/github.com/lunarway/"
+        "~/git/github.com/kirksw/lunar-notes"
         "~/projects/lunar/"
       ];
       providers = [ "work-openai-key" ];
@@ -106,6 +107,8 @@ _: {
         "backend-practices"
         "swe-pruner"
         "granola"
+        "linear"
+        "sourcegraph"
       ];
       tierMapping = {
         ultrafast = "openai/gpt-5.3-codex-spark";
