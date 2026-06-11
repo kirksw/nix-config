@@ -74,13 +74,14 @@ let
   piWorkAuth = builtins.toJSON {
     openai = {
       type = "api_key";
-      key = "OPENAI_API_KEY";
+      key = "$OPENAI_API_KEY";
     };
     anthropic = {
       type = "api_key";
-      key = "ANTHROPIC_API_KEY";
+      key = "$ANTHROPIC_API_KEY";
     };
   };
+  piWorkAuthFile = pkgs.writeText "pi-work-auth.json" piWorkAuth;
 
   codexPersonalSettings = ''
     approvals_reviewer = "guardian_subagent"
@@ -432,7 +433,6 @@ in
         "nix-agents/codex/bases/work/settings/config.toml".text = codexWorkSettings;
       })
       (lib.mkIf config.homeModules.piCodingAgent.enable {
-        "nix-agents/pi/bases/work/settings/auth.json".text = piWorkAuth;
         "nix-agents/pi/bases/work/settings/mcp.json".text = piWorkMcp;
         "nix-agents/pi/bases/work/settings/models.json".text = piWorkModels;
         "nix-agents/pi/bases/work/settings/settings.json".text = piWorkSettings;
@@ -446,6 +446,26 @@ in
         '';
       })
     ];
+
+    home.activation.piWorkAuthSeed = lib.mkIf config.homeModules.piCodingAgent.enable (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        auth_target="$HOME/.config/nix-agents/pi/bases/work/settings/auth.json"
+
+        mkdir -p "$(dirname "$auth_target")"
+
+        if [ -L "$auth_target" ]; then
+          rm "$auth_target"
+        fi
+
+        if [ ! -e "$auth_target" ]; then
+          if [ -e "$auth_target.backup" ]; then
+            mv "$auth_target.backup" "$auth_target"
+          else
+            install -m 0600 "${piWorkAuthFile}" "$auth_target"
+          fi
+        fi
+      ''
+    );
 
     home.activation.codexGitReadApprovalRules = lib.mkIf config.homeModules.codex.enable (
       lib.hm.dag.entryAfter [ "writeBoundary" ] ''
