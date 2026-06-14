@@ -20,7 +20,7 @@
     ../defs/skills/grill-me
     ../defs/skills/microvm-agent
     ../defs/mcps/agent-observe.nix
-    ../defs/mcps/backend-practices.nix
+    ../defs/mcps/lunar-skills.nix
     ../defs/mcps/granola.nix
     ../defs/mcps/linear.nix
     ../defs/mcps/sourcegraph.nix

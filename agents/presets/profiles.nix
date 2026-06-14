@@ -104,7 +104,7 @@ _: {
       ];
       mcpServers = [
         "agent-observe"
-        "backend-practices"
+        "lunar-skills"
         "swe-pruner"
         "granola"
         "linear"

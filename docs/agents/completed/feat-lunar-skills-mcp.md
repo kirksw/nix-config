@@ -1,4 +1,4 @@
-# feat-backend-practices-mcp
+# feat-lunar-skills-mcp
 
 > Expose backend-engineering-practices skills to work profiles through MCP instead of eagerly syncing them as profile skills.
 
@@ -42,12 +42,12 @@ The desired behavior is to keep work profiles lean and expose those practices th
 Commands run to validate:
 
 ```sh
-python3 -m py_compile packages/backend-practices-mcp/server.py
-nixfmt packages/backend-practices-mcp/default.nix agents/defs/mcps/backend-practices.nix agents/presets/default.nix agents/presets/profiles.nix flake/packages.nix flake/apps.nix
-printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}\n{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"lunar_skills_search","arguments":{"query":"postgres"}}}\n' | python3 packages/backend-practices-mcp/server.py --skills-root /nix/store/aw0sfdspriyvdr0fvvsq749kx9ylpxsf-source/skills
+python3 -m py_compile packages/lunar-skills-mcp/server.py
+nixfmt packages/lunar-skills-mcp/default.nix agents/defs/mcps/lunar-skills.nix agents/presets/default.nix agents/presets/profiles.nix flake/packages.nix flake/apps.nix
+printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}\n{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"lunar_skills_search","arguments":{"query":"postgres"}}}\n' | python3 packages/lunar-skills-mcp/server.py --skills-root /nix/store/aw0sfdspriyvdr0fvvsq749kx9ylpxsf-source/skills
 nix eval --impure --json --expr 'let flake = builtins.getFlake (toString ./.); pkgs = import flake.inputs.nixpkgs { system = "aarch64-darwin"; }; localAgents = import ./agents { inherit pkgs; }; system = flake.inputs.nix-agents.lib.aarch64-darwin.mkAgentSystem { inherit pkgs; target = "codex"; inputs = flake.inputs // { self = flake; }; modules = localAgents.defaultModules; profile = "work-default"; }; in { skills = builtins.attrNames (builtins.readDir (system + "/skills")); mcp = builtins.readFile (system + "/mcp.nix.toml"); }'
-nix build path:.#backend-practices-mcp
-printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"lunar_skills_read","arguments":{"name":"postgres-sqlc"}}}\n' | ./result/bin/backend-practices-mcp
+nix build path:.#lunar-skills-mcp
+printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"lunar_skills_read","arguments":{"name":"postgres-sqlc"}}}\n' | ./result/bin/lunar-skills-mcp
 ./scripts/check-structure.sh
 nix flake check --no-build
 nix run .#sync-agents -- --dry-run
@@ -57,16 +57,16 @@ nix run .#sync-agents -- --dry-run
 
 ### What changed
 
-- Added `packages/backend-practices-mcp`, a small stdio MCP server that indexes the locked `backend-engineering-practices` `skills/` tree.
+- Added `packages/lunar-skills-mcp`, a small stdio MCP server that indexes the locked `backend-engineering-practices` `skills/` tree.
 - Added MCP tools to list, search, read a skill, and read a skill reference/script on demand.
-- Registered `backend-practices` as a local MCP server and enabled it for `work-default`.
+- Registered `lunar-skills` as a local MCP server and enabled it for `work-default`.
 - Removed the automatic backend practice skill overlay copy from `sync-agents`, so work profile skills stay limited to the configured local allowlist.
 
 ### What was tested
 
 - Python syntax and direct MCP protocol smoke tests passed.
-- The Nix package builds through `path:.#backend-practices-mcp`.
-- Generated Codex `work-default` config includes the `backend-practices` MCP server, while generated skills remain `grill-me`, `nix-agents`, `parallel-reviews`, `session-heuristics`, and `system-context`.
+- The Nix package builds through `path:.#lunar-skills-mcp`.
+- Generated Codex `work-default` config includes the `lunar-skills` MCP server, while generated skills remain `grill-me`, `nix-agents`, `parallel-reviews`, `session-heuristics`, and `system-context`.
 - `./scripts/check-structure.sh`, `nix flake check --no-build`, and `nix run .#sync-agents -- --dry-run` passed.
 
 ### Follow-up

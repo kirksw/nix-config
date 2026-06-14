@@ -43,7 +43,7 @@ let
   '';
 
   # Legacy/manual compatibility helper. The default work profile uses the
-  # backend-practices MCP server so these skills are loaded on demand.
+  # lunar-skills MCP server so these skills are loaded on demand.
   syncSkills = pkgs.writeShellScriptBin "sync-work-skills" ''
     set -euo pipefail
 
@@ -85,9 +85,54 @@ let
   agentInputs = inputs // {
     inherit self;
   };
+  agentBaseSettings = import ../agents/base-settings.nix {
+    inherit
+      self
+      lib
+      system
+      ;
+  };
+  agentBaseSettingsTargets = agentBaseSettings.targets;
   nixAgentsLib = inputs.nix-agents.lib.${system};
   agentModulesFor =
     target: if target == "pi" then localAgents.piModules else localAgents.defaultModules;
+
+  settingsDirFor =
+    target: baseName: files:
+    pkgs.runCommandLocal "nix-agents-${target}-${baseName}-base-settings" { } ''
+      mkdir -p "$out"
+      ${lib.concatMapStringsSep "\n" (
+        fileName:
+        let
+          source = pkgs.writeText "nix-agents-${target}-${baseName}-${baseNameOf fileName}" files.${fileName};
+        in
+        ''
+          mkdir -p "$(dirname "$out/${fileName}")"
+          cp "${source}" "$out/${fileName}"
+        ''
+      ) (builtins.attrNames files)}
+    '';
+
+  syncBaseSettingsCommands =
+    target:
+    let
+      baseSettings = agentBaseSettingsTargets.${target} or { };
+      syncBase =
+        baseName: files:
+        let
+          settingsDir = "$CONFIG_BASE/${target}/bases/${baseName}/settings";
+          storeSettingsDir = settingsDirFor target baseName files;
+          settingNames = builtins.attrNames files;
+          fileCommands = lib.concatMapStringsSep "\n" (fileName: ''
+            seed_mutable_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}" 0644
+          '') settingNames;
+        in
+        ''
+          echo "Bootstrapping ${target}/${baseName}/settings"
+          ${fileCommands}
+        '';
+    in
+    lib.concatStringsSep "\n" (lib.mapAttrsToList syncBase baseSettings);
 
   profileMetaFor =
     target:
@@ -197,6 +242,20 @@ let
     ]
   );
 
+  allBaseSettingsCommands = lib.concatStringsSep "\n" (
+    map syncBaseSettingsCommands [
+      "opencode"
+      "claude"
+      "codex"
+      "pi"
+    ]
+  );
+
+  piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
+  codexPersonalRulesFile = pkgs.writeText "codex-personal-default.rules" agentBaseSettings.codexRules.personal-default;
+  codexWorkRulesFile = pkgs.writeText "codex-work-default.rules" agentBaseSettings.codexRules.work-default;
+  piKanbanPatchDir = ../agents/external/pi-packages/patches/pi-kanban;
+
   syncAgents = pkgs.writeShellScriptBin "sync-agents" ''
     set -euo pipefail
 
@@ -266,14 +325,70 @@ let
       fi
     }
 
+    seed_mutable_file() {
+      source_file="$1"
+      target_file="$2"
+      mode="$3"
+
+      run ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$target_file")"
+
+      if [ -L "$target_file" ]; then
+        run ${pkgs.coreutils}/bin/rm "$target_file"
+      fi
+
+      if [ ! -e "$target_file" ]; then
+        if [ -e "$target_file.backup" ]; then
+          run ${pkgs.coreutils}/bin/mv "$target_file.backup" "$target_file"
+        else
+          run ${pkgs.coreutils}/bin/install -m "$mode" "$source_file" "$target_file"
+        fi
+      fi
+    }
+
+    install_lines_once() {
+      source_file="$1"
+      target_file="$2"
+
+      run ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$target_file")"
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "DRY-RUN install_lines_once $source_file $target_file"
+        return 0
+      fi
+
+      touch "$target_file"
+      chmod u+w "$target_file" 2>/dev/null || true
+
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        if ! grep -qxF "$line" "$target_file" 2>/dev/null; then
+          printf '%s\n' "$line" >> "$target_file"
+        fi
+      done < "$source_file"
+    }
+
+    remove_stale_base_setting_links() {
+      profile_dir="$1"
+      for stale in "$profile_dir"/*.backup "$profile_dir"/*.hm-symlink "$profile_dir"/.sync-agents-generated; do
+        if [ -L "$stale" ]; then
+          run ${pkgs.coreutils}/bin/rm "$stale"
+        fi
+      done
+    }
+
     link_base_settings() {
       settings_dir="$1"
       profile_dir="$2"
+      remove_stale_base_setting_links "$profile_dir"
       if [ -d "$settings_dir" ]; then
         for f in "$settings_dir"/*; do
           [ -f "$f" ] || continue
           name="''${f##*/}"
           [ "$name" = "env" ] && continue
+          case "$name" in
+            .*|*.backup|*.hm-symlink)
+              continue
+              ;;
+          esac
           run ${pkgs.coreutils}/bin/ln -sfn "$f" "$profile_dir/$name" 2>/dev/null || true
         done
       fi
@@ -282,12 +397,18 @@ let
     link_base_settings_except_config_toml() {
       settings_dir="$1"
       profile_dir="$2"
+      remove_stale_base_setting_links "$profile_dir"
       if [ -d "$settings_dir" ]; then
         for f in "$settings_dir"/*; do
           [ -f "$f" ] || continue
           name="''${f##*/}"
           [ "$name" = "env" ] && continue
           [ "$name" = "config.toml" ] && continue
+          case "$name" in
+            .*|*.backup|*.hm-symlink)
+              continue
+              ;;
+          esac
           run ${pkgs.coreutils}/bin/ln -sfn "$f" "$profile_dir/$name" 2>/dev/null || true
         done
       fi
@@ -318,7 +439,46 @@ let
       fi
     }
 
+    apply_pi_kanban_patch() {
+      patch_dir="${piKanbanPatchDir}"
+      for profile_root in \
+        "$CONFIG_BASE/pi/bases/personal/profiles/personal-default" \
+        "$CONFIG_BASE/pi/bases/work/profiles/work-default"; do
+        package_dir="$profile_root/npm/node_modules/pi-kanban"
+        if [ ! -d "$package_dir" ]; then
+          continue
+        fi
+        echo "Patching pi-kanban at $package_dir"
+        run ${pkgs.coreutils}/bin/chmod -R u+w "$package_dir" 2>/dev/null || true
+        run ${pkgs.coreutils}/bin/mkdir -p \
+          "$package_dir/lib" \
+          "$package_dir/public" \
+          "$package_dir/extensions"
+        run ${pkgs.coreutils}/bin/cp "$patch_dir/lib/pi-parsers.js" "$package_dir/lib/pi-parsers.js"
+        run ${pkgs.coreutils}/bin/cp "$patch_dir/server.js" "$package_dir/server.js"
+        run ${pkgs.coreutils}/bin/cp "$patch_dir/public/app.js" "$package_dir/public/app.js"
+        run ${pkgs.coreutils}/bin/cp "$patch_dir/extensions/kanban.ts.txt" "$package_dir/extensions/kanban.ts"
+      done
+    }
+
+    ${allBaseSettingsCommands}
+
+    seed_mutable_file \
+      "${piWorkAuthFile}" \
+      "$CONFIG_BASE/pi/bases/work/settings/auth.json" \
+      0600
+
     ${allSyncCommands}
+
+    apply_pi_kanban_patch
+
+    install_lines_once \
+      "${codexPersonalRulesFile}" \
+      "$CONFIG_BASE/codex/bases/personal/profiles/personal-default/rules/default.rules"
+
+    install_lines_once \
+      "${codexWorkRulesFile}" \
+      "$CONFIG_BASE/codex/bases/work/profiles/work-default/rules/default.rules"
 
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "Dry run complete. No files were changed."

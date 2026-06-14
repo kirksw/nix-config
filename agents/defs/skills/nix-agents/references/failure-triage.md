@@ -46,4 +46,4 @@ Before running a documented sync app, verify the current outputs:
 nix flake show --all-systems 2>/dev/null | rg 'sync'
 ```
 
-This repo exposes `sync-agents` for full generated agent config sync. Backend engineering practice skills are exposed to work profiles through the `backend-practices` MCP server; `sync-work-skills` remains available only as a legacy/manual overlay helper.
+This repo exposes `sync-agents` for full generated agent config sync. Lunar backend practice skills are exposed to work profiles through the `lunar-skills` MCP server; `sync-work-skills` remains available only as a legacy/manual overlay helper.

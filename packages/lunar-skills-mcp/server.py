@@ -192,7 +192,7 @@ class McpServer:
                     {
                         "protocolVersion": "2024-11-05",
                         "capabilities": {"tools": {}},
-                        "serverInfo": {"name": "backend-practices-mcp", "version": "0.1.0"},
+                        "serverInfo": {"name": "lunar-skills-mcp", "version": "0.1.0"},
                     },
                 )
             if method == "tools/list":
