@@ -12,6 +12,36 @@ let
     packages = piPackageRefs;
   };
 
+  # Temporary shim until pi-coding-agent's built-in ZAI model registry includes GLM-5.2.
+  piPersonalModels = builtins.toJSON {
+    providers.zai.models = [
+      {
+        id = "glm-5.2";
+        name = "GLM-5.2";
+        reasoning = true;
+        input = [ "text" ];
+        cost = {
+          input = 0;
+          output = 0;
+          cacheRead = 0;
+          cacheWrite = 0;
+        };
+        compat = {
+          supportsDeveloperRole = false;
+          thinkingFormat = "zai";
+          zaiToolStream = true;
+        };
+        thinkingLevelMap = {
+          low = "high";
+          high = "max";
+          xhigh = "max";
+        };
+        contextWindow = 1000000;
+        maxTokens = 131072;
+      }
+    ];
+  };
+
   piWorkSettings = builtins.toJSON {
     defaultProvider = "openai";
     defaultModel = "gpt-5.4";
@@ -183,6 +213,7 @@ in
 
     pi = {
       personal = {
+        "models.json" = piPersonalModels;
         "settings.json" = piPersonalSettings;
       };
       work = {

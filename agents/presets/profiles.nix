@@ -75,8 +75,8 @@ _: {
       tierMapping = {
         ultrafast = "minimax/minimax-m2.7-highspeed";
         fast = "openai/gpt-5.4-mini";
-        powerful = "zai/glm-5.2";
-        reasoning = "zai/glm-5.2";
+        powerful = "openai/gpt-5.5";
+        reasoning = "openai/gpt-5.5";
       };
     };
 
