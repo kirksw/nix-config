@@ -13,6 +13,7 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P2 S Upstream pi-kanban configurable session roots and parallel dashboard support, then remove the local vendor patch (feat-pi-kanban-session-aware)
 - P1 XS Run Darwin switch and `nix run .#sync-agents` after work MCP mapping lands so live Codex base settings pick up the deduped MCP source of truth (feat-work-sourcegraph-mcp)
 - P1 M Bootstrap sandboxed OpenClaw and GitHub/LLM credentials inside `personal-assistant`, `household-assistant`, and `work-assistant` after first boot (feat-agent-microvms)
 - P2 S Calibrate `model-bench` agent-binary criteria with harder scout repos and known-good/known-bad outputs (feat-model-bench-agent-verifier)
