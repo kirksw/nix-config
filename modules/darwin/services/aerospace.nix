@@ -131,7 +131,7 @@ let
   asPrimaryUser = command: ''
     launchctl asuser "$(id -u -- ${lib.escapeShellArg primaryUser})" sudo --user=${lib.escapeShellArg primaryUser} -- ${command}
   '';
-  captureAerospaceState = pkgs.writeShellScript "capture-aerospace-state" ''
+  captureAerospaceState = pkgs.writeShellScriptBin "capture-aerospace-switch-state" ''
     set -eu
 
     export PATH="${shellPath}:/usr/bin:/bin"
@@ -176,7 +176,7 @@ let
     touch "$marker"
     echo "AeroSpace: saved $(wc -l < "$state_dir/windows.tsv" | tr -d ' ') windows for restore" >&2
   '';
-  restoreAerospaceState = pkgs.writeShellScript "restore-aerospace-state" ''
+  restoreAerospaceState = pkgs.writeShellScriptBin "restore-aerospace-switch-state" ''
     set -eu
 
     export PATH="${shellPath}:/usr/bin:/bin"
@@ -281,12 +281,12 @@ in
 
   config = lib.mkIf config.darwinModules.aerospace.enable {
     system.activationScripts.preActivation.text = lib.mkBefore ''
-      ${asPrimaryUser captureAerospaceState}
+      ${asPrimaryUser "${captureAerospaceState}/bin/capture-aerospace-switch-state"}
     '';
 
     system.activationScripts.postActivation.text = lib.mkAfter ''
       if [ -f ${lib.escapeShellArg stateDir}/restore-needed ]; then
-        ${asPrimaryUser restoreAerospaceState}
+        ${asPrimaryUser "${restoreAerospaceState}/bin/restore-aerospace-switch-state"}
       else
         echo "AeroSpace: no saved switch state to restore" >&2
       fi
@@ -294,6 +294,8 @@ in
 
     environment.systemPackages = [
       pkgs.aerospace
+      captureAerospaceState
+      restoreAerospaceState
     ];
 
     launchd.user.agents.aerospace = {

@@ -14,12 +14,37 @@ fi
 
 HOSTNAME="$1"; shift || true
 FLAKE_SYSTEM="darwinConfigurations.${HOSTNAME}.system"
+SWITCH_FAILED=0
+
+restore_aerospace_on_failure() {
+  status=$?
+  if [ "$status" -eq 0 ] || [ "$SWITCH_FAILED" -ne 1 ]; then
+    return "$status"
+  fi
+
+  echo "${YELLOW}Switch failed; attempting AeroSpace layout restore...${NC}" >&2
+  if [ -x ./result/sw/bin/restore-aerospace-switch-state ]; then
+    ./result/sw/bin/restore-aerospace-switch-state || true
+  elif command -v restore-aerospace-switch-state >/dev/null 2>&1; then
+    restore-aerospace-switch-state || true
+  elif [ -x /run/current-system/sw/bin/restore-aerospace-switch-state ]; then
+    /run/current-system/sw/bin/restore-aerospace-switch-state || true
+  else
+    echo "${YELLOW}AeroSpace restore helper is not available in this generation.${NC}" >&2
+  fi
+
+  return "$status"
+}
+
+trap restore_aerospace_on_failure EXIT
 
 echo "${YELLOW}Starting build...${NC}"
 nix --extra-experimental-features 'nix-command flakes' build ".#${FLAKE_SYSTEM}" "$@"
 
 echo "${YELLOW}Switching to new generation...${NC}"
+SWITCH_FAILED=1
 ./result/sw/bin/darwin-rebuild switch --flake ".#${HOSTNAME}" "$@"
+SWITCH_FAILED=0
 
 echo "${YELLOW}Cleaning up...${NC}"
 if [ -L ./result ]; then
