@@ -18,7 +18,7 @@ function threadLine(thread: ThreadRecord): string {
 }
 
 export function trackerSection(data: LifeOsData): string {
-	const lines = ["# LifeOS Tracker", "", `Threads: ${data.threads.length}`, ""];
+	const lines = ["# Thread OS Tracker", "", `Threads: ${data.threads.length}`, ""];
 	for (const [status, threads] of groupBy(
 		data.threads,
 		(thread) => thread.status,
@@ -48,9 +48,9 @@ export function trackerSection(data: LifeOsData): string {
 
 export function trackerFallback(): string {
 	return [
-		"# LifeOS Tracker",
+		"# Thread OS Tracker",
 		"",
-		"This file is updated by the Pi LifeOS extension. Manual notes can live outside the generated block.",
+		"This file is updated by the Pi Thread OS extension. Manual notes can live outside the generated block.",
 		"",
 		"<!-- lifeos:generated:start -->",
 		"_Generated tracker state will appear here._",
@@ -76,7 +76,7 @@ export async function renderFocus(
 ): Promise<RenderResult> {
 	return writeGeneratedSection(
 		path.join(workspacePath, "FOCUS.md"),
-		"# LifeOS Focus\n\n",
+		"# Thread OS Focus\n\n",
 		markdown,
 	);
 }

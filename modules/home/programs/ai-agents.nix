@@ -36,7 +36,7 @@ let
 
       is_lunar_project() {
         case "$(pwd)" in
-          "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunar-notes|"$HOME"/git/github.com/kirksw/lunar-notes/*|"$HOME"/projects/lunar|"$HOME"/projects/lunar/*)
+          "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunar-notes|"$HOME"/git/github.com/kirksw/lunar-notes/*|"$HOME"/git/github.com/kirksw/lunarOS|"$HOME"/git/github.com/kirksw/lunarOS/*|"$HOME"/projects/lunar|"$HOME"/projects/lunar/*)
             return 0
             ;;
           *)

@@ -13,8 +13,8 @@ const execFileAsync = promisify(execFile) as (
 	options?: Record<string, unknown>,
 ) => Promise<{ stdout: string; stderr: string }>;
 
-export interface LifeOsContext {
-	repoPath: string;
+export interface ThreadOsContext {
+	repoPath: string | null;
 	repoExists: boolean;
 	scope: Scope | null;
 	scopeReason: string;
@@ -24,11 +24,21 @@ export interface LifeOsContext {
 	writeDisabledReason?: string;
 }
 
-export function defaultRepoPath(): string {
-	return (
-		process.env.LIFEOS_REPO ??
-		path.join(process.env.HOME ?? "/Users/kisw", "git/github.com/kirksw/lifeOS")
-	);
+export function defaultRepoPath(scope: Scope | null): string | null {
+	const home = process.env.HOME ?? "/Users/kisw";
+	if (scope === "personal") {
+		return (
+			process.env.THREAD_OS_PERSONAL_REPO ??
+			path.join(home, "git/github.com/kirksw/lifeOS")
+		);
+	}
+	if (scope === "lunar") {
+		return (
+			process.env.THREAD_OS_WORK_REPO ??
+			path.join(home, "git/github.com/kirksw/lunarOS")
+		);
+	}
+	return null;
 }
 
 async function directoryExists(p: string): Promise<boolean> {
@@ -40,15 +50,20 @@ async function directoryExists(p: string): Promise<boolean> {
 	}
 }
 
-export async function resolveLifeOsContext(
+function resolveWorkspacePath(repoPath: string): string {
+	return path.join(repoPath, "workspace");
+}
+
+export async function resolveThreadOsContext(
 	ctx?: ExtensionContext,
-): Promise<LifeOsContext> {
-	const repoPath = defaultRepoPath();
-	const repoExists = await directoryExists(repoPath);
+): Promise<ThreadOsContext> {
 	const scope: ScopeResolution = resolveScope(ctx);
-	const workspacePath = scope.scope
-		? path.join(repoPath, "workspaces", scope.scope)
-		: null;
+	const repoPath = defaultRepoPath(scope.scope);
+	const repoExists = repoPath ? await directoryExists(repoPath) : false;
+	const workspacePath =
+		scope.scope && repoPath && repoExists
+			? resolveWorkspacePath(repoPath)
+			: null;
 	const storePath = workspacePath
 		? path.join(workspacePath, ".lifeos", "db")
 		: null;
@@ -57,11 +72,15 @@ export async function resolveLifeOsContext(
 		: false;
 
 	let writeDisabledReason: string | undefined;
-	if (!repoExists) writeDisabledReason = `LifeOS repo not found at ${repoPath}`;
-	else if (!scope.scope)
+	if (!scope.scope) {
 		writeDisabledReason = `scope is ambiguous (${scope.reason})`;
-	else if (!workspaceExists)
+	} else if (!repoPath) {
+		writeDisabledReason = `repo path could not be resolved for scope ${scope.scope}`;
+	} else if (!repoExists) {
+		writeDisabledReason = `Thread OS repo not found at ${repoPath}`;
+	} else if (!workspaceExists) {
 		writeDisabledReason = `workspace not found at ${workspacePath}`;
+	}
 
 	return {
 		repoPath,
@@ -94,8 +113,8 @@ export async function gitDirty(repoPath: string): Promise<string> {
 }
 
 export function requireWritable(
-	lifeos: LifeOsContext,
-): asserts lifeos is LifeOsContext & {
+	lifeos: ThreadOsContext,
+): asserts lifeos is ThreadOsContext & {
 	scope: Scope;
 	workspacePath: string;
 	storePath: string;
@@ -106,6 +125,8 @@ export function requireWritable(
 		!lifeos.workspacePath ||
 		!lifeos.storePath
 	) {
-		throw new Error(lifeos.writeDisabledReason ?? "LifeOS writes are disabled");
+		throw new Error(
+			lifeos.writeDisabledReason ?? "Thread OS writes are disabled",
+		);
 	}
 }

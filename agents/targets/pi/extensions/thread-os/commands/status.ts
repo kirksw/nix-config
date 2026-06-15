@@ -1,6 +1,6 @@
 /// <reference path="../types.d.ts" />
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import type { LifeOsContext } from "../core/repo.js";
+import type { ThreadOsContext } from "../core/repo.js";
 import { gitDirty } from "../core/repo.js";
 
 export type ActiveThreadLookup = (
@@ -8,16 +8,17 @@ export type ActiveThreadLookup = (
 ) => string | undefined;
 
 export async function statusMarkdown(
-	lifeos: LifeOsContext,
+	lifeos: ThreadOsContext,
 	activeThread: ActiveThreadLookup,
 ): Promise<string> {
-	const dirty = lifeos.repoExists
-		? await gitDirty(lifeos.repoPath)
-		: "repo missing";
+	const dirty =
+		lifeos.repoExists && lifeos.repoPath
+			? await gitDirty(lifeos.repoPath)
+			: "repo missing";
 	return [
-		"# LifeOS status",
+		"# Thread OS status",
 		"",
-		`- Repo: ${lifeos.repoPath}`,
+		`- Repo: ${lifeos.repoPath ?? "n/a"}`,
 		`- Repo exists: ${lifeos.repoExists ? "yes" : "no"}`,
 		`- Scope: ${lifeos.scope ?? "unknown"}`,
 		`- Scope reason: ${lifeos.scopeReason}`,
@@ -33,7 +34,7 @@ export async function statusMarkdown(
 export async function handleStatus(
 	_args: string,
 	ctx: ExtensionContext,
-	lifeos: LifeOsContext,
+	lifeos: ThreadOsContext,
 	activeThread: ActiveThreadLookup,
 ): Promise<string> {
 	void ctx;

@@ -15,9 +15,9 @@ function hasToken(value: string | undefined, token: string): boolean {
 }
 
 export function resolveScope(ctx?: ExtensionContext): ScopeResolution {
-	const explicit = process.env.LIFEOS_SCOPE?.toLowerCase();
+	const explicit = process.env.THREAD_OS_SCOPE?.toLowerCase();
 	if (explicit === "personal" || explicit === "lunar") {
-		return { scope: explicit, reason: "LIFEOS_SCOPE" };
+		return { scope: explicit, reason: "THREAD_OS_SCOPE" };
 	}
 
 	const envPairs: Array<[string, string | undefined]> = [

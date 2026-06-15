@@ -1,5 +1,7 @@
 # LifeOS Native Pi Extension v0 Implementation Plan
 
+> Historical note: this command surface was later renamed to `thread-os` and split across `lifeOS` (personal) and `lunarOS` (work) repos by `feat-thread-os`.
+
 Date: 2026-06-14
 Status: implemented (manual-command v0)
 Source design: `/Users/kisw/git/github.com/kirksw/lifeOS/workspaces/personal/threads/lifeos-memory-system/artifacts/lifeos-v0-design.md`

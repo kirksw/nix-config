@@ -13,10 +13,10 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
-- P2 M Add LifeOS metric/link management commands so focus scoring can create and maintain `metrics.jsonl` plus `contributes_to` edges from Pi (feat-lifeos-pi-extension-v0)
-- P2 L Add conservative LifeOS thread routing and small context injection after manual command usage proves stable (feat-lifeos-pi-extension-v0)
-- P3 M Add `/lifeos evolve` recommendation flow with `/grill-me` adoption review once enough LifeOS records exist (feat-lifeos-pi-extension-v0)
-- P2 S Enhance lifeOS session hook with richer semantic associativity once Pi exposes stable transcript/session-summary payloads (feat-lifeos-session-hook)
+- P2 M Add Thread OS metric/link management commands so focus scoring can create and maintain `metrics.jsonl` plus `contributes_to` edges from Pi across lifeOS and lunarOS (feat-thread-os)
+- P2 L Add conservative Thread OS thread routing and small context injection after manual command usage proves stable (feat-thread-os)
+- P3 M Add `/thread-os evolve` recommendation flow with `/grill-me` adoption review once enough Thread OS records exist (feat-thread-os)
+- P2 S Enhance the Thread OS session hook with richer semantic associativity once Pi exposes stable transcript/session-summary payloads (feat-thread-os)
 - P2 S Upstream pi-kanban configurable session roots and parallel dashboard support, then remove the local vendor patch (feat-pi-kanban-session-aware)
 - P1 XS Run Darwin switch and `nix run .#sync-agents` after work MCP mapping lands so live Codex base settings pick up the deduped MCP source of truth (feat-work-sourcegraph-mcp)
 - P1 M Bootstrap sandboxed OpenClaw and GitHub/LLM credentials inside `personal-assistant`, `household-assistant`, and `work-assistant` after first boot (feat-agent-microvms)

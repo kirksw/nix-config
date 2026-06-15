@@ -1,8 +1,8 @@
 import type { ScoredThread } from "../core/scoring.js";
 
 export function focusMarkdown(scored: ScoredThread[], limit = 8): string {
-	if (scored.length === 0) return "# LifeOS Focus\n\nNo active threads yet.\n";
-	const lines = ["# LifeOS Focus", "", "Recommended threads:", ""];
+	if (scored.length === 0) return "# Thread OS Focus\n\nNo active threads yet.\n";
+	const lines = ["# Thread OS Focus", "", "Recommended threads:", ""];
 	for (const item of scored.slice(0, limit)) {
 		lines.push(`## ${item.thread.title}`);
 		lines.push("");

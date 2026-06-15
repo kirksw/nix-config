@@ -9,5 +9,5 @@ export function emit(
 	if (ctx.ui.setEditorText) {
 		ctx.ui.setEditorText(message.endsWith("\n") ? message : `${message}\n`);
 	}
-	ctx.ui.notify(message.split("\n")[0] || "LifeOS", level);
+	ctx.ui.notify(message.split("\n")[0] || "Thread OS", level);
 }

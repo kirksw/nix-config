@@ -22,7 +22,7 @@ export function threadReadmeFallback(thread: ThreadRecord): string {
 		`# ${thread.title}`,
 		"",
 		"<!-- lifeos:generated:start -->",
-		"_Generated LifeOS state will appear here._",
+		"_Generated Thread OS state will appear here._",
 		"<!-- lifeos:generated:end -->",
 		"",
 		"## Manual notes",
@@ -43,7 +43,7 @@ export function threadGeneratedSection(
 		.slice(-5)
 		.reverse();
 	return [
-		"## LifeOS state",
+		"## Thread OS state",
 		"",
 		`- Status: ${thread.status}`,
 		`- Stage: ${thread.stage}`,
@@ -64,7 +64,10 @@ export function threadGeneratedSection(
 	].join("\n");
 }
 
-function safeThreadReadmePath(workspacePath: string, thread: ThreadRecord): string {
+function safeThreadReadmePath(
+	workspacePath: string,
+	thread: ThreadRecord,
+): string {
 	const workspace = path.resolve(workspacePath);
 	const readme = path.resolve(workspace, thread.path, "README.md");
 	const relative = path.relative(workspace, readme);

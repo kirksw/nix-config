@@ -1,5 +1,7 @@
 # feat-lifeos-session-hook
 
+> Historical note: this hook was later updated by `feat-thread-os` to route personal sessions to `lifeOS` and work sessions to `lunarOS`.
+
 > Write Pi session-end summaries into the reset lifeOS workspace repository.
 
 ## Status
