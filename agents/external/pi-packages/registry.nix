@@ -93,4 +93,15 @@
     ];
     source = "https://pi.dev/packages/pi-lens";
   };
+
+  ponytail = {
+    enabled = true;
+    ref = "git:github.com/DietrichGebert/ponytail@687c1b339872289d70f65c5eaabce850b1663867";
+    version = "687c1b339872289d70f65c5eaabce850b1663867";
+    types = [
+      "extension"
+      "skill"
+    ];
+    source = "https://github.com/DietrichGebert/ponytail";
+  };
 }

@@ -9,11 +9,14 @@ let
 
   packageRef =
     name: package:
-    let
-      npmName = package.npmName or name;
-      version = package.version;
-    in
-    "npm:${npmName}@${version}";
+    if package ? ref then
+      package.ref
+    else
+      let
+        npmName = package.npmName or name;
+        version = package.version;
+      in
+      "npm:${npmName}@${version}";
 
   packageRefs = lib.mapAttrsToList packageRef enabledPackages;
 in
