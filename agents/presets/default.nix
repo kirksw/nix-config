@@ -18,7 +18,7 @@
     ../defs/skills/add-module
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
-    ../defs/skills/microvm-agent
+    ../defs/skills/homelab
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/lunar-skills.nix
     ../defs/mcps/granola.nix
