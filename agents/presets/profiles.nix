@@ -111,6 +111,7 @@ _: {
         "lunar-skills"
         "swe-pruner"
         "granola"
+        "hubble-mcp-dev"
         "linear"
         "sourcegraph"
       ];

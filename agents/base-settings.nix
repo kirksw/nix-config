@@ -76,6 +76,11 @@ let
         command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
         lifecycle = "lazy";
       };
+      hubble-mcp-dev = {
+        url = "https://hubble-mcp.dev.lunar.tech/mcp/";
+        auth = "oauth";
+        lifecycle = "lazy";
+      };
       sourcegraph = {
         url = "https://lunar.sourcegraph.com/.api/mcp";
         lifecycle = "lazy";
