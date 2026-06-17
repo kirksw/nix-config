@@ -105,8 +105,10 @@ _: {
         "parallel-reviews"
         "session-heuristics"
         "system-context"
+        "what-if"
       ];
       mcpServers = [
+        "1password"
         "agent-observe"
         "lunar-skills"
         "swe-pruner"

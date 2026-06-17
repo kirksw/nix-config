@@ -80,14 +80,7 @@
     '';
     delegatesTo = [ ];
     permissions = {
-      edit = {
-        default = "deny";
-        rules = {
-          "*.md" = "allow";
-          "*.mdx" = "allow";
-          "*.markdown" = "allow";
-        };
-      };
+      edit = "allow";
       bash = {
         default = "deny";
         rules = {
@@ -96,7 +89,7 @@
           "git show*" = "allow";
           "git status*" = "allow";
           "git rev-parse*" = "allow";
-          "rg *" = "allow";
+          "rg*" = "allow";
         };
       };
       task = "deny";

@@ -48,7 +48,7 @@
           "git status*" = "allow";
           "git rev-parse*" = "allow";
           "git merge-base*" = "allow";
-          "rg *" = "allow";
+          "rg*" = "allow";
         };
       };
       task = "deny";

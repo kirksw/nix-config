@@ -92,113 +92,113 @@ let
     );
 
   notesCli = pkgs.writeShellScriptBin "notes-capture" ''
-    set -euo pipefail
+        set -euo pipefail
 
-    usage() {
-      cat <<'EOF'
-Usage: n [--context CONTEXT] <note text>
-       command | n [--context CONTEXT]
-EOF
-    }
+        usage() {
+          cat <<'EOF'
+    Usage: n [--context CONTEXT] <note text>
+           command | n [--context CONTEXT]
+    EOF
+        }
 
-    context=""
+        context=""
 
-    while [ "$#" -gt 0 ]; do
-      case "$1" in
-        --context)
-          if [ "$#" -lt 2 ]; then
-            echo "n: --context requires a value" >&2
-            exit 1
-          fi
-          context="$2"
-          shift 2
-          ;;
-        --help|-h)
-          usage
-          exit 0
-          ;;
-        --)
-          shift
-          break
-          ;;
-        -*)
-          echo "n: unknown option: $1" >&2
+        while [ "$#" -gt 0 ]; do
+          case "$1" in
+            --context)
+              if [ "$#" -lt 2 ]; then
+                echo "n: --context requires a value" >&2
+                exit 1
+              fi
+              context="$2"
+              shift 2
+              ;;
+            --help|-h)
+              usage
+              exit 0
+              ;;
+            --)
+              shift
+              break
+              ;;
+            -*)
+              echo "n: unknown option: $1" >&2
+              usage >&2
+              exit 1
+              ;;
+            *)
+              break
+              ;;
+          esac
+        done
+
+        body_file="$(mktemp)"
+        cleanup() {
+          rm -f "$body_file"
+        }
+        trap cleanup EXIT
+
+        if [ "$#" -gt 0 ]; then
+          printf '%s\n' "$*" > "$body_file"
+        elif [ ! -t 0 ]; then
+          cat > "$body_file"
+        else
           usage >&2
           exit 1
-          ;;
-        *)
-          break
-          ;;
-      esac
-    done
+        fi
 
-    body_file="$(mktemp)"
-    cleanup() {
-      rm -f "$body_file"
-    }
-    trap cleanup EXIT
+        if [ ! -s "$body_file" ]; then
+          echo "n: note body is empty" >&2
+          exit 1
+        fi
 
-    if [ "$#" -gt 0 ]; then
-      printf '%s\n' "$*" > "$body_file"
-    elif [ ! -t 0 ]; then
-      cat > "$body_file"
-    else
-      usage >&2
-      exit 1
-    fi
+        repo_dir="''${NOTES_REPO_DIR:-$HOME/git/github.com/kirksw/notes}"
 
-    if [ ! -s "$body_file" ]; then
-      echo "n: note body is empty" >&2
-      exit 1
-    fi
+        if [ ! -d "$repo_dir/.git" ]; then
+          echo "n: notes repo not found at $repo_dir" >&2
+          exit 1
+        fi
 
-    repo_dir="''${NOTES_REPO_DIR:-$HOME/git/github.com/kirksw/notes}"
+        timestamp="$(date '+%Y%m%d-%H%M%S')"
+        year="$(date '+%Y')"
+        month="$(date '+%m')"
+        created_at="$(date '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/([+-][0-9]{2})([0-9]{2})$/\1:\2/')"
 
-    if [ ! -d "$repo_dir/.git" ]; then
-      echo "n: notes repo not found at $repo_dir" >&2
-      exit 1
-    fi
+        slug="$(
+          tr '\n' ' ' < "$body_file" |
+            tr '[:upper:]' '[:lower:]' |
+            sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g' |
+            cut -c1-48 |
+            sed -E 's/-+$//'
+        )"
 
-    timestamp="$(date '+%Y%m%d-%H%M%S')"
-    year="$(date '+%Y')"
-    month="$(date '+%m')"
-    created_at="$(date '+%Y-%m-%dT%H:%M:%S%z' | sed -E 's/([+-][0-9]{2})([0-9]{2})$/\1:\2/')"
+        if [ -z "$slug" ]; then
+          slug="note"
+        fi
 
-    slug="$(
-      tr '\n' ' ' < "$body_file" |
-        tr '[:upper:]' '[:lower:]' |
-        sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g' |
-        cut -c1-48 |
-        sed -E 's/-+$//'
-    )"
+        note_dir="$repo_dir/raw/inbox/$year/$month"
+        note_rel_path="raw/inbox/$year/$month/$timestamp-$slug.md"
+        note_path="$repo_dir/$note_rel_path"
 
-    if [ -z "$slug" ]; then
-      slug="note"
-    fi
+        mkdir -p "$note_dir"
 
-    note_dir="$repo_dir/raw/inbox/$year/$month"
-    note_rel_path="raw/inbox/$year/$month/$timestamp-$slug.md"
-    note_path="$repo_dir/$note_rel_path"
+        {
+          printf '%s\n' '---'
+          printf '%s\n' 'type: micronote'
+          printf 'created: %s\n' "$created_at"
+          if [ -n "$context" ]; then
+            printf 'context: %s\n' "$context"
+          fi
+          printf '%s\n' 'status: unprocessed'
+          printf '%s\n' '---'
+          printf '\n'
+          cat "$body_file"
+        } > "$note_path"
 
-    mkdir -p "$note_dir"
+        git -C "$repo_dir" add -- "$note_rel_path"
+        git -C "$repo_dir" commit --quiet --only -m "add note $timestamp-$slug" -- "$note_rel_path"
 
-    {
-      printf '%s\n' '---'
-      printf '%s\n' 'type: micronote'
-      printf 'created: %s\n' "$created_at"
-      if [ -n "$context" ]; then
-        printf 'context: %s\n' "$context"
-      fi
-      printf '%s\n' 'status: unprocessed'
-      printf '%s\n' '---'
-      printf '\n'
-      cat "$body_file"
-    } > "$note_path"
-
-    git -C "$repo_dir" add -- "$note_rel_path"
-    git -C "$repo_dir" commit --quiet --only -m "add note $timestamp-$slug" -- "$note_rel_path"
-
-    printf '%s\n' "$note_rel_path"
+        printf '%s\n' "$note_rel_path"
   '';
 in
 {
@@ -233,6 +233,7 @@ in
       marp-cli
       # github cli
       gh
+      _1password-cli
       # devenv
       devenv
       # duckdb

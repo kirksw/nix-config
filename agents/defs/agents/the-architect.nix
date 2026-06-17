@@ -41,14 +41,7 @@
     '';
     delegatesTo = [ ];
     permissions = {
-      edit = {
-        default = "deny";
-        rules = {
-          "*.md" = "allow";
-          "*.mdx" = "allow";
-          "*.markdown" = "allow";
-        };
-      };
+      edit = "allow";
       bash = "deny";
       task = {
         default = "deny";

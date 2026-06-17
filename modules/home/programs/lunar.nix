@@ -6,6 +6,9 @@
   ...
 }:
 
+let
+  kubesealPublicCert = "${config.xdg.configHome}/lunar/kubeseal/public.pem";
+in
 {
   options = {
     homeModules.lunar.enable = lib.mkEnableOption "enables lunar tooling";
@@ -30,6 +33,7 @@
 
     home.sessionVariables = {
       GOPRIVATE = "go.lunarway.com,github.com/lunarway";
+      LW_KUBESEAL_PUBLIC_CERT = kubesealPublicCert;
     };
   };
 }

@@ -39,12 +39,12 @@
           "git status*" = "allow";
           "git rev-parse*" = "allow";
           "git merge-base*" = "allow";
-          "rg *" = "allow";
-          "go test *" = "allow";
+          "rg*" = "allow";
+          "go test*" = "allow";
           "npm test*" = "allow";
           "npm run test*" = "allow";
           "npm run lint*" = "allow";
-          "npx *" = "allow";
+          "npx*" = "allow";
           "yarn test*" = "allow";
           "pnpm test*" = "allow";
           "pytest*" = "allow";

@@ -2,6 +2,8 @@
   lib,
   writeShellApplication,
   writeShellScript,
+  runCommand,
+  fetchFromGitHub,
   uv,
   python312,
   git,
@@ -12,7 +14,19 @@
 let
   versions = lib.importJSON ./versions.json;
   inherit (versions.omnigent) version rev;
-  packageUrl = "git+https://github.com/omnigent-ai/omnigent.git@${rev}";
+  src = fetchFromGitHub {
+    owner = "omnigent-ai";
+    repo = "omnigent";
+    inherit rev;
+    hash = "sha256-Q5mLSRQWHDnO4GyDO8YeQlxCRyWY5uH+xtc4UW+aMtw=";
+  };
+  patchedSrc = runCommand "omnigent-${version}-patched-source" { } ''
+    cp -R ${src} $out
+    chmod -R u+w $out
+    substituteInPlace $out/omnigent/runner/app.py \
+      --replace 'command="claude",' 'command=os.environ.get("OMNIGENT_CLAUDE_BIN", "claude"),' \
+      --replace 'env=build_native_claude_terminal_env(claude_config),' 'env={**build_native_claude_terminal_env(claude_config), "CLAUDE_CONFIG_DIR": os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude")), **({"CLAUDE_EXECUTABLE_PATH": os.environ["OMNIGENT_CLAUDE_BIN"]} if os.environ.get("OMNIGENT_CLAUDE_BIN") else {})},'
+  '';
 in
 writeShellApplication {
   name = "omnigent";
@@ -28,9 +42,20 @@ writeShellApplication {
     export UV_PYTHON_DOWNLOADS="''${UV_PYTHON_DOWNLOADS:-never}"
     export UV_PYTHON="''${UV_PYTHON:-${python312}/bin/python3}"
 
+    if [ -z "''${OMNIGENT_UV_FROM:-}" ]; then
+      _omnigent_src="''${XDG_CACHE_HOME:-$HOME/.cache}/omnigent-patched-source-${rev}"
+      if [ ! -d "$_omnigent_src" ]; then
+        rm -rf "$_omnigent_src.tmp"
+        cp -R ${patchedSrc} "$_omnigent_src.tmp"
+        chmod -R u+w "$_omnigent_src.tmp"
+        mv "$_omnigent_src.tmp" "$_omnigent_src"
+      fi
+      export OMNIGENT_UV_FROM="$_omnigent_src"
+    fi
+
     exec ${lib.getExe uv} tool run \
       --python "$UV_PYTHON" \
-      --from "''${OMNIGENT_UV_FROM:-${packageUrl}}" \
+      --from "$OMNIGENT_UV_FROM" \
       omnigent "$@"
   '';
 

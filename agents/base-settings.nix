@@ -63,6 +63,10 @@ let
 
   piWorkMcp = builtins.toJSON {
     mcpServers = {
+      "1password" = {
+        command = "/Applications/1Password.app/Contents/MacOS/onepassword-mcp";
+        lifecycle = "lazy";
+      };
       granola = {
         url = "https://mcp.granola.ai/mcp";
         auth = "oauth";
@@ -74,6 +78,11 @@ let
       };
       lunar-skills = {
         command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
+        lifecycle = "lazy";
+      };
+      hubble-mcp-dev = {
+        url = "https://hubble-mcp.dev.lunar.tech/mcp/";
+        auth = "oauth";
         lifecycle = "lazy";
       };
       sourcegraph = {

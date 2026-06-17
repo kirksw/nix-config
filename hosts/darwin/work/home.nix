@@ -47,6 +47,7 @@
   homeModules.treekanga.enable = false;
   homeModules.opencode.enable = true;
   homeModules.piCodingAgent.enable = true;
+  homeModules.omnigent.enable = true;
   homeModules.codex.enable = true;
   homeModules.openshell.enable = true;
   homeModules.multica.enable = true;

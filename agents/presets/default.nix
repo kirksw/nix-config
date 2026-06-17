@@ -19,6 +19,8 @@
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
     ../defs/skills/homelab
+    ../defs/skills/what-if
+    ../defs/mcps/1password.nix
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/lunar-skills.nix
     ../defs/mcps/granola.nix

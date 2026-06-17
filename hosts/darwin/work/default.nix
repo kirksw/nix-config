@@ -17,6 +17,7 @@
   darwinModules.dock.enable = true;
   darwinModules.tailscale.enable = true;
   darwinModules.jankyborders.enable = true;
+  darwinModules.landing.enable = true;
 
   # specific host config
   nixpkgs.config.allowUnfree = true;

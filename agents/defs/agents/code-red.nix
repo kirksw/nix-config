@@ -54,13 +54,13 @@
           "git rev-parse*" = "allow";
           "git merge-base*" = "allow";
           "git ls-files*" = "allow";
-          "rg *" = "allow";
+          "rg*" = "allow";
           "nix flake metadata*" = "allow";
           "nix flake show*" = "allow";
           "nix eval*" = "allow";
           "nix flake check --no-build*" = "allow";
-          "statix check *" = "allow";
-          "deadnix *" = "allow";
+          "statix check*" = "allow";
+          "deadnix*" = "allow";
         };
       };
       task = "deny";
