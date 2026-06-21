@@ -13,6 +13,7 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P3 XL Explore dynamic/problem-specific Pi agent assembly: nix-agents builds a full catalog (all agents/skills/extensions/mcps), and a runtime selector reads context from `kirksw/notes` to symlink only the relevant subset into the Pi profile dir before launch. Defers implementation until notes repo has enough structured content to drive problem-aware skill/extension selection (agent-discussion)
 - P2 M Add Thread OS metric/link management commands so focus scoring can create and maintain `metrics.jsonl` plus `contributes_to` edges from Pi across lifeOS and lunarOS (feat-thread-os)
 - P2 L Add conservative Thread OS thread routing and small context injection after manual command usage proves stable (feat-thread-os)
 - P3 M Add `/thread-os evolve` recommendation flow with `/grill-me` adoption review once enough Thread OS records exist (feat-thread-os)
