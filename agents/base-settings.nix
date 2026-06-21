@@ -80,8 +80,8 @@ let
         command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
         lifecycle = "lazy";
       };
-      hubble-mcp-dev = {
-        url = "https://hubble-mcp.dev.lunar.tech/mcp/";
+      hubble-mcp = {
+        url = "https://hubble-mcp.lunar.tech/mcp/";
         auth = "oauth";
         lifecycle = "lazy";
       };

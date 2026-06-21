@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   lib,
   config,
@@ -8,6 +7,9 @@
 
 let
   kubesealPublicCert = "${config.xdg.configHome}/lunar/kubeseal/public.pem";
+  cmuxCli = pkgs.writeShellScriptBin "cmux" ''
+    exec "${pkgs.cmux}/Applications/cmux.app/Contents/Resources/bin/cmux" "$@"
+  '';
 in
 {
   options = {
@@ -29,11 +31,14 @@ in
       lunarctl
       cursor-cli
       amp-cli
+      cmux
+      (lib.hiPrio cmuxCli)
     ];
 
     home.sessionVariables = {
       GOPRIVATE = "go.lunarway.com,github.com/lunarway";
       LW_KUBESEAL_PUBLIC_CERT = kubesealPublicCert;
+      CMUX_BUNDLED_CLI_PATH = "${pkgs.cmux}/Applications/cmux.app/Contents/Resources/bin/cmux";
     };
   };
 }
