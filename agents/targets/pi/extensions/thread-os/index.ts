@@ -19,7 +19,11 @@ import { handleFocus } from "./commands/focus.js";
 import { emit } from "./commands/output.js";
 import { handleRender } from "./commands/render.js";
 import { handleStatus } from "./commands/status.js";
-import { handleNewThread, handleThread } from "./commands/thread.js";
+import {
+	handleNewThread,
+	handleThread,
+	handleReconcile,
+} from "./commands/thread.js";
 import { resolveThreadOsContext } from "./core/repo.js";
 
 const activeThreads = new Map<string, string>();
@@ -41,6 +45,7 @@ function help(): string {
 		"- `/thread-os capture [text]`",
 		"- `/thread-os focus`",
 		"- `/thread-os render`",
+		"- `/thread-os reconcile [<slug>]`",
 	].join("\n");
 }
 
@@ -76,6 +81,9 @@ export default function threadOsExtension(pi: ExtensionAPI): void {
 						break;
 					case "render":
 						output = await handleRender(rest, lifeos);
+						break;
+					case "reconcile":
+						output = await handleReconcile(rest, lifeos);
 						break;
 					case "help":
 					case "--help":

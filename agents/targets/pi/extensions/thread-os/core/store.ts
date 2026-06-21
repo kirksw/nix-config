@@ -50,6 +50,45 @@ export async function appendRecord<T extends LifeOsRecord>(
 	return record;
 }
 
+export async function writeJsonl<T>(
+	storePath: string,
+	file: StoreFile,
+	records: T[],
+): Promise<void> {
+	await ensureStore(storePath);
+	const body = records.map((r) => JSON.stringify(r)).join("\n") + "\n";
+	await fs.writeFile(path.join(storePath, `${file}.jsonl`), body, "utf8");
+}
+
+/**
+ * Deduplicate records by `id`, keeping the last occurrence.
+ * This makes the JSONL store safe for append-updated records (e.g. thread
+ * timestamp updates from the session-end hook). When all ids are unique the
+ * function is a no-op.
+ */
+export function dedupById<T>(records: T[]): T[] {
+	const latest = new Map<string, T>();
+	for (const record of records) {
+		const id = (record as { id?: string })?.id;
+		if (typeof id === "string") latest.set(id, record);
+	}
+	if (latest.size === 0) return records;
+	const result: T[] = [];
+	const emitted = new Set<string>();
+	for (const record of records) {
+		const id = (record as { id?: string })?.id;
+		if (typeof id === "string") {
+			if (!emitted.has(id)) {
+				emitted.add(id);
+				result.push(latest.get(id)!);
+			}
+		} else {
+			result.push(record);
+		}
+	}
+	return result;
+}
+
 export async function readJsonl<T>(
 	storePath: string,
 	file: StoreFile,
@@ -68,7 +107,7 @@ export async function readJsonl<T>(
 			);
 		}
 	}
-	return records;
+	return dedupById(records);
 }
 
 export async function readData(storePath: string): Promise<LifeOsData> {

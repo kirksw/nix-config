@@ -31,6 +31,8 @@ declare module "node:fs/promises" {
 	export function stat(
 		path: string,
 	): Promise<{ isDirectory(): boolean; isFile(): boolean }>;
+	export function readdir(path: string): Promise<string[]>;
+	export function rename(oldPath: string, newPath: string): Promise<void>;
 }
 
 declare module "node:child_process" {
