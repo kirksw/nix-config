@@ -2,7 +2,7 @@
   "pi-subagents" = {
     enabled = true;
     npmName = "pi-subagents";
-    version = "0.28.0";
+    version = "0.30.0";
     types = [
       "extension"
       "skill"
@@ -14,7 +14,7 @@
   "rpiv-todo" = {
     enabled = true;
     npmName = "@juicesharp/rpiv-todo";
-    version = "1.19.1";
+    version = "1.20.0";
     aliases = [ "rpiv-todos" ];
     types = [ "extension" ];
     source = "https://pi.dev/packages/%40juicesharp/rpiv-todo";
@@ -78,7 +78,7 @@
   "rpiv-btw" = {
     enabled = true;
     npmName = "@juicesharp/rpiv-btw";
-    version = "1.19.1";
+    version = "1.20.0";
     types = [ "extension" ];
     source = "https://pi.dev/packages/%40juicesharp/rpiv-btw";
   };
@@ -86,7 +86,7 @@
   "pi-lens" = {
     enabled = true;
     npmName = "pi-lens";
-    version = "3.8.50";
+    version = "3.8.53";
     types = [
       "extension"
       "skill"
@@ -96,8 +96,8 @@
 
   ponytail = {
     enabled = true;
-    ref = "git:github.com/DietrichGebert/ponytail@687c1b339872289d70f65c5eaabce850b1663867";
-    version = "687c1b339872289d70f65c5eaabce850b1663867";
+    ref = "git:github.com/DietrichGebert/ponytail@6da37bfa7d0282522c7785759f4d2f1544015354";
+    version = "6da37bfa7d0282522c7785759f4d2f1544015354";
     types = [
       "extension"
       "skill"

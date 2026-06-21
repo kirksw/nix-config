@@ -532,4 +532,15 @@ in
       description = "Install git pre-commit hooks for this repository.";
     };
   };
+
+  pi-update-extensions = {
+    type = "app";
+    program = "${pkgs.writeShellScriptBin "pi-update-extensions" ''
+      set -euo pipefail
+      exec ${pkgs.python3}/bin/python3 ${../agents/external/pi-packages/update.py}
+    ''}/bin/pi-update-extensions";
+    meta = {
+      description = "Check and update pi extension versions in registry.nix from npm and git upstreams.";
+    };
+  };
 }
