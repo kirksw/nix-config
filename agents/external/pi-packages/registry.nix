@@ -104,4 +104,12 @@
     ];
     source = "https://github.com/DietrichGebert/ponytail";
   };
+
+  "pi-cmux" = {
+    enabled = true;
+    ref = "git:github.com/gtwatts/pi-cmux@0b6010b93bd7f2cd29b842dd9f2619b23645356f";
+    version = "0b6010b93bd7f2cd29b842dd9f2619b23645356f";
+    types = [ "extension" ];
+    source = "https://github.com/gtwatts/pi-cmux";
+  };
 }

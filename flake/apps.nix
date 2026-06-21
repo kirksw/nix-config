@@ -336,11 +336,33 @@ let
         run ${pkgs.coreutils}/bin/rm "$target_file"
       fi
 
+      # First seed: target does not exist (after symlink removal).
       if [ ! -e "$target_file" ]; then
         if [ -e "$target_file.backup" ]; then
           run ${pkgs.coreutils}/bin/mv "$target_file.backup" "$target_file"
         else
           run ${pkgs.coreutils}/bin/install -m "$mode" "$source_file" "$target_file"
+        fi
+        return
+      fi
+
+      # Target already exists as a regular file. For JSON files, shallow-merge
+      # so that nix-controlled keys (e.g. "packages") are updated from source
+      # while preserving runtime/user keys (e.g. "theme",
+      # "lastChangelogVersion") that nix does not manage. Source values win on
+      # key conflicts; target-only keys are kept. Non-JSON files (e.g. env)
+      # are left untouched.
+      if [ -f "$source_file" ] \
+        && ${pkgs.jq}/bin/jq empty "$target_file" 2>/dev/null \
+        && ${pkgs.jq}/bin/jq empty "$source_file" 2>/dev/null; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+          echo "DRY-RUN merge_json $source_file -> $target_file"
+        else
+          _seed_merge_tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$target_file" "$source_file" > "$_seed_merge_tmp"
+          run ${pkgs.coreutils}/bin/cp "$_seed_merge_tmp" "$target_file"
+          run ${pkgs.coreutils}/bin/chmod "$mode" "$target_file"
+          run ${pkgs.coreutils}/bin/rm -f "$_seed_merge_tmp"
         fi
       fi
     }
