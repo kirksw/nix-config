@@ -62,6 +62,11 @@
     };
 
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+
+    last30days-skill = {
+      url = "github:mvanhorn/last30days-skill";
+      flake = false;
+    };
   };
 
   outputs =

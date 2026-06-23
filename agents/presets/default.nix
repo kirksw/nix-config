@@ -19,6 +19,7 @@
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
     ../defs/skills/homelab
+    ../defs/skills/last30days
     ../defs/skills/what-if
     ../defs/mcps/1password.nix
     ../defs/mcps/agent-observe.nix
