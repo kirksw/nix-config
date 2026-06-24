@@ -82,32 +82,17 @@ buildNpmPackage (finalAttrs: {
     # finds the binary on its first call (it only runs `which tailscale`
     # asynchronously on a 10s cache and otherwise relies on these paths).
     SERVER=$out/lib/node_modules/9router/app/.next-cli-build/server
-    CHUNK=$SERVER/chunks/666.js
-    # Bundle-only patches: socket, sync-fallback search path, hardcoded
-    # homebrew path, and the brew-install branch. These are minified into
-    # the helpers module 666.js.
-    substituteInPlace "$CHUNK" \
-      --replace-fail '/opt/homebrew/bin:' "" \
-      --replace-fail '"/opt/homebrew/bin/tailscale",' "" \
-      --replace-fail '"which brew"' '"which __9router_no_brew__"' \
-      --replace-fail 'g().join(ap,"tailscaled.sock")' '"/var/run/tailscaled.socket"' \
-      --replace-fail '"/usr/local/bin/tailscale",' '"/usr/local/bin/tailscale","${tailscale}/bin/tailscale",'
 
-    # Route-file patches: each route under /api/tunnel/tailscale-* ships
-    # its own inline copies of the homebrew PATH prefix and the brew
-    # check. Strip them with sed (forgiving when a pattern is absent)
-    # across all matching route files.
-    for f in \
-      $SERVER/app/api/tunnel/tailscale-check/route.js \
-      $SERVER/app/api/tunnel/tailscale-install/route.js \
-      $SERVER/app/api/tunnel/tailscale-enable/route.js \
-      $SERVER/app/api/tunnel/tailscale-disable/route.js; do
-      [ -f "$f" ] || continue
+    # ponytail: upstream chunk names move; patch every bundled server JS file.
+    while IFS= read -r f; do
       sed -i \
         -e 's|/opt/homebrew/bin:||g' \
+        -e 's|"/opt/homebrew/bin/tailscale",||g' \
         -e 's|"which brew"|"which __9router_no_brew__"|g' \
+        -e 's|g().join(ap,"tailscaled.sock")|"/var/run/tailscaled.socket"|g' \
+        -e 's|"/usr/local/bin/tailscale",|"/usr/local/bin/tailscale","${tailscale}/bin/tailscale",|g' \
         "$f"
-    done
+    done < <(find "$SERVER" -type f -name '*.js')
 
     mkdir -p $out/bin
     makeWrapper ${lib.getExe nodejs} $out/bin/9router \
