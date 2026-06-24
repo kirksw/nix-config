@@ -123,9 +123,17 @@ let
           settingsDir = "$CONFIG_BASE/${target}/bases/${baseName}/settings";
           storeSettingsDir = settingsDirFor target baseName files;
           settingNames = builtins.attrNames files;
-          fileCommands = lib.concatMapStringsSep "\n" (fileName: ''
-            seed_mutable_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}" 0644
-          '') settingNames;
+          fileCommands = lib.concatMapStringsSep "\n" (
+            fileName:
+            if fileName == "config.toml" then
+              ''
+                sync_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}"
+              ''
+            else
+              ''
+                seed_mutable_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}" 0644
+              ''
+          ) settingNames;
         in
         ''
           echo "Bootstrapping ${target}/${baseName}/settings"
@@ -216,6 +224,7 @@ let
             if target == "codex" then
               ''
                 link_base_settings_except_config_toml "${settingsDir}" "${profileDir}"
+                append_file "${profileDir}/AGENTS.md" "${codexImageGuidanceFile}"
                 merge_codex_config "${settingsDir}/config.toml" "${profileDir}/mcp.nix.toml" "${profileDir}/config.toml"
               ''
             else
@@ -252,6 +261,15 @@ let
   );
 
   piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
+  codexImageGuidanceFile = pkgs.writeText "codex-image-guidance.md" ''
+    ## Image generation
+
+    Use Codex built-in image generation (`$imagegen` / `image_gen.imagegen`) as the default for all requested raster image generation or image editing: cats, stickers, mockups, photos, illustrations, textures, sprites, product shots, and other bitmap assets.
+
+    Do not satisfy image-generation requests by drawing with Python/PIL, SVG, canvas, shell scripts, or placeholder code unless the user explicitly asks for code-native output.
+
+    Use Mermaid, Graphviz, SVG, HTML/CSS/canvas, or another deterministic format when the user explicitly asks for that format, or when the requested diagram is clearly better as code-native structured output than as a generated bitmap.
+  '';
   codexPersonalRulesFile = pkgs.writeText "codex-personal-default.rules" agentBaseSettings.codexRules.personal-default;
   codexWorkRulesFile = pkgs.writeText "codex-work-default.rules" agentBaseSettings.codexRules.work-default;
   piKanbanPatchDir = ../agents/external/pi-packages/patches/pi-kanban;
@@ -433,6 +451,20 @@ let
           esac
           run ${pkgs.coreutils}/bin/ln -sfn "$f" "$profile_dir/$name" 2>/dev/null || true
         done
+      fi
+    }
+
+    append_file() {
+      target_file="$1"
+      source_file="$2"
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "DRY-RUN append_file $source_file -> $target_file"
+        return 0
+      fi
+      if [ -f "$target_file" ] && [ -f "$source_file" ]; then
+        printf '\n' >> "$target_file"
+        cat "$source_file" >> "$target_file"
+        chmod u+w "$target_file"
       fi
     }
 

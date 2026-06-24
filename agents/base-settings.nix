@@ -118,6 +118,10 @@ let
 
   codexPersonalSettings = ''
     approvals_reviewer = "guardian_subagent"
+    suppress_unstable_features_warning = true
+
+    [features]
+    imagegenext = true
   '';
 
   codexPersonalRules = ''
@@ -137,6 +141,10 @@ let
     openai_base_url = "https://eu.api.openai.com/v1"
     plan_mode_reasoning_effort = "high"
     approvals_reviewer = "guardian_subagent"
+    suppress_unstable_features_warning = true
+
+    [features]
+    imagegenext = true
 
     [projects."/Users/kisw/git/github.com/lunarway/hubble-continuum"]
     trust_level = "trusted"
