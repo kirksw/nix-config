@@ -7,6 +7,15 @@
 
 let
   rootSshKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC6CnYKakaB/Uv7hgYngA69iP0HUy5DhZmNBaxsslbyW89xlJVLbtzlkGgxsfKQn/KHVxkn5TUYe7sfXNO/beGbX+ejlN3OWANT/cbkNOScLyn/kIUT0LKm6JxXXJUOK2g0jfMQNSd4b4b/OloXORCIJFst5pRrFTWbCkXYwNbsa698UCRlFWTDWPiiwjxedTu11PUFYnTQuC6DuXUZ3ZVXYR5lGhDwOq4ayLkAX9xZGSTDYDUh1hUoVxz+8u543QgsLeT1F4VYh54gwVIuluEyWO0olYnjHeqvGsJ77a7HcYjDeFwlMjUVB7GdkJ6+sOtdK/IDihtGd9Yqk6E42t/pQpOrsdkQqq8n/UhKd9E8LYt6xDqBPd1rgdyeZU2Y7RZ2UHlffbg6rpObHNo5tzTtbGQMfJ9s79o/C5xxYLi0S2CGiepd0h/OY+PoqcSlqMfG2mNzNGfMxpIKo/svFj4tuKIX3Pup4Zrtb4FXjgQneE7JO02MUjfsD1Zh5j3EhG8= kisw@Kirk-Sweeney.local";
+  routerHttpPort = 80;
+  routerServicePort = 20128;
+  routerPackage = self.packages.${pkgs.system}."9router";
+  routerRuntimePackages = [
+    pkgs.inetutils
+    pkgs.nodejs
+    pkgs.procps
+    pkgs.which
+  ];
 
   assistants = [
     {
@@ -29,6 +38,21 @@ let
       authSecret = "tailscale/microvms/work-assistant/authKey";
       authKey = "workAssistantAuthKey";
       mac = "02:00:00:10:00:03";
+    }
+  ];
+
+  llmRouters = [
+    {
+      name = "home-llm-router";
+      hostPort = 20129;
+      sshPort = 20229;
+      mac = "02:00:00:10:00:11";
+    }
+    {
+      name = "work-llm-router";
+      hostPort = 20130;
+      sshPort = 20230;
+      mac = "02:00:00:10:00:12";
     }
   ];
 
@@ -186,13 +210,164 @@ let
         };
       };
     };
+
+  mkRouterVm = router: {
+    name = router.name;
+    value = {
+      autostart = true;
+      config = {
+        networking.hostName = router.name;
+        system.stateVersion = "25.05";
+
+        nix.settings.experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
+
+        environment.systemPackages = [
+          routerPackage
+          pkgs.curl
+          pkgs.htop
+          pkgs.jq
+        ]
+        ++ routerRuntimePackages;
+
+        users.groups.router = { };
+        users.users = {
+          root.openssh.authorizedKeys.keys = [ rootSshKey ];
+          router = {
+            isSystemUser = true;
+            group = "router";
+            home = "/var/lib/9router";
+            createHome = false;
+          };
+        };
+
+        services.openssh = {
+          enable = true;
+          hostKeys = [
+            {
+              path = "/var/lib/9router/ssh/ssh_host_ed25519_key";
+              type = "ed25519";
+            }
+            {
+              path = "/var/lib/9router/ssh/ssh_host_rsa_key";
+              type = "rsa";
+              bits = 4096;
+            }
+          ];
+          settings = {
+            PasswordAuthentication = false;
+            PermitRootLogin = "prohibit-password";
+          };
+        };
+
+        services.tailscale.enable = true;
+        systemd.services.tailscaled.restartIfChanged = false;
+
+        networking.firewall = {
+          enable = true;
+          allowedTCPPorts = [
+            routerHttpPort
+            22
+          ];
+        };
+        networking.nameservers = [
+          "100.100.100.100"
+          "8.8.8.8"
+          "1.1.1.1"
+        ];
+        networking.search = [ "tail54de03.ts.net" ];
+        systemd.network.enable = true;
+
+        systemd.tmpfiles.rules = [
+          "d /var/lib/9router 0700 router router -"
+          "d /var/lib/9router/ssh 0700 root root -"
+        ];
+
+        services.nginx = {
+          enable = true;
+          recommendedProxySettings = true;
+          virtualHosts."_".locations."/".proxyPass = "http://127.0.0.1:${toString routerServicePort}";
+        };
+
+        systemd.services."9router" = {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          path = routerRuntimePackages;
+          environment = {
+            DATA_DIR = "/var/lib/9router";
+            HOME = "/var/lib/9router";
+          };
+          serviceConfig = {
+            ExecStart = "${routerPackage}/bin/9router --port ${toString routerServicePort} --host 127.0.0.1 --no-browser --skip-update --log";
+            Restart = "always";
+            RestartSec = "5s";
+            User = "router";
+            Group = "router";
+            WorkingDirectory = "/var/lib/9router";
+          };
+        };
+
+        microvm = {
+          hypervisor = "qemu";
+          mem = 4096;
+          vcpu = 2;
+          interfaces = [
+            {
+              type = "user";
+              id = "qemu";
+              mac = router.mac;
+            }
+          ];
+          forwardPorts = [
+            {
+              from = "host";
+              proto = "tcp";
+              host.port = router.hostPort;
+              guest.port = routerHttpPort;
+            }
+            {
+              from = "host";
+              proto = "tcp";
+              host.port = router.sshPort;
+              guest.port = 22;
+            }
+          ];
+          volumes = [
+            {
+              image = "/var/lib/microvms/${router.name}/9router.img";
+              mountPoint = "/var/lib/9router";
+              size = 8192;
+              fsType = "ext4";
+              autoCreate = true;
+            }
+            {
+              image = "/var/lib/microvms/${router.name}/tailscale.img";
+              mountPoint = "/var/lib/tailscale";
+              size = 1024;
+              fsType = "ext4";
+              autoCreate = true;
+            }
+          ];
+        };
+      };
+    };
+  };
 in
 {
   sops.secrets = builtins.listToAttrs (map mkSopsSecret assistants);
 
-  systemd.tmpfiles.rules = map (
-    assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -"
-  ) assistants;
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = builtins.concatMap (router: [
+    router.hostPort
+    router.sshPort
+  ]) llmRouters;
 
-  microvm.vms = builtins.listToAttrs (map mkVm assistants);
+  systemd.tmpfiles.rules =
+    (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -") assistants)
+    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") llmRouters);
+
+  microvm.vms =
+    builtins.listToAttrs (map mkVm assistants) // builtins.listToAttrs (map mkRouterVm llmRouters);
 }
