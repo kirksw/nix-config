@@ -785,16 +785,16 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1782338125,
-        "narHash": "sha256-pl6eNic01ZaNBLtHP15pvebuUzB9VaZTGuXbsTVie1o=",
+        "lastModified": 1782339114,
+        "narHash": "sha256-+/5l3cMQaaWsd2Pi1Tj6MiwzN2D3QXubIobV81FKRfE=",
         "owner": "kirksw",
         "repo": "nix-agents",
-        "rev": "534c07ec960c2038ed87a44b2513c1c1767e24c1",
+        "rev": "b6d9b7c7f01024f33d939e04f5fab6f793829035",
         "type": "github"
       },
       "original": {
         "owner": "kirksw",
-        "ref": "feat/workflow-guide-claude-codex",
+        "ref": "main",
         "repo": "nix-agents",
         "type": "github"
       }
