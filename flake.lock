@@ -615,6 +615,22 @@
         "url": "ssh://git@github.com/lunarway/hubble-cli"
       }
     },
+    "last30days-skill": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782181109,
+        "narHash": "sha256-NgPlErMW6jY4VweL0rWQTXydUfWy3G4I5IwNHTTnDgY=",
+        "owner": "mvanhorn",
+        "repo": "last30days-skill",
+        "rev": "977f0beed5ad4dbc604f6762a4b27ab8efbd3504",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mvanhorn",
+        "repo": "last30days-skill",
+        "type": "github"
+      }
+    },
     "llm-agents": {
       "inputs": {
         "blueprint": "blueprint",
@@ -1072,6 +1088,7 @@
         "git-hooks": "git-hooks",
         "home-manager": "home-manager",
         "homebrew-brew": "homebrew-brew",
+        "last30days-skill": "last30days-skill",
         "llm-agents": "llm-agents",
         "lunar-tools": "lunar-tools",
         "microvm": "microvm",
