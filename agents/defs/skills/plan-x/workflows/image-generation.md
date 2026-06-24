@@ -12,13 +12,15 @@ Scripts (run with `uv run`, needs `OPENAI_API_KEY`):
 - Create image: `uv run scripts/generate_gpt_image.py "<prompt>" <output.png> --size 1536x1024 --quality high`
 - Edit image: `uv run scripts/edit_gpt_image.py "<instruction>" <output.png> <input.png> --size 1536x1024 --quality high`
 
-Shared rules for every image prompt:
+Shared rules for every image prompt (these cover GPT Image editorial illustrations only — see `references/visual-design.md` for the full two-layer philosophy):
 
 - always generate in wide format (`--size 1536x1024`) at high quality (`--quality high`)
 - convey the one or two core ideas of that section for a professional software engineer
 - match the plan's synced visual identity (professional, focused, minimal)
 - keep total words shown in the image under 10
 - save images to `IMAGES_OUTPUT_DIR` (create it if missing)
+- ground illustrations in the plan's actual content, not generic AI art — see the Illustration Rule in `references/visual-design.md`
+- do not use GPT Image for analytical visualizations (dependency graphs, timelines, metrics) — render those deterministically (Mermaid, SVG, etc.) directly in the HTML
 
 ## Create
 
