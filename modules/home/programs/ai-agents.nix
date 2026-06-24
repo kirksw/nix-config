@@ -110,12 +110,14 @@ let
       target = "claude";
       inputs = agentInputs;
       modules = nixAgentsModules;
+      src = localAgentsSrc;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "claude";
       inputs = agentInputs;
       modules = nixAgentsModules;
+      src = localAgentsSrc;
     };
   });
 
@@ -128,12 +130,14 @@ let
       target = "codex";
       inputs = agentInputs;
       modules = nixAgentsModules;
+      src = localAgentsSrc;
     };
     profileMeta = nixAgentsLib.mkProfileMeta {
       inherit pkgs;
       target = "codex";
       inputs = agentInputs;
       modules = nixAgentsModules;
+      src = localAgentsSrc;
     };
   });
 

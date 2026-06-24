@@ -664,11 +664,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1782005722,
-        "narHash": "sha256-oHLLfAtqHPA9LlOOKlcmAZltEQLWtYbw9MGRtE2HTfE=",
+        "lastModified": 1782263994,
+        "narHash": "sha256-6bhUwnv9EbIXi7x1uMAf01gqvu1IherPyy8Wu6cErBg=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "4c323455f5dcfa0012eb79603f18597ea7efe5f3",
+        "rev": "31dc02699e4ad2b9b53252212538f67c0ab9c686",
         "type": "github"
       },
       "original": {
@@ -785,16 +785,16 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1782011290,
-        "narHash": "sha256-dwbLNnMNqabic2+l5obFtgYdHIfaEvCD1/AazUMOcgc=",
+        "lastModified": 1782338125,
+        "narHash": "sha256-pl6eNic01ZaNBLtHP15pvebuUzB9VaZTGuXbsTVie1o=",
         "owner": "kirksw",
         "repo": "nix-agents",
-        "rev": "df0d17e9247a0e9464f914ea7fd2915ae2bf74cb",
+        "rev": "534c07ec960c2038ed87a44b2513c1c1767e24c1",
         "type": "github"
       },
       "original": {
         "owner": "kirksw",
-        "ref": "main",
+        "ref": "feat/workflow-guide-claude-codex",
         "repo": "nix-agents",
         "type": "github"
       }
@@ -993,11 +993,11 @@
     },
     "nixpkgs_8": {
       "locked": {
-        "lastModified": 1781607440,
-        "narHash": "sha256-rxO+uc/KFbSJp+pgyXRuAX6QlG9hJdnt0BXpEQRXY+U=",
+        "lastModified": 1782118813,
+        "narHash": "sha256-BnbXO5s5EhV89lLXMAGCzPdEN5a6vNqvMk71obeTEUw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "3e41b24abd260e8f71dbe2f5737d24122f972158",
+        "rev": "b3c092d3c36d91e2f61f3dfb39a159f180a56659",
         "type": "github"
       },
       "original": {

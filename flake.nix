@@ -42,7 +42,8 @@
     };
 
     llm-agents.url = "github:numtide/llm-agents.nix";
-    nix-agents.url = "github:kirksw/nix-agents/main";
+    # TEMP: pointed at PR branch until kirksw/nix-agents#78 merges
+    nix-agents.url = "github:kirksw/nix-agents/feat/workflow-guide-claude-codex";
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 

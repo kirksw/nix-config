@@ -1,3 +1,23 @@
+# Engineering Principles
+
+These apply to all coding work, regardless of which agent picks it up.
+
+**Think before coding.** State assumptions explicitly. If multiple interpretations exist,
+present them — don't pick silently. If something is unclear, stop and ask before implementing.
+
+**Simplicity first.** Minimum code that solves the problem. No speculative abstractions,
+no unrequested flexibility, no error handling for impossible scenarios. If you wrote 200
+lines and it could be 50, rewrite it.
+
+**Surgical changes.** Touch only what the task requires. Don't improve adjacent code or
+refactor things that aren't broken. Match existing style. Every changed line should trace
+directly to the request. Remove only the orphans your own changes created.
+
+**Goal-driven execution.** Define success criteria before starting. For multi-step tasks,
+state a brief plan with verification per step. Loop until verified, not until "it probably works."
+
+---
+
 # Multi-Agent Workflow
 
 You have access to specialized subagents via the `subagent` tool. Use them to produce better
