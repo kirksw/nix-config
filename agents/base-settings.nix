@@ -104,9 +104,6 @@ let
     if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
       export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
     fi
-    if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-      export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-    fi
   '';
 
   piWorkAuth = builtins.toJSON {
@@ -115,8 +112,7 @@ let
       key = "$OPENAI_API_KEY";
     };
     anthropic = {
-      type = "api_key";
-      key = "$ANTHROPIC_API_KEY";
+      type = "oauth";
     };
   };
 
