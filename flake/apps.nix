@@ -511,6 +511,7 @@ let
         run ${pkgs.coreutils}/bin/cp "$patch_dir/lib/pi-parsers.js" "$package_dir/lib/pi-parsers.js"
         run ${pkgs.coreutils}/bin/cp "$patch_dir/server.js" "$package_dir/server.js"
         run ${pkgs.coreutils}/bin/cp "$patch_dir/public/app.js" "$package_dir/public/app.js"
+        run ${pkgs.coreutils}/bin/rm -f "$package_dir/extensions/kanban.js"
         run ${pkgs.coreutils}/bin/cp "$patch_dir/extensions/kanban.ts.txt" "$package_dir/extensions/kanban.ts"
       done
     }
