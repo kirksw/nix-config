@@ -21,6 +21,7 @@
     ../defs/skills/homelab
     ../defs/skills/last30days
     ../defs/skills/what-if
+    ../defs/skills/plan-x
     ../defs/mcps/1password.nix
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/lunar-skills.nix

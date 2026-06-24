@@ -106,6 +106,7 @@ _: {
         "session-heuristics"
         "system-context"
         "what-if"
+        "plan-x"
       ];
       mcpServers = [
         "1password"
