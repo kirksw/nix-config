@@ -145,51 +145,30 @@ in
             };
           };
         };
-        models.providers = {
-          cx = {
-            baseUrl = "http://${cfg.router}:80/v1";
-            apiKey = {
-              source = "env";
-              provider = "default";
-              id = "LLM_ROUTER_API_KEY";
-            };
-            models = [
-              "gpt-5.5"
-              "gpt-5.4"
-              "gpt-5.3-codex"
-            ];
+        models.providers.router = {
+          baseUrl = "http://${cfg.router}:80/v1";
+          api = "openai-completions";
+          apiKey = {
+            source = "env";
+            provider = "default";
+            id = "LLM_ROUTER_API_KEY";
           };
-          minimax = {
-            baseUrl = "http://${cfg.router}:80/v1";
-            apiKey = {
-              source = "env";
-              provider = "default";
-              id = "LLM_ROUTER_API_KEY";
-            };
-            models = [
-              "MiniMax-M3"
-              "MiniMax-M2.7-highspeed"
-            ];
-          };
-          glm = {
-            baseUrl = "http://${cfg.router}:80/v1";
-            apiKey = {
-              source = "env";
-              provider = "default";
-              id = "LLM_ROUTER_API_KEY";
-            };
-            models = [
-              "glm-5.2"
-              "glm-5v-turbo"
-            ];
-          };
+          models = [
+            { id = "minimax/MiniMax-M3"; name = "MiniMax M3"; api = "openai-completions"; }
+            { id = "minimax/MiniMax-M2.7-highspeed"; name = "MiniMax M2.7 Highspeed"; api = "openai-completions"; }
+            { id = "zai/glm-5.2"; name = "GLM 5.2"; api = "openai-completions"; }
+            { id = "zai/glm-5v-turbo"; name = "GLM 5V Turbo"; api = "openai-completions"; input = [ "text" "image" ]; }
+            { id = "cx/gpt-5.3-codex"; name = "GPT 5.3 Codex"; api = "openai-completions"; }
+            { id = "cx/gpt-5.4"; name = "GPT 5.4"; api = "openai-completions"; }
+            { id = "cx/gpt-5.5"; name = "GPT 5.5"; api = "openai-completions"; }
+          ];
         };
         agents.defaults = {
           model = {
-            primary = "minimax/MiniMax-M3";
+            primary = "router/minimax/MiniMax-M3";
             fallbacks = [
-              "cx/gpt-5.5"
-              "glm/glm-5.2"
+              "router/cx/gpt-5.5"
+              "router/zai/glm-5.2"
             ];
           };
           sandbox = {
