@@ -153,6 +153,11 @@ in
               provider = "default";
               id = "LLM_ROUTER_API_KEY";
             };
+            models = [
+              "gpt-5.5"
+              "gpt-5.4"
+              "gpt-5.3-codex"
+            ];
           };
           minimax = {
             baseUrl = "http://${cfg.router}:80/v1";
@@ -161,6 +166,10 @@ in
               provider = "default";
               id = "LLM_ROUTER_API_KEY";
             };
+            models = [
+              "MiniMax-M3"
+              "MiniMax-M2.7-highspeed"
+            ];
           };
           glm = {
             baseUrl = "http://${cfg.router}:80/v1";
@@ -169,6 +178,10 @@ in
               provider = "default";
               id = "LLM_ROUTER_API_KEY";
             };
+            models = [
+              "glm-5.2"
+              "glm-5v-turbo"
+            ];
           };
         };
         agents.defaults = {
