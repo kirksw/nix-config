@@ -145,30 +145,44 @@ in
             };
           };
         };
-        models.providers.router = {
-          baseUrl = "http://${cfg.router}:80/v1";
-          api = "openai-completions";
-          apiKey = {
-            source = "env";
-            provider = "default";
-            id = "LLM_ROUTER_API_KEY";
+        models.providers = {
+          router-anthropic = {
+            baseUrl = "http://${cfg.router}:80";
+            api = "anthropic-messages";
+            apiKey = {
+              source = "env";
+              provider = "default";
+              id = "LLM_ROUTER_API_KEY";
+            };
+            models = [
+              { id = "minimax/MiniMax-M3"; name = "MiniMax M3"; api = "anthropic-messages"; }
+              { id = "minimax/MiniMax-M2.7-highspeed"; name = "MiniMax M2.7 Highspeed"; api = "anthropic-messages"; }
+              # home-llm-router currently exposes GLM as glm/*, not zai/*.
+              { id = "glm/glm-5.2"; name = "GLM 5.2"; api = "anthropic-messages"; }
+              { id = "glm/glm-5v-turbo"; name = "GLM 5V Turbo"; api = "anthropic-messages"; input = [ "text" "image" ]; }
+            ];
           };
-          models = [
-            { id = "minimax/MiniMax-M3"; name = "MiniMax M3"; api = "openai-completions"; }
-            { id = "minimax/MiniMax-M2.7-highspeed"; name = "MiniMax M2.7 Highspeed"; api = "openai-completions"; }
-            { id = "zai/glm-5.2"; name = "GLM 5.2"; api = "openai-completions"; }
-            { id = "zai/glm-5v-turbo"; name = "GLM 5V Turbo"; api = "openai-completions"; input = [ "text" "image" ]; }
-            { id = "cx/gpt-5.3-codex"; name = "GPT 5.3 Codex"; api = "openai-completions"; }
-            { id = "cx/gpt-5.4"; name = "GPT 5.4"; api = "openai-completions"; }
-            { id = "cx/gpt-5.5"; name = "GPT 5.5"; api = "openai-completions"; }
-          ];
+          router-openai = {
+            baseUrl = "http://${cfg.router}:80/v1";
+            api = "openai-completions";
+            apiKey = {
+              source = "env";
+              provider = "default";
+              id = "LLM_ROUTER_API_KEY";
+            };
+            models = [
+              { id = "cx/gpt-5.3-codex"; name = "GPT 5.3 Codex"; api = "openai-completions"; }
+              { id = "cx/gpt-5.4"; name = "GPT 5.4"; api = "openai-completions"; }
+              { id = "cx/gpt-5.5"; name = "GPT 5.5"; api = "openai-completions"; }
+            ];
+          };
         };
         agents.defaults = {
           model = {
-            primary = "router/minimax/MiniMax-M3";
+            primary = "router-anthropic/minimax/MiniMax-M3";
             fallbacks = [
-              "router/cx/gpt-5.5"
-              "router/zai/glm-5.2"
+              "router-openai/cx/gpt-5.5"
+              "router-anthropic/glm/glm-5.2"
             ];
           };
           sandbox = {
