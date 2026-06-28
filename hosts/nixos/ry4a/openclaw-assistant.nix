@@ -130,6 +130,9 @@ in
             ];
             # Allow plain HTTP device auth since we're behind a trusted tailnet
             allowInsecureAuth = true;
+            # Device auth requires crypto.subtle which needs HTTPS.
+            # We have gateway token auth + trusted tailnet, so disable device auth.
+            dangerouslyDisableDeviceAuth = true;
           };
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
