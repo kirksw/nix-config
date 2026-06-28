@@ -114,7 +114,7 @@ in
         gateway = {
           mode = "local";
           # Bind on all interfaces so the dashboard is reachable over Tailscale
-          bind = "0.0.0.0";
+          bind = "lan";
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
             mode = "token";
