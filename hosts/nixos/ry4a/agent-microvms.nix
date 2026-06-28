@@ -23,14 +23,14 @@ let
     {
       name = "personal-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/assistant-auth-key";
+      authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:01";
     }
     {
       name = "household-assistant";
       kbRepo = "https://github.com/kirksw/kb-household";
-      authSecret = "tailscale/microvms/assistant-auth-key";
+      authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:02";
       openclaw = {
@@ -46,7 +46,7 @@ let
     {
       name = "sanja-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/assistant-auth-key";
+      authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:04";
       openclaw = {
@@ -62,7 +62,7 @@ let
     {
       name = "kirk-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/assistant-auth-key";
+      authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:05";
       openclaw = {
@@ -78,7 +78,7 @@ let
     {
       name = "work-assistant";
       kbRepo = "https://github.com/kirksw/kb-lunar";
-      authSecret = "tailscale/microvms/assistant-auth-key";
+      authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:03";
     }
