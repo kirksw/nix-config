@@ -116,15 +116,19 @@ in
           # Bind on all interfaces so the dashboard is reachable over Tailscale
           bind = "lan";
           # Allow dashboard WebSocket connections from Tailscale hostnames and IPs
-          controlUi.allowedOrigins = [
-            "http://${cfg.router}"
-            "http://kirk-assistant"
-            "http://sanja-assistant"
-            "http://household-assistant"
-            "http://100.123.43.18"
-            "http://100.67.143.125"
-            "http://100.82.155.69"
-          ];
+          controlUi = {
+            allowedOrigins = [
+              "http://${cfg.router}"
+              "http://kirk-assistant"
+              "http://sanja-assistant"
+              "http://household-assistant"
+              "http://100.123.43.18"
+              "http://100.67.143.125"
+              "http://100.82.155.69"
+            ];
+            # Allow plain HTTP device auth since we're behind a trusted tailnet
+            allowInsecureAuth = true;
+          };
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
             mode = "token";
