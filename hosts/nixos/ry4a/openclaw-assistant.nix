@@ -153,9 +153,18 @@ in
             id = "LLM_ROUTER_API_KEY";
           };
         };
-        agents.defaults.sandbox = {
-          mode = "all";
-          backend = "docker";
+        agents.defaults = {
+          model = {
+            primary = "cx/gpt-5.5";
+            fallbacks = [
+              "minimax/MiniMax-M3"
+              "glm/glm-5.2"
+            ];
+          };
+          sandbox = {
+            mode = "all";
+            backend = "docker";
+          };
         };
         channels.telegram = {
           enabled = true;
