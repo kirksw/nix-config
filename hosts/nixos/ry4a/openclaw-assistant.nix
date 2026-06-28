@@ -116,6 +116,8 @@ in
           # Bind on all interfaces so the dashboard is reachable over Tailscale
           bind = "lan";
           # Allow dashboard WebSocket connections from Tailscale hostnames and IPs
+          # Trust nginx reverse proxy forwarding headers
+          trustedProxies = [ "127.0.0.1/32" ];
           controlUi = {
             allowedOrigins = [
               "http://${cfg.router}"
