@@ -145,12 +145,30 @@ in
             };
           };
         };
-        models.providers.openai = {
-          baseUrl = "http://${cfg.router}:80/v1";
-          apiKey = {
-            source = "env";
-            provider = "default";
-            id = "LLM_ROUTER_API_KEY";
+        models.providers = {
+          cx = {
+            baseUrl = "http://${cfg.router}:80/v1";
+            apiKey = {
+              source = "env";
+              provider = "default";
+              id = "LLM_ROUTER_API_KEY";
+            };
+          };
+          minimax = {
+            baseUrl = "http://${cfg.router}:80/v1";
+            apiKey = {
+              source = "env";
+              provider = "default";
+              id = "LLM_ROUTER_API_KEY";
+            };
+          };
+          glm = {
+            baseUrl = "http://${cfg.router}:80/v1";
+            apiKey = {
+              source = "env";
+              provider = "default";
+              id = "LLM_ROUTER_API_KEY";
+            };
           };
         };
         agents.defaults = {
