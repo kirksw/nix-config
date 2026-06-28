@@ -31,6 +31,40 @@ in
       "keys"
     ];
 
+    # --- Build the OpenClaw sandbox Docker image on first boot ---
+    # OpenClaw requires openclaw-sandbox:bookworm-slim to exist before
+    # it can sandbox tool execution. This builds it from debian:bookworm-slim
+    # with python3 and basic tools baked in.
+    systemd.services.openclaw-sandbox-image = {
+      description = "Build OpenClaw sandbox Docker image";
+      after = [ "docker.service" ];
+      requires = [ "docker.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        if ! ${pkgs.docker}/bin/docker image inspect openclaw-sandbox:bookworm-slim >/dev/null 2>&1; then
+          echo "Building openclaw-sandbox:bookworm-slim..."
+          ${pkgs.docker}/bin/docker build -t openclaw-sandbox:bookworm-slim - <<'DOCKERFILE'
+        FROM debian:bookworm-slim
+        ENV DEBIAN_FRONTEND=noninteractive
+        RUN apt-get update && apt-get install -y --no-install-recommends \
+          bash ca-certificates curl git jq python3 ripgrep \
+          && rm -rf /var/lib/apt/lists/*
+        RUN useradd --create-home --shell /bin/bash sandbox
+        USER sandbox
+        WORKDIR /home/sandbox
+        CMD ["sleep", "infinity"]
+        DOCKERFILE
+          echo "Done."
+        else
+          echo "openclaw-sandbox:bookworm-slim already exists, skipping."
+        fi
+      '';
+    };
+
     # Runtime dir for the assembled env file
     systemd.tmpfiles.rules = [
       "d /run/openclaw-secrets 0700 agent users -"
@@ -110,8 +144,14 @@ in
 
     # Ensure secrets-env runs before gateway
     systemd.services.openclaw-gateway = {
-      after = [ "openclaw-secrets-env.service" ];
-      wants = [ "openclaw-secrets-env.service" ];
+      after = [
+        "openclaw-secrets-env.service"
+        "openclaw-sandbox-image.service"
+      ];
+      wants = [
+        "openclaw-secrets-env.service"
+        "openclaw-sandbox-image.service"
+      ];
     };
 
     # Allow gateway port on Tailscale interface
