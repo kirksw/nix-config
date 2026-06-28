@@ -165,6 +165,16 @@ in
     };
 
     # Allow gateway port on Tailscale interface
-    networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 18789 ];
+    networking.firewall.interfaces.tailscale0.allowedTCPPorts = [
+      18789
+      80
+    ];
+
+    # Reverse proxy port 80 -> gateway 18789 for easy dashboard access
+    services.nginx = {
+      enable = true;
+      recommendedProxySettings = true;
+      virtualHosts."_".locations."/".proxyPass = "http://127.0.0.1:18789";
+    };
   };
 }
