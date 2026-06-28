@@ -35,6 +35,39 @@ let
       mac = "02:00:00:10:00:02";
       openclaw = {
         router = "home-llm-router";
+        secretsFile = "household";
+        sopsSecrets = [
+          "telegram_bot_token"
+          "llm_router_api_key"
+          "gateway_token"
+        ];
+      };
+    }
+    {
+      name = "sanja-assistant";
+      kbRepo = "https://github.com/kirksw/kb-personal";
+      authSecret = "tailscale/microvms/sanja-assistant/authKey";
+      authKey = "sanjaAssistantAuthKey";
+      mac = "02:00:00:10:00:04";
+      openclaw = {
+        router = "home-llm-router";
+        secretsFile = "sanja";
+        sopsSecrets = [
+          "telegram_bot_token"
+          "llm_router_api_key"
+          "gateway_token"
+        ];
+      };
+    }
+    {
+      name = "kirk-assistant";
+      kbRepo = "https://github.com/kirksw/kb-personal";
+      authSecret = "tailscale/microvms/kirk-assistant/authKey";
+      authKey = "kirkAssistantAuthKey";
+      mac = "02:00:00:10:00:05";
+      openclaw = {
+        router = "home-llm-router";
+        secretsFile = "kirk";
         sopsSecrets = [
           "telegram_bot_token"
           "llm_router_api_key"
@@ -76,15 +109,18 @@ let
   };
 
   # Sops secrets for OpenClaw-enabled assistants.
-  # Each key from household.yaml becomes a file under /run/secrets/assistants/household/.
+  # Each key from <name>.yaml becomes a file under /run/secrets/assistants/<name>/.
   # Group-readable so the VM's agent user (in keys group) can read via virtiofs.
   mkOpenClawSopsSecrets =
     assistant:
+    let
+      sf = assistant.openclaw.secretsFile;
+    in
     builtins.listToAttrs (
       map (key: {
-        name = "assistants/household/${key}";
+        name = "assistants/${sf}/${key}";
         value = {
-          sopsFile = "${self}/secrets/assistants/household.yaml";
+          sopsFile = "${self}/secrets/assistants/${sf}.yaml";
           inherit key;
           mode = "0440";
           group = "keys";
@@ -251,7 +287,7 @@ let
               }
             ]
             ++ (lib.optional (assistant ? openclaw) {
-              source = builtins.dirOf config.sops.secrets."assistants/household/telegram_bot_token".path;
+              source = builtins.dirOf config.sops.secrets."assistants/${assistant.openclaw.secretsFile}/telegram_bot_token".path;
               mountPoint = "/run/host-secrets/openclaw";
               tag = "openclaw-secrets";
               proto = "virtiofs";
