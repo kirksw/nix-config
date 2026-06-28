@@ -77,15 +77,20 @@ let
 
   # Sops secrets for OpenClaw-enabled assistants.
   # Each key from household.yaml becomes a file under /run/secrets/assistants/household/.
-  mkOpenClawSopsSecrets = assistant:
-    builtins.listToAttrs (map (key: {
-      name = "assistants/household/${key}";
-      value = {
-        sopsFile = "${self}/secrets/assistants/household.yaml";
-        inherit key;
-        mode = "0400";
-      };
-    }) assistant.openclaw.sopsSecrets);
+  # Group-readable so the VM's agent user (in keys group) can read via virtiofs.
+  mkOpenClawSopsSecrets =
+    assistant:
+    builtins.listToAttrs (
+      map (key: {
+        name = "assistants/household/${key}";
+        value = {
+          sopsFile = "${self}/secrets/assistants/household.yaml";
+          inherit key;
+          mode = "0440";
+          group = "keys";
+        };
+      }) assistant.openclaw.sopsSecrets
+    );
 
   mkVm =
     assistant:
@@ -403,9 +408,10 @@ let
   };
 in
 {
-  sops.secrets = builtins.listToAttrs (map mkSopsSecret assistants)
-    // builtins.foldl' (acc: a:
-      if a ? openclaw then acc // mkOpenClawSopsSecrets a else acc
+  sops.secrets =
+    builtins.listToAttrs (map mkSopsSecret assistants)
+    // builtins.foldl' (
+      acc: a: if a ? openclaw then acc // mkOpenClawSopsSecrets a else acc
     ) { } assistants;
 
   networking.firewall.interfaces.tailscale0.allowedTCPPorts = builtins.concatMap (router: [
