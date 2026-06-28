@@ -155,9 +155,9 @@ in
         };
         agents.defaults = {
           model = {
-            primary = "cx/gpt-5.5";
+            primary = "minimax/MiniMax-M3";
             fallbacks = [
-              "minimax/MiniMax-M3"
+              "cx/gpt-5.5"
               "glm/glm-5.2"
             ];
           };
