@@ -67,6 +67,8 @@ in
       group = "users";
       stateDir = "/var/lib/openclaw";
       port = 18789;
+      # Docker sandbox needs the docker binary in the gateway's PATH
+      servicePath = [ pkgs.docker ];
 
       config = {
         gateway = {
