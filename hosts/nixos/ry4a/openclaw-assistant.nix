@@ -30,7 +30,38 @@ in
   };
 
   config = {
-    users.users.agent.extraGroups = [ "keys" ];
+    virtualisation.docker.enable = true;
+    users.users.agent.extraGroups = [
+      "docker"
+      "keys"
+    ];
+
+    # Build the sandbox image used for non-main/spawned agent work.
+    systemd.services.openclaw-sandbox-image = {
+      description = "Build OpenClaw sandbox Docker image";
+      after = [ "docker.service" ];
+      requires = [ "docker.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        if ! ${pkgs.docker}/bin/docker image inspect openclaw-sandbox:bookworm-slim >/dev/null 2>&1; then
+          ${pkgs.docker}/bin/docker build -t openclaw-sandbox:bookworm-slim - <<'DOCKERFILE'
+        FROM debian:bookworm-slim
+        ENV DEBIAN_FRONTEND=noninteractive
+        RUN apt-get update && apt-get install -y --no-install-recommends \
+          bash ca-certificates curl git jq python3 ripgrep \
+          && rm -rf /var/lib/apt/lists/*
+        RUN useradd --create-home --shell /bin/bash sandbox
+        USER sandbox
+        WORKDIR /home/sandbox
+        CMD ["sleep", "infinity"]
+        DOCKERFILE
+        fi
+      '';
+    };
 
     # Runtime dir for the assembled env file
     systemd.tmpfiles.rules = [
@@ -68,6 +99,7 @@ in
       group = "users";
       stateDir = "/var/lib/openclaw";
       port = 18789;
+      servicePath = [ pkgs.docker ];
       config = {
         gateway = {
           mode = "local";
@@ -181,7 +213,9 @@ in
           thinkingDefault = "adaptive";
           reasoningDefault = "on";
           sandbox = {
-            mode = "off";
+            # Main Telegram sessions stay host-side; spawned/non-main work can sandbox.
+            mode = "non-main";
+            backend = "docker";
           };
         };
         channels.telegram = {
@@ -200,8 +234,14 @@ in
 
     # Ensure secrets-env runs before gateway
     systemd.services.openclaw-gateway = {
-      after = [ "openclaw-secrets-env.service" ];
-      wants = [ "openclaw-secrets-env.service" ];
+      after = [
+        "openclaw-secrets-env.service"
+        "openclaw-sandbox-image.service"
+      ];
+      wants = [
+        "openclaw-secrets-env.service"
+        "openclaw-sandbox-image.service"
+      ];
     };
 
     # Allow gateway port on Tailscale interface
