@@ -155,11 +155,33 @@ in
               id = "LLM_ROUTER_API_KEY";
             };
             models = [
-              { id = "minimax/MiniMax-M3"; name = "MiniMax M3"; api = "anthropic-messages"; }
-              { id = "minimax/MiniMax-M2.7-highspeed"; name = "MiniMax M2.7 Highspeed"; api = "anthropic-messages"; }
+              {
+                id = "minimax/MiniMax-M3";
+                name = "MiniMax M3";
+                api = "anthropic-messages";
+                reasoning = true;
+              }
+              {
+                id = "minimax/MiniMax-M2.7-highspeed";
+                name = "MiniMax M2.7 Highspeed";
+                api = "anthropic-messages";
+              }
               # home-llm-router currently exposes GLM as glm/*, not zai/*.
-              { id = "glm/glm-5.2"; name = "GLM 5.2"; api = "anthropic-messages"; }
-              { id = "glm/glm-5v-turbo"; name = "GLM 5V Turbo"; api = "anthropic-messages"; input = [ "text" "image" ]; }
+              {
+                id = "glm/glm-5.2";
+                name = "GLM 5.2";
+                api = "anthropic-messages";
+                reasoning = true;
+              }
+              {
+                id = "glm/glm-5v-turbo";
+                name = "GLM 5V Turbo";
+                api = "anthropic-messages";
+                input = [
+                  "text"
+                  "image"
+                ];
+              }
             ];
           };
           router-openai = {
@@ -171,9 +193,22 @@ in
               id = "LLM_ROUTER_API_KEY";
             };
             models = [
-              { id = "cx/gpt-5.3-codex"; name = "GPT 5.3 Codex"; api = "openai-completions"; }
-              { id = "cx/gpt-5.4"; name = "GPT 5.4"; api = "openai-completions"; }
-              { id = "cx/gpt-5.5"; name = "GPT 5.5"; api = "openai-completions"; }
+              {
+                id = "cx/gpt-5.3-codex";
+                name = "GPT 5.3 Codex";
+                api = "openai-completions";
+              }
+              {
+                id = "cx/gpt-5.4";
+                name = "GPT 5.4";
+                api = "openai-completions";
+              }
+              {
+                id = "cx/gpt-5.5";
+                name = "GPT 5.5";
+                api = "openai-completions";
+                reasoning = true;
+              }
             ];
           };
         };
@@ -185,6 +220,8 @@ in
               "router-anthropic/glm/glm-5.2"
             ];
           };
+          thinkingDefault = "adaptive";
+          reasoningDefault = "on";
           sandbox = {
             mode = "all";
             backend = "docker";
