@@ -94,6 +94,7 @@ in
         };
         channels.telegram = {
           enabled = true;
+          allowFrom = [ 8504646361 ];
           botToken = {
             source = "env";
             provider = "default";
