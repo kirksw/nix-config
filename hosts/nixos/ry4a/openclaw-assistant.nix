@@ -213,8 +213,8 @@ in
           thinkingDefault = "adaptive";
           reasoningDefault = "on";
           sandbox = {
-            # Main Telegram sessions stay host-side; spawned/non-main work can sandbox.
-            mode = "non-main";
+            # Docker sandbox is available, but sessions are not forced into it.
+            mode = "off";
             backend = "docker";
           };
         };
