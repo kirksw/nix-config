@@ -36,6 +36,7 @@ let
       openclaw = {
         router = "home-llm-router";
         secretsFile = "household";
+        telegramAllowFrom = [ 8504646361 8771595122 ];
         sopsSecrets = [
           "telegram_bot_token"
           "llm_router_api_key"
@@ -52,6 +53,7 @@ let
       openclaw = {
         router = "home-llm-router";
         secretsFile = "sanja";
+        telegramAllowFrom = [ 8771595122 ];
         sopsSecrets = [
           "telegram_bot_token"
           "llm_router_api_key"
@@ -68,6 +70,7 @@ let
       openclaw = {
         router = "home-llm-router";
         secretsFile = "kirk";
+        telegramAllowFrom = [ 8504646361 ];
         sopsSecrets = [
           "telegram_bot_token"
           "llm_router_api_key"
@@ -157,6 +160,7 @@ let
                 assistant.openclaw.router = assistant.openclaw.router;
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
+                assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
                 nixpkgs.overlays = [ inputs.nix-openclaw.overlays.default ];
               })
             ]

@@ -21,6 +21,12 @@ in
       type = lib.types.str;
       description = "virtiofs-mounted sops secrets directory readable by the keys group.";
     };
+
+    telegramAllowFrom = lib.mkOption {
+      type = lib.types.listOf lib.types.int;
+      default = [ ];
+      description = "Telegram user IDs allowed to message this assistant.";
+    };
   };
 
   config = {
@@ -130,7 +136,7 @@ in
         };
         channels.telegram = {
           enabled = true;
-          allowFrom = [ 8504646361 ];
+          allowFrom = cfg.telegramAllowFrom;
           botToken = {
             source = "env";
             provider = "default";
