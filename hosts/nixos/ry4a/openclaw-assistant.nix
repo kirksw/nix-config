@@ -107,14 +107,14 @@ in
       group = "users";
       stateDir = "/var/lib/openclaw";
       port = 18789;
-      # Bind on all interfaces so the dashboard is reachable over Tailscale
-      execStart = "${pkgs.openclaw}/bin/openclaw gateway --port 18789 --host 0.0.0.0";
       # Docker sandbox needs the docker binary in the gateway's PATH
       servicePath = [ pkgs.docker ];
 
       config = {
         gateway = {
           mode = "local";
+          # Bind on all interfaces so the dashboard is reachable over Tailscale
+          bind = "0.0.0.0";
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
             mode = "token";
