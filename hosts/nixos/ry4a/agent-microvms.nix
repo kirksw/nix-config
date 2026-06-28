@@ -23,15 +23,15 @@ let
     {
       name = "personal-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/personal-assistant/authKey";
-      authKey = "personalAssistantAuthKey";
+      authSecret = "tailscale/microvms/assistant-auth-key";
+      authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:01";
     }
     {
       name = "household-assistant";
       kbRepo = "https://github.com/kirksw/kb-household";
-      authSecret = "tailscale/microvms/household-assistant/authKey";
-      authKey = "householdAssistantAuthKey";
+      authSecret = "tailscale/microvms/assistant-auth-key";
+      authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:02";
       openclaw = {
         router = "home-llm-router";
@@ -46,8 +46,8 @@ let
     {
       name = "sanja-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/sanja-assistant/authKey";
-      authKey = "sanjaAssistantAuthKey";
+      authSecret = "tailscale/microvms/assistant-auth-key";
+      authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:04";
       openclaw = {
         router = "home-llm-router";
@@ -62,8 +62,8 @@ let
     {
       name = "kirk-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/kirk-assistant/authKey";
-      authKey = "kirkAssistantAuthKey";
+      authSecret = "tailscale/microvms/assistant-auth-key";
+      authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:05";
       openclaw = {
         router = "home-llm-router";
@@ -78,8 +78,8 @@ let
     {
       name = "work-assistant";
       kbRepo = "https://github.com/kirksw/kb-lunar";
-      authSecret = "tailscale/microvms/work-assistant/authKey";
-      authKey = "workAssistantAuthKey";
+      authSecret = "tailscale/microvms/assistant-auth-key";
+      authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:03";
     }
   ];
@@ -287,7 +287,9 @@ let
               }
             ]
             ++ (lib.optional (assistant ? openclaw) {
-              source = builtins.dirOf config.sops.secrets."assistants/${assistant.openclaw.secretsFile}/telegram_bot_token".path;
+              source =
+                builtins.dirOf
+                  config.sops.secrets."assistants/${assistant.openclaw.secretsFile}/telegram_bot_token".path;
               mountPoint = "/run/host-secrets/openclaw";
               tag = "openclaw-secrets";
               proto = "virtiofs";
@@ -445,7 +447,8 @@ let
 in
 {
   sops.secrets =
-    builtins.listToAttrs (map mkSopsSecret assistants)
+    # Deduplicate tailscale auth keys (all assistants share one key)
+    builtins.listToAttrs (lib.unique (map (a: mkSopsSecret a) assistants))
     // builtins.foldl' (
       acc: a: if a ? openclaw then acc // mkOpenClawSopsSecrets a else acc
     ) { } assistants;
