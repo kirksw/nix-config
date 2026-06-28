@@ -1,7 +1,9 @@
 {
   self,
+  inputs,
   config,
   pkgs,
+  lib,
   ...
 }:
 
@@ -31,6 +33,14 @@ let
       authSecret = "tailscale/microvms/household-assistant/authKey";
       authKey = "householdAssistantAuthKey";
       mac = "02:00:00:10:00:02";
+      openclaw = {
+        router = "home-llm-router";
+        sopsSecrets = [
+          "telegram_bot_token"
+          "llm_router_api_key"
+          "gateway_token"
+        ];
+      };
     }
     {
       name = "work-assistant";
@@ -65,6 +75,18 @@ let
     };
   };
 
+  # Sops secrets for OpenClaw-enabled assistants.
+  # Each key from household.yaml becomes a file under /run/secrets/assistants/household/.
+  mkOpenClawSopsSecrets = assistant:
+    builtins.listToAttrs (map (key: {
+      name = "assistants/household/${key}";
+      value = {
+        sopsFile = "${self}/secrets/assistants/household.yaml";
+        inherit key;
+        mode = "0400";
+      };
+    }) assistant.openclaw.sopsSecrets);
+
   mkVm =
     assistant:
     let
@@ -83,6 +105,22 @@ let
       name = assistant.name;
       value = {
         autostart = true;
+
+        # Extra modules for OpenClaw-enabled assistants
+        extraModules =
+          if assistant ? openclaw then
+            [
+              inputs.nix-openclaw.nixosModules.openclaw-gateway
+              ./openclaw-assistant.nix
+              ({ ... }: {
+                assistant.openclaw.router = assistant.openclaw.router;
+                # sopsDir is the virtiofs mount point where the VM reads shared secrets
+                assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
+                nixpkgs.overlays = [ inputs.nix-openclaw.overlays.default ];
+              })
+            ]
+          else
+            [ ];
         config = {
           networking.hostName = assistant.name;
           system.stateVersion = "25.05";
@@ -165,7 +203,8 @@ let
 
           microvm = {
             hypervisor = "qemu";
-            mem = 4096;
+            # OpenClaw + Docker sandbox needs more RAM
+            mem = if assistant ? openclaw then 6144 else 4096;
             vcpu = 2;
             interfaces = [
               {
@@ -205,7 +244,14 @@ let
                 proto = "virtiofs";
                 readOnly = true;
               }
-            ];
+            ]
+            ++ (lib.optional (assistant ? openclaw) {
+              source = builtins.dirOf config.sops.secrets."assistants/household/telegram_bot_token".path;
+              mountPoint = "/run/host-secrets/openclaw";
+              tag = "openclaw-secrets";
+              proto = "virtiofs";
+              readOnly = true;
+            });
           };
         };
       };
@@ -357,7 +403,10 @@ let
   };
 in
 {
-  sops.secrets = builtins.listToAttrs (map mkSopsSecret assistants);
+  sops.secrets = builtins.listToAttrs (map mkSopsSecret assistants)
+    // builtins.foldl' (acc: a:
+      if a ? openclaw then acc // mkOpenClawSopsSecrets a else acc
+    ) { } assistants;
 
   networking.firewall.interfaces.tailscale0.allowedTCPPorts = builtins.concatMap (router: [
     router.hostPort

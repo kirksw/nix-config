@@ -51,6 +51,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nix-openclaw.url = "github:openclaw/nix-openclaw";
+
     backend-engineering-practices = {
       url = "github:lunarway/backend-engineering-practices/master";
       flake = false;
@@ -80,6 +82,7 @@
       nix-agents,
       git-hooks,
       neovim-nightly-overlay,
+      nix-openclaw,
       ...
     }:
     let
