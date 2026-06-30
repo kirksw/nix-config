@@ -2,7 +2,7 @@
   "pi-subagents" = {
     enabled = true;
     npmName = "pi-subagents";
-    version = "0.30.0";
+    version = "0.31.0";
     types = [
       "extension"
       "skill"
@@ -31,7 +31,7 @@
   "context-mode" = {
     enabled = true;
     npmName = "context-mode";
-    version = "1.0.162";
+    version = "1.0.169";
     types = [
       "extension"
       "skill"
@@ -42,7 +42,7 @@
   "pi-web-access" = {
     enabled = true;
     npmName = "pi-web-access";
-    version = "0.10.7";
+    version = "0.13.0";
     aliases = [ "pi-web-acess" ];
     types = [
       "extension"
@@ -86,7 +86,7 @@
   "pi-lens" = {
     enabled = true;
     npmName = "pi-lens";
-    version = "3.8.53";
+    version = "3.8.62";
     types = [
       "extension"
       "skill"
@@ -96,8 +96,8 @@
 
   ponytail = {
     enabled = true;
-    ref = "git:github.com/DietrichGebert/ponytail@6da37bfa7d0282522c7785759f4d2f1544015354";
-    version = "6da37bfa7d0282522c7785759f4d2f1544015354";
+    ref = "git:github.com/DietrichGebert/ponytail@16f6cbf4b87792938e47b0f8c650b6d80fcbc98c";
+    version = "16f6cbf4b87792938e47b0f8c650b6d80fcbc98c";
     types = [
       "extension"
       "skill"
