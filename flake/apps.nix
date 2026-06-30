@@ -273,6 +273,10 @@ let
   codexPersonalRulesFile = pkgs.writeText "codex-personal-default.rules" agentBaseSettings.codexRules.personal-default;
   codexWorkRulesFile = pkgs.writeText "codex-work-default.rules" agentBaseSettings.codexRules.work-default;
   piKanbanPatchDir = ../agents/external/pi-packages/patches/pi-kanban;
+  threadOsContextHook = ../agents/defs/hooks/session-thread-context.py;
+  threadOsSyncHook = ../agents/defs/hooks/session-thread-sync.py;
+  threadOsStartHook = ../agents/defs/hooks/pi-thread-os-session-start.sh;
+  threadOsEndHook = ../agents/defs/hooks/pi-thread-os-session-end.sh;
 
   syncAgents = pkgs.writeShellScriptBin "sync-agents" ''
     set -euo pipefail
@@ -516,6 +520,31 @@ let
       done
     }
 
+    sync_pi_thread_os_hooks() {
+      profile_dir="$1"
+      hooks_dir="$profile_dir/hooks/thread-os"
+      start_hook="$hooks_dir/pi-thread-os-session-start.sh"
+      end_hook="$hooks_dir/pi-thread-os-session-end.sh"
+
+      echo "Syncing Pi Thread OS session hooks for $profile_dir"
+      mkdir_p "$hooks_dir"
+      sync_file "${threadOsContextHook}" "$hooks_dir/session-thread-context.py"
+      sync_file "${threadOsSyncHook}" "$hooks_dir/session-thread-sync.py"
+      sync_file "${threadOsStartHook}" "$start_hook"
+      sync_file "${threadOsEndHook}" "$end_hook"
+
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "DRY-RUN chmod +x $start_hook $end_hook"
+        echo "DRY-RUN write $profile_dir/hook-manifest"
+        return 0
+      fi
+
+      chmod u+x "$start_hook" "$end_hook"
+      # ponytail: direct Pi hook manifest until nix-agents hook manifests can reference hook derivations during sync.
+      printf 'session-start:%s\nsession-end:%s\n' "$start_hook" "$end_hook" > "$profile_dir/hook-manifest"
+      chmod u+w "$profile_dir/hook-manifest"
+    }
+
     ${allBaseSettingsCommands}
 
     seed_mutable_file \
@@ -526,6 +555,13 @@ let
     ${allSyncCommands}
 
     apply_pi_kanban_patch
+
+    for pi_profile_dir in \
+      "$CONFIG_BASE/pi/bases/personal/profiles/personal-default" \
+      "$CONFIG_BASE/pi/bases/work/profiles/work-default"; do
+      [ -d "$pi_profile_dir" ] || continue
+      sync_pi_thread_os_hooks "$pi_profile_dir"
+    done
 
     install_lines_once \
       "${codexPersonalRulesFile}" \
