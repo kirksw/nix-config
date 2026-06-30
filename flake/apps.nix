@@ -522,7 +522,7 @@ let
 
     sync_pi_thread_os_hooks() {
       profile_dir="$1"
-      hooks_dir="$profile_dir/hooks/thread-os"
+      hooks_dir="$profile_dir/extensions/thread-os/hooks"
       start_hook="$hooks_dir/pi-thread-os-session-start.sh"
       end_hook="$hooks_dir/pi-thread-os-session-end.sh"
 
@@ -536,13 +536,15 @@ let
       if [ "$DRY_RUN" -eq 1 ]; then
         echo "DRY-RUN chmod +x $start_hook $end_hook"
         echo "DRY-RUN write $profile_dir/hook-manifest"
+        echo "DRY-RUN rm -rf $profile_dir/hooks"
         return 0
       fi
 
       chmod u+x "$start_hook" "$end_hook"
-      # ponytail: direct Pi hook manifest until nix-agents hook manifests can reference hook derivations during sync.
+      # ponytail: wrapper still consumes hook-manifest; scripts live under extensions/ to avoid Pi's deprecated global hooks/ warning.
       printf 'session-start:%s\nsession-end:%s\n' "$start_hook" "$end_hook" > "$profile_dir/hook-manifest"
       chmod u+w "$profile_dir/hook-manifest"
+      rm -rf "$profile_dir/hooks"
     }
 
     ${allBaseSettingsCommands}
