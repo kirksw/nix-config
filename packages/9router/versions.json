@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "9routerVersions": {
-    "version": "0.5.8",
-    "hash": "sha256-d6MG0ya41fL24r7qwTC1j0xNkKXa9sN0KxkrjOZraCU=",
-    "npmDepsHash": "sha256-TfZ/qDE1Cm0pahTvgmWNbcg3lGJeewsxcIO1FvmYq+E="
+    "version": "0.5.15",
+    "hash": "sha256-54vXNHbCrXqW3Wu0zwvVmjyvvDE7coCFCtMnAM/DNcM=",
+    "npmDepsHash": "sha256-UajrXGnVuIl/Gl9eQtdBkbyRZRgxkx9mGGM0xUVE8P8="
   }
 }
