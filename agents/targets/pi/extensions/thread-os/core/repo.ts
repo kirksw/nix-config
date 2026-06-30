@@ -50,20 +50,38 @@ async function directoryExists(p: string): Promise<boolean> {
 	}
 }
 
-function resolveWorkspacePath(repoPath: string): string {
-	return path.join(repoPath, "workspace");
+async function resolveRepoAndWorkspacePath(
+	repoPath: string,
+): Promise<{ repoPath: string; workspacePath: string }> {
+	const workspacePath = path.join(repoPath, "workspace");
+	if (await directoryExists(workspacePath)) {
+		return { repoPath, workspacePath };
+	}
+
+	const mainRepoPath = path.join(repoPath, "main");
+	const mainWorkspacePath = path.join(mainRepoPath, "workspace");
+	if (await directoryExists(mainWorkspacePath)) {
+		return { repoPath: mainRepoPath, workspacePath: mainWorkspacePath };
+	}
+
+	return { repoPath, workspacePath };
 }
 
 export async function resolveThreadOsContext(
 	ctx?: ExtensionContext,
 ): Promise<ThreadOsContext> {
 	const scope: ScopeResolution = resolveScope(ctx);
-	const repoPath = defaultRepoPath(scope.scope);
-	const repoExists = repoPath ? await directoryExists(repoPath) : false;
-	const workspacePath =
-		scope.scope && repoPath && repoExists
-			? resolveWorkspacePath(repoPath)
+	const configuredRepoPath = defaultRepoPath(scope.scope);
+	const configuredRepoExists = configuredRepoPath
+		? await directoryExists(configuredRepoPath)
+		: false;
+	const resolvedPaths =
+		scope.scope && configuredRepoPath && configuredRepoExists
+			? await resolveRepoAndWorkspacePath(configuredRepoPath)
 			: null;
+	const repoPath = resolvedPaths?.repoPath ?? configuredRepoPath;
+	const repoExists = repoPath ? await directoryExists(repoPath) : false;
+	const workspacePath = resolvedPaths?.workspacePath ?? null;
 	const storePath = workspacePath
 		? path.join(workspacePath, ".lifeos", "db")
 		: null;

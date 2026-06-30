@@ -18,7 +18,7 @@ Repo resolution is scope-aware:
 - personal scope uses `THREAD_OS_PERSONAL_REPO`, then `~/git/github.com/kirksw/lifeOS`
 - lunar/work scope uses `THREAD_OS_WORK_REPO`, then `~/git/github.com/kirksw/lunarOS`
 
-Workspace resolution uses `repo/workspace`.
+Workspace resolution uses `repo/workspace`, with a fallback to `repo/main/workspace` for worktree-style repos.
 
 Scope is profile/base authoritative when `THREAD_OS_SCOPE`, `NAX_BASE`, `NAX_PROFILE`, or `PI_CODING_AGENT_DIR` are present. Unknown scopes disable writes.
 

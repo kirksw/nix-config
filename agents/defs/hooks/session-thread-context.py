@@ -74,6 +74,19 @@ def dedup_by_id(records):
 # Scope and repo resolution (duplicated from session-thread-sync.py)
 # ---------------------------------------------------------------------------
 
+def resolve_repo_and_workspace(repo):
+    workspace = repo / "workspace"
+    if workspace.exists():
+        return repo, workspace
+
+    main_repo = repo / "main"
+    main_workspace = main_repo / "workspace"
+    if main_workspace.exists():
+        return main_repo, main_workspace
+
+    return repo, workspace
+
+
 def resolve_scope_and_repo():
     personal_repo = Path(os.environ.get(
         "THREAD_OS_PERSONAL_REPO",
@@ -94,13 +107,14 @@ def resolve_scope_and_repo():
     elif profile.startswith("work"):
         scope = "lunar"
     else:
-        return None, None
+        return None, None, None
 
     repo = personal_repo if scope == "personal" else work_repo
     if not repo.exists():
-        return None, None
+        return None, None, None
 
-    return scope, repo
+    repo, workspace = resolve_repo_and_workspace(repo)
+    return scope, repo, workspace
 
 
 # ---------------------------------------------------------------------------
@@ -396,11 +410,10 @@ def main():
     if not session:
         sys.exit(0)
 
-    scope, repo = resolve_scope_and_repo()
-    if not scope or repo is None:
+    scope, repo, workspace = resolve_scope_and_repo()
+    if not scope or repo is None or workspace is None:
         sys.exit(0)
 
-    workspace = repo / "workspace"
     workspace.mkdir(parents=True, exist_ok=True)
     db = workspace / ".lifeos" / "db"
 
