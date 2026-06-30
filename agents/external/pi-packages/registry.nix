@@ -84,7 +84,7 @@
   };
 
   "pi-lens" = {
-    enabled = true;
+    enabled = false;
     npmName = "pi-lens";
     version = "3.8.62";
     types = [
