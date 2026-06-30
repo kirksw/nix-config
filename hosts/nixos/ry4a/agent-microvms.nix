@@ -36,7 +36,11 @@ let
       openclaw = {
         router = "home-llm-router";
         secretsFile = "household";
-        telegramAllowFrom = [ 8504646361 8771595122 ];
+        telegramAllowFrom = [
+          8504646361
+          8771595122
+        ];
+        modelFallbacks = [ "router-anthropic/glm/glm-5.2" ];
         sopsSecrets = [
           "telegram_bot_token"
           "llm_router_api_key"
@@ -54,6 +58,10 @@ let
         router = "home-llm-router";
         secretsFile = "sanja";
         telegramAllowFrom = [ 8771595122 ];
+        modelFallbacks = [
+          "router-openai/cx/gpt-5.4"
+          "router-anthropic/glm/glm-5.2"
+        ];
         sopsSecrets = [
           "telegram_bot_token"
           "llm_router_api_key"
@@ -149,6 +157,8 @@ let
       name = assistant.name;
       value = {
         autostart = true;
+        # ponytail: avoid deploy-rs rollback on transient parallel MicroVM boot failures; restart target VMs manually when needed.
+        restartIfChanged = false;
 
         # Extra modules for OpenClaw-enabled assistants
         extraModules =
@@ -161,6 +171,11 @@ let
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
+                assistant.openclaw.modelFallbacks =
+                  assistant.openclaw.modelFallbacks or [
+                    "router-openai/cx/gpt-5.4"
+                    "router-anthropic/glm/glm-5.2"
+                  ];
                 nixpkgs.overlays = [ inputs.nix-openclaw.overlays.default ];
               })
             ]
@@ -308,6 +323,8 @@ let
     name = router.name;
     value = {
       autostart = true;
+      # ponytail: avoid deploy-rs rollback on transient parallel MicroVM boot failures; restart target VMs manually when needed.
+      restartIfChanged = false;
       config = {
         networking.hostName = router.name;
         system.stateVersion = "25.05";

@@ -27,10 +27,20 @@ in
       default = [ ];
       description = "Telegram user IDs allowed to message this assistant.";
     };
+
+    modelFallbacks = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "router-openai/cx/gpt-5.4"
+        "router-anthropic/glm/glm-5.2"
+      ];
+      description = "Fallback models for the assistant default agent model.";
+    };
   };
 
   config = {
     virtualisation.docker.enable = true;
+    environment.systemPackages = [ pkgs.openclaw ];
     users.users.agent.extraGroups = [
       "docker"
       "keys"
@@ -99,14 +109,21 @@ in
       group = "users";
       stateDir = "/var/lib/openclaw";
       port = 18789;
-      servicePath = [ pkgs.docker ];
+      servicePath = [
+        pkgs.docker
+        pkgs.sudo
+        pkgs.tailscale
+      ];
       config = {
         gateway = {
           mode = "local";
-          # Bind on all interfaces so the dashboard is reachable over Tailscale
-          bind = "lan";
-          # Allow dashboard WebSocket connections from Tailscale hostnames and IPs
-          # Trust nginx reverse proxy forwarding headers
+          # Tailscale Serve publishes the loopback gateway to the tailnet with Tailscale identity headers.
+          bind = "loopback";
+          tailscale = {
+            mode = "serve";
+            resetOnExit = false;
+          };
+          # Tailscale Serve maps the dashboard to https://<node>.<tailnet> (443).
           trustedProxies = [ "127.0.0.1/32" ];
           controlUi = {
             allowedOrigins = [
@@ -135,6 +152,71 @@ in
             };
           };
         };
+        commands.ownerAllowFrom = map (id: "telegram:${toString id}") cfg.telegramAllowFrom;
+        browser = {
+          enabled = true;
+          executablePath = "${pkgs.chromium}/bin/chromium";
+          headless = true;
+          noSandbox = true;
+          extraArgs = [ "--disable-dev-shm-usage" ];
+        };
+        memory = {
+          backend = "qmd";
+          citations = "auto";
+          qmd = {
+            command = "${pkgs.qmd}/bin/qmd";
+            includeDefaultMemory = true;
+            sessions = {
+              enabled = true;
+              exportDir = "/var/lib/openclaw/session-memory";
+              retentionDays = 90;
+            };
+            update = {
+              onBoot = true;
+              startup = "idle";
+              interval = "10m";
+              embedInterval = "30m";
+              waitForBootSync = false;
+            };
+          };
+        };
+        plugins.entries.memory-core = {
+          enabled = true;
+          config.dreaming.enabled = true;
+        };
+        plugins.entries.file-transfer = {
+          enabled = true;
+          config.nodes."*" = {
+            ask = "on-miss";
+            allowReadPaths = [
+              "/srv/assistant/**"
+              "/var/lib/openclaw/logs/**"
+              "/etc/assistant/**"
+              "/etc/openclaw/openclaw.json"
+              "/Users/kisw/git/**"
+              "/Users/kisw/Desktop/**"
+              "/Users/kisw/Downloads/**"
+              "/tmp/openclaw-transfer/**"
+            ];
+            allowWritePaths = [
+              "/srv/assistant/inbox/**"
+              "/srv/assistant/workspace/**"
+              "/Users/kisw/Downloads/openclaw-transfer/**"
+              "/tmp/openclaw-transfer/**"
+            ];
+            denyPaths = [
+              "/run/host-secrets/**"
+              "/run/secrets/**"
+              "/var/lib/openclaw/config/**"
+              "/Users/*/.ssh/**"
+              "/Users/*/.gnupg/**"
+              "/Users/*/.config/sops/**"
+              "/Users/*/Library/Keychains/**"
+            ];
+            maxBytes = 16777216;
+            followSymlinks = false;
+          };
+        };
         models.providers = {
           router-anthropic = {
             baseUrl = "http://${cfg.router}:80";
@@ -149,24 +231,38 @@ in
                 id = "minimax/MiniMax-M3";
                 name = "MiniMax M3";
                 api = "anthropic-messages";
+                contextWindow = 1000000;
+                maxTokens = 524288;
                 reasoning = true;
+                input = [
+                  "text"
+                  "image"
+                  "video"
+                ];
               }
               {
                 id = "minimax/MiniMax-M2.7-highspeed";
                 name = "MiniMax M2.7 Highspeed";
                 api = "anthropic-messages";
+                contextWindow = 204800;
+                maxTokens = 204800;
+                reasoning = true;
               }
               # home-llm-router currently exposes GLM as glm/*, not zai/*.
               {
                 id = "glm/glm-5.2";
                 name = "GLM 5.2";
                 api = "anthropic-messages";
+                contextWindow = 1000000;
+                maxTokens = 131072;
                 reasoning = true;
               }
               {
-                id = "glm/glm-5v-turbo";
-                name = "GLM 5V Turbo";
+                id = "glm/glm-4.6v";
+                name = "GLM 4.6V";
                 api = "anthropic-messages";
+                contextWindow = 128000;
+                maxTokens = 131072;
                 input = [
                   "text"
                   "image"
@@ -205,13 +301,11 @@ in
         agents.defaults = {
           model = {
             primary = "router-anthropic/minimax/MiniMax-M3";
-            fallbacks = [
-              "router-openai/cx/gpt-5.5"
-              "router-anthropic/glm/glm-5.2"
-            ];
+            fallbacks = cfg.modelFallbacks;
           };
-          thinkingDefault = "adaptive";
-          reasoningDefault = "on";
+          # ponytail: hide model chain-of-thought; turn back on only if answer quality tanks.
+          thinkingDefault = "off";
+          reasoningDefault = "off";
           sandbox = {
             # Docker sandbox is available, but sessions are not forced into it.
             mode = "off";
@@ -232,35 +326,39 @@ in
       environmentFiles = [ "/run/openclaw-secrets/env" ];
     };
 
+    systemd.services.openclaw-tailscale-operator = {
+      description = "Allow OpenClaw to manage Tailscale Serve";
+      after = [ "tailscaled.service" ];
+      wants = [ "tailscaled.service" ];
+      before = [ "openclaw-gateway.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
+          if ${pkgs.tailscale}/bin/tailscale status --json >/dev/null 2>&1; then
+            ${pkgs.tailscale}/bin/tailscale set --operator=agent || true
+            exit 0
+          fi
+          ${pkgs.coreutils}/bin/sleep 1
+        done
+      '';
+    };
+
     # Ensure secrets-env runs before gateway
     systemd.services.openclaw-gateway = {
       after = [
         "openclaw-secrets-env.service"
         "openclaw-sandbox-image.service"
+        "openclaw-tailscale-operator.service"
       ];
       wants = [
         "openclaw-secrets-env.service"
         "openclaw-sandbox-image.service"
+        "openclaw-tailscale-operator.service"
       ];
-    };
-
-    # Allow gateway port on Tailscale interface
-    networking.firewall.interfaces.tailscale0.allowedTCPPorts = [
-      18789
-      80
-    ];
-
-    # Reverse proxy port 80 -> gateway 18789 for easy dashboard access
-    # Includes WebSocket upgrade support for the dashboard UI
-    services.nginx = {
-      enable = true;
-      recommendedProxySettings = true;
-      virtualHosts."_" = {
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:18789";
-          proxyWebsockets = true;
-        };
-      };
     };
   };
 }
