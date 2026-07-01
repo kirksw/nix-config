@@ -16,6 +16,12 @@
       "$schema" = "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json";
       schemaVersion = 1;
 
+      automation = {
+        # ponytail: no cmux Claude shim; use the Home Manager/nix-agents wrapper.
+        claudeCodeIntegration = false;
+        claudeBinaryPath = "${config.home.profileDirectory}/bin/claude";
+      };
+
       # tmux-style prefix bindings (Ctrl+a then key).
       # Existing cmd-based defaults still work alongside these.
       shortcuts.bindings = {
