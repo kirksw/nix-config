@@ -20,12 +20,44 @@
     source = "https://pi.dev/packages/%40juicesharp/rpiv-todo";
   };
 
+  "rpiv-ask-user-question" = {
+    enabled = true;
+    npmName = "@juicesharp/rpiv-ask-user-question";
+    version = "1.20.0";
+    types = [ "extension" ];
+    source = "https://pi.dev/packages/%40juicesharp/rpiv-ask-user-question";
+  };
+
   "pi-kanban" = {
     enabled = false;
     npmName = "pi-kanban";
     version = "1.0.0";
     types = [ "extension" ];
     source = "https://pi.dev/packages/pi-kanban";
+  };
+
+  "pi-goal-x" = {
+    enabled = true;
+    ref = "git:github.com/tmonk/pi-goal-x@68ed6de10201cef2fb262b64ab40d75a4e0c6098";
+    version = "0.18.8";
+    types = [ "extension" ];
+    source = "https://github.com/tmonk/pi-goal-x";
+  };
+
+  "pi-observational-memory" = {
+    enabled = true;
+    npmName = "pi-observational-memory";
+    version = "3.0.2";
+    types = [ "extension" ];
+    source = "https://pi.dev/packages/pi-observational-memory";
+  };
+
+  "pi-permission-system" = {
+    enabled = true;
+    npmName = "pi-permission-system";
+    version = "0.7.1";
+    types = [ "extension" ];
+    source = "https://pi.dev/packages/pi-permission-system";
   };
 
   "context-mode" = {
