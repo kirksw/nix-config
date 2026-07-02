@@ -1,8 +1,8 @@
 /**
  * Notes Extension
  *
- * `/note [text]` opens a TUI note capture panel. Notes can be routed to the
- * personal or work notes repository, then saved as committed micronotes.
+ * `/note [text]` opens a TUI note capture panel. Notes are saved into the
+ * correct notes/wiki plane with OKF frontmatter augmented by a tiny Pi model pass.
  */
 
 import { execFile } from "node:child_process";
@@ -22,6 +22,22 @@ type TuiHandle = {
 type SaveResult = {
   repo: string;
   relativePath: string;
+  metadataSource: "pi" | "fallback";
+};
+
+type SaveOptions = {
+  cwd: string;
+  model?: string;
+  signal?: AbortSignal;
+};
+
+type NoteMeta = {
+  title: string;
+  summary?: string;
+  tags?: string[];
+  topics?: string[];
+  source_type?: "braindump" | "meeting" | "research" | "source" | "idea";
+  status?: "raw" | "needs_ingest" | "processed";
 };
 
 const execFileAsync = promisify(execFile);
@@ -31,7 +47,7 @@ function defaultRepo(route: Route): string {
   if (route === "work") {
     return process.env.PI_NOTES_WORK_REPO ?? path.join(home, "git/github.com/kirksw/lunar-notes");
   }
-  return process.env.PI_NOTES_PERSONAL_REPO ?? path.join(home, "git/github.com/kirksw/notes");
+  return process.env.PI_NOTES_PERSONAL_REPO ?? path.join(home, "git/github.com/kirksw/lifeOS");
 }
 
 function defaultRoute(cwd: string): Route {
@@ -97,6 +113,160 @@ function escapeYamlString(value: string): string {
   return JSON.stringify(value);
 }
 
+
+function yamlList(values: string[] | undefined): string {
+  const clean = (values ?? [])
+    .map((value) => String(value).trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  return `[${clean.map(escapeYamlString).join(", ")}]`;
+}
+
+function normalizeList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item).trim()).filter(Boolean);
+}
+
+function fallbackMeta(body: string): NoteMeta {
+  return {
+    title: firstMeaningfulLine(body).slice(0, 100),
+    tags: [],
+    topics: [],
+    source_type: "braindump",
+    status: "raw",
+  };
+}
+
+function normalizeMeta(raw: Partial<NoteMeta>, body: string): NoteMeta {
+  const fallback = fallbackMeta(body);
+  const sourceType = ["braindump", "meeting", "research", "source", "idea"].includes(String(raw.source_type))
+    ? raw.source_type
+    : fallback.source_type;
+  const status = ["raw", "needs_ingest", "processed"].includes(String(raw.status)) ? raw.status : fallback.status;
+  return {
+    title: String(raw.title || fallback.title).trim().slice(0, 100),
+    summary: raw.summary ? String(raw.summary).trim().slice(0, 280) : undefined,
+    tags: normalizeList(raw.tags),
+    topics: normalizeList(raw.topics),
+    source_type: sourceType,
+    status,
+  };
+}
+
+function extractJson<T>(text: string): T | null {
+  const fence = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
+  const candidates: string[] = [];
+  if (fence) candidates.push(fence[1]);
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first !== -1 && last > first) candidates.push(text.slice(first, last + 1));
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate.trim()) as T;
+    } catch {
+      // try next candidate
+    }
+  }
+  return null;
+}
+
+function finalAssistantText(stdout: string): string {
+  const messages: string[] = [];
+  for (const line of stdout.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const event = JSON.parse(line) as {
+        type?: string;
+        message?: { role?: string; content?: Array<{ type?: string; text?: string }> };
+      };
+      const msg = event.message;
+      if (event.type !== "message_end" || msg?.role !== "assistant") continue;
+      const text = (msg.content ?? [])
+        .filter((part) => part.type === "text" && part.text?.trim())
+        .map((part) => part.text ?? "")
+        .join("\n")
+        .trim();
+      if (text) messages.push(text);
+    } catch {
+      // ignore non-json output
+    }
+  }
+  return messages.length > 0 ? messages[messages.length - 1] : "";
+}
+
+async function writeTempFile(dir: string, name: string, content: string): Promise<string> {
+  const file = path.join(dir, name);
+  await fs.writeFile(file, content, "utf8");
+  return file;
+}
+
+async function runPiMetadata(body: string, route: Route, opts: SaveOptions): Promise<Partial<NoteMeta> | null> {
+  if (process.env.PI_OFFLINE || process.env.PI_NOTES_SKIP_MODEL) return null;
+
+  let tmpDir: string | undefined;
+  try {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "pi-note-"));
+    const systemFile = await writeTempFile(
+      tmpDir,
+      "system.md",
+      [
+        "You add OKF metadata to raw human notes.",
+        "Return ONLY JSON with keys: title, summary, tags, topics, source_type, status.",
+        "source_type must be one of: braindump, meeting, research, source, idea.",
+        "status should usually be raw unless the note clearly asks to ingest/process something.",
+        "Do not rewrite or summarize the note body outside the summary field.",
+      ].join("\n"),
+    );
+    const taskFile = await writeTempFile(
+      tmpDir,
+      "task.md",
+      [`Route: ${route}`, "", "Raw note:", "```", body, "```"].join("\n"),
+    );
+    const args = [
+      "--no-extensions",
+      "--mode",
+      "json",
+      "-p",
+      "--no-session",
+      "--no-context-files",
+      "--no-skills",
+      "--no-prompt-templates",
+      "--no-tools",
+    ];
+    if (opts.model) args.push("--model", opts.model);
+    args.push("--append-system-prompt", systemFile, `@${taskFile}`);
+
+    const result = (await execFileAsync("pi", args, {
+      cwd: opts.cwd,
+      timeout: 60_000,
+      maxBuffer: 1024 * 1024,
+      signal: opts.signal,
+    })) as { stdout: string };
+    return extractJson<Partial<NoteMeta>>(finalAssistantText(result.stdout));
+  } catch {
+    return null;
+  } finally {
+    if (tmpDir) await fs.rm(tmpDir, { recursive: true, force: true });
+  }
+}
+
+async function augmentMetadata(body: string, route: Route, opts: SaveOptions): Promise<NoteMeta & { metadataSource: "pi" | "fallback" }> {
+  const raw = await runPiMetadata(body, route, opts);
+  if (!raw) return { ...fallbackMeta(body), metadataSource: "fallback" };
+  return { ...normalizeMeta(raw, body), metadataSource: "pi" };
+}
+
+async function notesBase(repo: string): Promise<string> {
+  const coLocated = path.join(repo, "workspace/wiki");
+  try {
+    const stat = await fs.stat(coLocated);
+    if (stat.isDirectory()) return "workspace/wiki";
+  } catch {
+    // external notes repos keep raw/ and wiki/ at repo root
+  }
+  return "";
+}
+
 async function ensureNotesRepo(repo: string): Promise<void> {
   const gitDir = path.join(repo, ".git");
   try {
@@ -114,7 +284,7 @@ async function git(repo: string, args: string[]): Promise<void> {
   });
 }
 
-async function saveNote(route: Route, body: string): Promise<SaveResult> {
+async function saveNote(route: Route, body: string, opts: SaveOptions): Promise<SaveResult> {
   const trimmed = body.trim();
   if (!trimmed) throw new Error("note body is empty");
 
@@ -122,8 +292,10 @@ async function saveNote(route: Route, body: string): Promise<SaveResult> {
   await ensureNotesRepo(repo);
 
   const { timestamp, year, month, createdAt } = timestampParts();
-  const slug = slugify(firstMeaningfulLine(trimmed));
-  const relativePath = path.join("raw", "quicknote", year, month, `${timestamp}-${slug}.md`);
+  const meta = await augmentMetadata(trimmed, route, opts);
+  const slug = slugify(meta.title);
+  const base = await notesBase(repo);
+  const relativePath = path.join(base, "raw", "inbox", year, month, `${timestamp}-${slug}.md`);
   const notePath = path.join(repo, relativePath);
 
   await fs.mkdir(path.dirname(notePath), { recursive: true });
@@ -131,11 +303,17 @@ async function saveNote(route: Route, body: string): Promise<SaveResult> {
     notePath,
     [
       "---",
-      "type: micronote",
+      "type: Note",
+      `title: ${escapeYamlString(meta.title)}`,
       `created: ${createdAt}`,
       `context: ${route}`,
-      "source: pi",
-      "status: unprocessed",
+      "source: pi-note",
+      `status: ${meta.status ?? "raw"}`,
+      `source_type: ${meta.source_type ?? "braindump"}`,
+      `metadata_source: ${meta.metadataSource}`,
+      `tags: ${yamlList(meta.tags)}`,
+      `topics: ${yamlList(meta.topics)}`,
+      ...(meta.summary ? [`summary: ${escapeYamlString(meta.summary)}`] : []),
       "---",
       "",
       trimmed,
@@ -147,7 +325,7 @@ async function saveNote(route: Route, body: string): Promise<SaveResult> {
   await git(repo, ["add", "--", relativePath]);
   await git(repo, ["commit", "--quiet", "--only", "-m", `add ${route} note ${timestamp}-${slug}`, "--", relativePath]);
 
-  return { repo, relativePath };
+  return { repo, relativePath, metadataSource: meta.metadataSource };
 }
 
 function wrap(text: string, width: number): string[] {
@@ -199,6 +377,7 @@ class NotesPanel {
     private readonly tui: TuiHandle,
     private readonly theme: Theme,
     private readonly done: () => void,
+    private readonly saveOptions: SaveOptions,
   ) {
     this.route = initialRoute;
     this.lines = initialText.length > 0 ? initialText.split("\n") : [""];
@@ -291,10 +470,10 @@ class NotesPanel {
 
   private async save(): Promise<void> {
     if (this.status === "saving") return;
-    this.setMessage("saving", `saving to ${this.route} notes`);
+    this.setMessage("saving", `augmenting metadata and saving to ${this.route}`);
     try {
-      const result = await saveNote(this.route, this.body());
-      this.setMessage("saved", `saved ${result.relativePath}`);
+      const result = await saveNote(this.route, this.body(), this.saveOptions);
+      this.setMessage("saved", `saved ${result.relativePath} (${result.metadataSource} metadata)`);
     } catch (err) {
       this.setMessage("error", (err as Error).message);
     }
@@ -421,9 +600,15 @@ class NotesPanel {
   }
 }
 
+function modelString(ctx: ExtensionContext): string | undefined {
+  const model = (ctx as ExtensionContext & { model?: { provider?: string; id?: string } }).model;
+  if (!model?.id) return undefined;
+  return model.provider ? `${model.provider}/${model.id}` : model.id;
+}
+
 export default function notesExtension(pi: ExtensionAPI): void {
   pi.registerCommand("note", {
-    description: "Capture a personal/work note into the selected notes repo",
+    description: "Capture a personal/work note into the selected notes/wiki plane",
     handler: async (args: string, ctx: ExtensionContext) => {
       if (!ctx.hasUI) {
         ctx.ui.notify("/note requires interactive mode", "error");
@@ -431,7 +616,11 @@ export default function notesExtension(pi: ExtensionAPI): void {
       }
 
       await ctx.ui.custom<void>((tui, theme, _keybindings, done) => {
-        return new NotesPanel(args.trim(), defaultRoute(ctx.cwd), tui, theme, done);
+        return new NotesPanel(args.trim(), defaultRoute(ctx.cwd), tui, theme, done, {
+          cwd: ctx.cwd,
+          model: modelString(ctx),
+          signal: ctx.signal,
+        });
       });
     },
   });
