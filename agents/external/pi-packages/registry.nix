@@ -21,7 +21,7 @@
   };
 
   "pi-kanban" = {
-    enabled = true;
+    enabled = false;
     npmName = "pi-kanban";
     version = "1.0.0";
     types = [ "extension" ];
