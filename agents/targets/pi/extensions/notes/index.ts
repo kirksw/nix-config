@@ -45,7 +45,7 @@ const execFileAsync = promisify(execFile);
 function defaultRepo(route: Route): string {
   const home = os.homedir();
   if (route === "work") {
-    return process.env.PI_NOTES_WORK_REPO ?? path.join(home, "git/github.com/kirksw/lunar-notes");
+    return process.env.PI_NOTES_WORK_REPO ?? path.join(home, "git/github.com/kirksw/lunarOS/main");
   }
   return process.env.PI_NOTES_PERSONAL_REPO ?? path.join(home, "git/github.com/kirksw/lifeOS");
 }
@@ -55,6 +55,7 @@ function defaultRoute(cwd: string): Route {
   const workRoots = [
     path.join(home, "git/github.com/lunarway"),
     path.join(home, "git/github.com/kirksw/lunar-notes"),
+    path.join(home, "git/github.com/kirksw/lunarOS/main"),
     path.join(home, "projects/lunar"),
   ];
   return workRoots.some((root) => cwd === root || cwd.startsWith(`${root}${path.sep}`)) ? "work" : "personal";

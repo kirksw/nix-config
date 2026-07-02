@@ -9,11 +9,12 @@ falls back to deterministic metadata rather than dropping the note.
 ## Routing
 
 - `personal` routes to `~/git/github.com/kirksw/lifeOS` and writes under `workspace/wiki/raw/inbox/`.
-- `work` routes to `~/git/github.com/kirksw/lunar-notes` and writes under `raw/inbox/`.
+- `work` routes to `~/git/github.com/kirksw/lunarOS/main` and writes under `workspace/wiki/raw/inbox/`.
 
 The default route is inferred from the current working directory. Work paths
-under `~/git/github.com/lunarway`, `~/git/github.com/kirksw/lunar-notes`, or
-`~/projects/lunar` default to `work`; everything else defaults to `personal`.
+under `~/git/github.com/lunarway`, `~/git/github.com/kirksw/lunar-notes`,
+`~/git/github.com/kirksw/lunarOS/main`, or `~/projects/lunar` default to `work`;
+everything else defaults to `personal`.
 
 Override paths with:
 
