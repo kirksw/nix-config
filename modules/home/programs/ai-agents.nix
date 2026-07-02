@@ -31,6 +31,7 @@ let
   # Modules shared across all target builds
   nixAgentsModules = localAgents.defaultModules;
   piAgentsModules = localAgents.piModules;
+  piFactoryAgentsModules = localAgents.piFactoryModules;
 
   # Thin wrapper that reads sops-decrypted secrets into env vars,
   # then execs the nix-agents wrapper which handles profile detection
@@ -141,25 +142,62 @@ let
     };
   });
 
+  piAgentSystem = nixAgentsLib.mkAgentSystem {
+    inherit pkgs;
+    target = "pi";
+    inputs = agentInputs;
+    modules = piAgentsModules;
+    src = localAgentsSrc;
+  };
+
+  piProfileMeta = nixAgentsLib.mkProfileMeta {
+    inherit pkgs;
+    target = "pi";
+    inputs = agentInputs;
+    modules = piAgentsModules;
+    src = localAgentsSrc;
+  };
+
+  piFactoryAgentSystem = nixAgentsLib.mkAgentSystem {
+    inherit pkgs;
+    target = "pi";
+    inputs = agentInputs;
+    modules = piFactoryAgentsModules;
+    src = localAgentsSrc;
+  };
+
+  piFactoryProfileMeta = nixAgentsLib.mkProfileMeta {
+    inherit pkgs;
+    target = "pi";
+    inputs = agentInputs;
+    modules = piFactoryAgentsModules;
+    src = localAgentsSrc;
+  };
+
   piPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "pi";
     tool = pkgs.llm-agents.pi;
-    agentSystem = nixAgentsLib.mkAgentSystem {
-      inherit pkgs;
-      target = "pi";
-      inputs = agentInputs;
-      modules = piAgentsModules;
-      src = localAgentsSrc;
-    };
-    profileMeta = nixAgentsLib.mkProfileMeta {
-      inherit pkgs;
-      target = "pi";
-      inputs = agentInputs;
-      modules = piAgentsModules;
-      src = localAgentsSrc;
-    };
+    agentSystem = piAgentSystem;
+    profileMeta = piProfileMeta;
   });
+
+  mkPiFactoryPkg =
+    profile:
+    pkgs.writeShellScriptBin "pi-${profile}" ''
+      exec "${
+        nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
+          inherit pkgs profile;
+          target = "pi";
+          tool = pkgs.llm-agents.pi;
+          agentSystem = piFactoryAgentSystem;
+          profileMeta = piFactoryProfileMeta;
+        })
+      }/bin/pi" "$@"
+    '';
+
+  piHomeFactoryPkg = mkPiFactoryPkg "home-factory";
+  piWorkFactoryPkg = mkPiFactoryPkg "work-factory";
 
   mkOmnigentServerScript =
     profile: port: envBlock:
@@ -474,6 +512,28 @@ in
             if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
               export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
             fi
+          fi
+        '')
+        (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
+          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"
+          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
+
+          if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+            export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
+          fi
+          if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+            export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+          fi
+        '')
+        (mkCredWrapper "pi-work-factory" piWorkFactoryPkg ''
+          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/work-factory"
+          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
+
+          if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+            export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+          fi
+          if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+            export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
           fi
         '')
       ])

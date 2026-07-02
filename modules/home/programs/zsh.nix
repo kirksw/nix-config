@@ -106,6 +106,13 @@ in
 
             export PATH="$HOME/.local/bin:$PATH"
 
+            # ponytail: cmux disables hooks but still prepends a claude shim; drop only that path.
+            if [[ "''${CMUX_CLAUDE_HOOKS_DISABLED:-}" == 1 && -n "''${CMUX_CLAUDE_WRAPPER_SHIM_ROOT:-}" ]]; then
+              path=("''${(@)path:#$CMUX_CLAUDE_WRAPPER_SHIM_ROOT}")
+              path=("''${(@)path:#*/cmux-cli-shims/*}")
+              rehash
+            fi
+
             #if [[ $TERM != "dumb" ]]; then
             #  eval "${self}/config/zsh/starship_init.zsh"
             #fi

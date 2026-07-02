@@ -29,6 +29,9 @@ How to work with encrypted secrets. Covers:
 - Editing with sops
 - File structure and validation
 
+### [agentic-factory-profiles.md](./agentic-factory-profiles.md)
+How lifeOS factory profiles map to `pi-home-factory` and `pi-work-factory`.
+
 ## Usage
 
 These documents are meant to be loaded as skills by agents when working on this repository. They provide context-specific guidance for Nix-related tasks.

@@ -19,7 +19,13 @@ let
       "npm:${npmName}@${version}";
 
   packageRefs = lib.mapAttrsToList packageRef enabledPackages;
+  packageRefsFor = names: map (name: packageRef name registry.${name}) names;
 in
 {
-  inherit registry enabledPackages packageRefs;
+  inherit
+    registry
+    enabledPackages
+    packageRefs
+    packageRefsFor
+    ;
 }

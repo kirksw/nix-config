@@ -7,9 +7,18 @@
 let
   piPackages = import ./external/pi-packages { inherit lib; };
   piPackageRefs = piPackages.packageRefs;
+  piFactoryPackageRefs = piPackages.packageRefsFor [
+    "pi-subagents"
+    "pi-permission-system"
+    "pi-web-access"
+  ];
 
   piPersonalSettings = builtins.toJSON {
     packages = piPackageRefs;
+  };
+
+  piHomeFactorySettings = builtins.toJSON {
+    packages = piFactoryPackageRefs;
   };
 
   # Temporary shim until pi-coding-agent's built-in ZAI model registry includes GLM-5.2.
@@ -42,7 +51,7 @@ let
     ];
   };
 
-  piWorkSettings = builtins.toJSON {
+  piWorkModelDefaults = {
     defaultProvider = "openai";
     defaultModel = "gpt-5.4";
     defaultThinkingLevel = "medium";
@@ -54,8 +63,21 @@ let
       "claude-opus-4-8"
       "claude-sonnet-4-6"
     ];
-    packages = piPackageRefs ++ [ "npm:pi-mcp-adapter@2.8.0" ];
   };
+
+  piWorkSettings = builtins.toJSON (
+    piWorkModelDefaults
+    // {
+      packages = piPackageRefs ++ [ "npm:pi-mcp-adapter@2.8.0" ];
+    }
+  );
+
+  piWorkFactorySettings = builtins.toJSON (
+    piWorkModelDefaults
+    // {
+      packages = piFactoryPackageRefs;
+    }
+  );
 
   piWorkModels = builtins.toJSON {
     providers.openai.baseUrl = "https://eu.api.openai.com/v1";
@@ -229,10 +251,20 @@ in
         "models.json" = piPersonalModels;
         "settings.json" = piPersonalSettings;
       };
+      home-factory = {
+        "models.json" = piPersonalModels;
+        "settings.json" = piHomeFactorySettings;
+      };
       work = {
         "mcp.json" = piWorkMcp;
         "models.json" = piWorkModels;
         "settings.json" = piWorkSettings;
+        "env" = piWorkEnv;
+      };
+      work-factory = {
+        "auth.json" = piWorkAuth;
+        "models.json" = piWorkModels;
+        "settings.json" = piWorkFactorySettings;
         "env" = piWorkEnv;
       };
     };

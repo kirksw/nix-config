@@ -18,6 +18,7 @@ let
   ];
 
   piModules = defaultModules ++ piTargetModules;
+  piFactoryModules = [ ./presets/factory.nix ];
 
   sessionModules =
     if pkgs == null then
@@ -28,7 +29,14 @@ let
       ];
 in
 {
-  inherit defaultModules tieredModules piTargetModules piModules sessionModules;
+  inherit
+    defaultModules
+    tieredModules
+    piTargetModules
+    piModules
+    piFactoryModules
+    sessionModules
+    ;
 
   defaultModulesWithSessions = defaultModules ++ sessionModules;
   tieredModulesWithSessions = tieredModules ++ sessionModules;

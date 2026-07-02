@@ -236,6 +236,62 @@
                   ${pkgs.lua}/bin/luac -p ${./config/wezterm/wezterm.lua}
                   touch $out
                 '';
+
+            agentic-factory-profiles =
+              let
+                localAgents = import ./agents { inherit pkgs; };
+                agentInputs = inputs // {
+                  inherit self;
+                };
+                profileMeta = nix-agents.lib.${system}.mkProfileMeta {
+                  inherit pkgs;
+                  target = "pi";
+                  inputs = agentInputs;
+                  modules = localAgents.piFactoryModules;
+                  src = ./agents;
+                };
+                agentBaseSettings = import ./agents/base-settings.nix {
+                  inherit self system;
+                  lib = nixpkgs.lib;
+                };
+                piPackages = import ./agents/external/pi-packages { lib = nixpkgs.lib; };
+                expectedPackages = builtins.toJSON (
+                  piPackages.packageRefsFor [
+                    "pi-subagents"
+                    "pi-permission-system"
+                    "pi-web-access"
+                  ]
+                );
+                expectedPackagesFile = pkgs.writeText "factory-pi-packages.json" expectedPackages;
+                homeSettingsFile =
+                  pkgs.writeText "home-factory-settings.json"
+                    agentBaseSettings.targets.pi."home-factory"."settings.json";
+                workSettingsFile =
+                  pkgs.writeText "work-factory-settings.json"
+                    agentBaseSettings.targets.pi."work-factory"."settings.json";
+              in
+              pkgs.runCommand "agentic-factory-profiles"
+                {
+                  nativeBuildInputs = [ pkgs.python3 ];
+                }
+                ''
+                  [ "${profileMeta."home-factory".base}" = "home-factory" ]
+                  [ "${profileMeta."work-factory".base}" = "work-factory" ]
+                  [ -z "$(find ${profileMeta."home-factory".storePath}/agents ${
+                    profileMeta."home-factory".storePath
+                  }/skills -type f -print -quit)" ]
+                  [ -z "$(find ${profileMeta."work-factory".storePath}/agents ${
+                    profileMeta."work-factory".storePath
+                  }/skills -type f -print -quit)" ]
+                  python3 - "${expectedPackagesFile}" "${homeSettingsFile}" "${workSettingsFile}" <<'PY'
+                  import json, sys
+                  expected = json.load(open(sys.argv[1]))
+                  for path in sys.argv[2:]:
+                      settings = json.load(open(path))
+                      assert settings["packages"] == expected, (path, settings["packages"])
+                  PY
+                  touch $out
+                '';
           };
 
           devShells.default = pkgs.mkShell {
