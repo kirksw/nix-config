@@ -22,6 +22,7 @@
     ../defs/skills/last30days
     ../defs/skills/what-if
     ../defs/skills/plan-x
+    ../defs/skills/writing-great-skills
     ../defs/mcps/1password.nix
     ../defs/mcps/agent-observe.nix
     ../defs/mcps/lunar-skills.nix

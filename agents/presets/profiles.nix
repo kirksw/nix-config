@@ -107,6 +107,7 @@ _: {
         "system-context"
         "what-if"
         "plan-x"
+        "writing-great-skills"
       ];
       mcpServers = [
         "1password"
