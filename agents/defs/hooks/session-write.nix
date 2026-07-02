@@ -3,14 +3,6 @@
 # Example (in flake.nix or preset):
 #   modules = defaultModules ++ [ (import ./defs/hooks/session-write.nix { inherit pkgs; }) ];
 { pkgs }:
-let
-  sessionThreadSync = pkgs.writeText "session-thread-sync.py" (
-    builtins.readFile ./session-thread-sync.py
-  );
-  sessionThreadContext = pkgs.writeText "session-thread-context.py" (
-    builtins.readFile ./session-thread-context.py
-  );
-in
 {
   hooks = [
     {
@@ -55,12 +47,6 @@ in
         echo "$SESSION_FILE" > "$_NAX_STATE_DIR/current-session"
         echo "$SESSION_ID" > "$_NAX_STATE_DIR/session-id"
 
-        # Thread OS context injection: resolve the thread for this project
-        # and write open blockers, recent decisions, and last session's
-        # incomplete items into the session JSON and THREAD_CONTEXT.md.
-        THREAD_OS_SESSION_FILE="$SESSION_FILE" \
-        python3 ${sessionThreadContext} \
-          || echo "thread-os: context injection failed (non-fatal)" >&2
       '';
     }
     {
@@ -90,12 +76,6 @@ in
           '.endedAt = $end | .branch = $branch | .lastCommit = $commit | .durationSec = $dur' \
           "$SESSION_FILE" > "$SESSION_FILE.tmp" && mv "$SESSION_FILE.tmp" "$SESSION_FILE"
 
-        # Thread OS session sync: bridges session activity to the JSONL store.
-        # Writes session records, extracts decisions/blockers, updates thread state.
-        THREAD_OS_EVENT_FILE="$EVENT_FILE" \
-        THREAD_OS_SESSION_FILE="$SESSION_FILE" \
-        python3 ${sessionThreadSync} \
-          || echo "thread-os: session sync failed (non-fatal)" >&2
 
         rm -f "$EVENT_FILE"
         rm -rf "''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/state/''${NAX_WRAPPER_PID:-$$}"
