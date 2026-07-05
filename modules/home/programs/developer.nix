@@ -218,6 +218,7 @@ in
       curl # cli http client
       envsubst # cli env var substitution
       fd # user friendly alternative to find
+      herdr
       neovide
       nil # nix
       nixd
