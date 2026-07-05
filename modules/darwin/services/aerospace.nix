@@ -11,6 +11,7 @@ let
   aerospaceServer = "${aerospaceApp}/Contents/MacOS/AeroSpace";
   aerospaceClient = "${pkgs.aerospace}/bin/aerospace";
   aerospaceSettings = {
+    config-version = 2;
     start-at-login = false;
     enable-normalization-flatten-containers = true;
     enable-normalization-opposite-orientation-for-nested-containers = true;
