@@ -7,13 +7,19 @@ project_roots() {
 }
 
 icon_for() {
+  local org repo
   case "$1" in
-    openclaw*) printf '🐙' ;;
-    pi*) printf '🤖' ;;
-    hubble*) printf '🏦' ;;
-    *starrocks*) printf '📊' ;;
-    *flink*) printf '🧪' ;;
-    *paimon*) printf '📦' ;;
+    "$HOME"/git/github.com/*/*)
+      org=$(basename "$(dirname "$1")")
+      repo=$(basename "$1")
+      case "$org/$repo" in
+        kirksw/lifeOS|kirksw/lunarOS) printf '⭐' ;;
+        kirksw/nix-config) printf '⚙' ;;
+        lunarway/*) printf '🏦' ;;
+        kirksw/*) printf '🏠' ;;
+        *) printf '📁' ;;
+      esac
+      ;;
     *) printf '📁' ;;
   esac
 }
@@ -72,10 +78,16 @@ recent_rows() {
   ' || true
 }
 
+project_label() {
+  case "$1" in
+    "$HOME"/git/github.com/*/*) printf 'gh:%s/%s\n' "$(basename "$(dirname "$1")")" "$(basename "$1")" ;;
+    *) basename "$1" ;;
+  esac
+}
+
 project_rows() {
   project_roots | sort -u | while IFS= read -r dir; do
-    name=$(basename "$dir")
-    printf '%s %s\t%s\tproject:%s\n' "$(icon_for "$name")" "$name" "$dir" "$dir"
+    printf '%s %s\t%s\tproject:%s\n' "$(icon_for "$dir")" "$(project_label "$dir")" "$dir" "$dir"
   done
 }
 
@@ -176,7 +188,11 @@ select_row() {
     *) return 1 ;;
   esac
 
-  rows_for_mode "$mode" | fzf --ansi --height=80% --border --delimiter=$'\t' --with-nth=1,2 --prompt="$prompt"
+  if [ "$mode" = projects ]; then
+    rows_for_mode "$mode" | fzf --ansi --height=80% --border --delimiter=$'\t' --with-nth=1 --prompt="$prompt"
+  else
+    rows_for_mode "$mode" | fzf --ansi --height=80% --border --delimiter=$'\t' --with-nth=1,2 --prompt="$prompt"
+  fi
 }
 
 handle_payload() {
@@ -206,6 +222,13 @@ self_test() {
   [ "$(repo_dest 'https://github.com/lunarway/hubble')" = '/tmp/herdr-test/git/github.com/lunarway/hubble' ]
   [ "$(repo_dest 'lunarway/hubble')" = '/tmp/herdr-test/git/github.com/lunarway/hubble' ]
   [ "$(repo_dest 'ssh://git.example.com/repo.git')" = '/tmp/herdr-test/projects/repo' ]
+  [ "$(project_label '/tmp/herdr-test/git/github.com/lunarway/hubble')" = 'gh:lunarway/hubble' ]
+  [ "$(icon_for '/tmp/herdr-test/git/github.com/kirksw/lifeOS')" = '⭐' ]
+  [ "$(icon_for '/tmp/herdr-test/git/github.com/kirksw/lunarOS')" = '⭐' ]
+  [ "$(icon_for '/tmp/herdr-test/git/github.com/kirksw/nix-config')" = '⚙' ]
+  [ "$(icon_for '/tmp/herdr-test/git/github.com/lunarway/hubble')" = '🏦' ]
+  [ "$(icon_for '/tmp/herdr-test/git/github.com/kirksw/notes')" = '🏠' ]
+  [ "$(icon_for '/tmp/herdr-test/git/github.com/other/repo')" = '📁' ]
   [ "$(mode_rows | awk 'NR==2 {print $1}')" = 'projects' ]
   [ "$(mode_rows | awk 'NR==4 {print $1}')" = 'ezgit' ]
   HOME=$old_home

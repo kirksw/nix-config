@@ -280,17 +280,48 @@ in
         show_agent_labels_on_pane_borders = true
 
         [keys]
-        previous_tab = ""
-
-        [[keys.command]]
-        key = "prefix+p"
-        type = "pane"
-        command = "herdr-project-palette"
+        prefix = "ctrl+a"
+        goto = ""
+        focus_pane_left = ""
+        focus_pane_down = ""
+        focus_pane_up = ""
+        focus_pane_right = ""
+        previous_tab = "prefix+p"
+        rename_tab = "prefix+comma"
+        close_tab = "prefix+ampersand"
+        split_vertical = "prefix+|"
+        split_horizontal = "prefix+minus"
+        zoom = "prefix+m"
 
         [[keys.command]]
         key = "cmd+p"
         type = "pane"
         command = "herdr-project-palette"
+
+        [[keys.command]]
+        key = "prefix+g"
+        type = "pane"
+        command = "herdr-project-palette ezgit"
+
+        [[keys.command]]
+        key = "prefix+h"
+        type = "shell"
+        command = "herdr pane resize --current --direction left --amount 5"
+
+        [[keys.command]]
+        key = "prefix+j"
+        type = "shell"
+        command = "herdr pane resize --current --direction down --amount 5"
+
+        [[keys.command]]
+        key = "prefix+k"
+        type = "shell"
+        command = "herdr pane resize --current --direction up --amount 5"
+
+        [[keys.command]]
+        key = "prefix+l"
+        type = "shell"
+        command = "herdr pane resize --current --direction right --amount 5"
       '';
     };
 
