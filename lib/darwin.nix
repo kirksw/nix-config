@@ -24,8 +24,8 @@ let
       // moduleArgs config;
       modules = [
         {
-          documentation.doc.enable = false;
-          documentation.man.enable = false;
+          documentation.enable = false;
+          system.tools.darwin-uninstaller.enable = false;
           nixpkgs.hostPlatform = config.system;
           nixpkgs.overlays = (config.overlays or [ ]);
         }
