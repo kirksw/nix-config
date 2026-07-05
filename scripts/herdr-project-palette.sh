@@ -26,6 +26,23 @@ workspace_for_path() {
   ' | head -n 1
 }
 
+ezgit_cmd() {
+  command -v ezgit 2>/dev/null || {
+    [ -x "$HOME/.nix-profile/bin/ezgit" ] && printf '%s\n' "$HOME/.nix-profile/bin/ezgit"
+  } || {
+    [ -n "${USER:-}" ] && [ -x "/etc/profiles/per-user/$USER/bin/ezgit" ] && printf '%s\n' "/etc/profiles/per-user/$USER/bin/ezgit"
+  }
+}
+
+run_ezgit() {
+  local bin
+  bin=$(ezgit_cmd) || {
+    printf 'ezgit not found\n' >&2
+    return 127
+  }
+  "$bin" "$@"
+}
+
 repo_dest() {
   local url=$1 name owner_repo
   name=${url##*/}
@@ -34,6 +51,8 @@ repo_dest() {
   if [[ $url =~ github.com[:/]([^/]+)/([^/]+)(\.git)?/?$ ]]; then
     owner_repo=${BASH_REMATCH[1]}/${BASH_REMATCH[2]%.git}
     printf '%s/git/github.com/%s\n' "$HOME" "$owner_repo"
+  elif [[ $url =~ ^([^/:]+)/([^/]+)$ ]]; then
+    printf '%s/git/github.com/%s/%s\n' "$HOME" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]%.git}"
   else
     printf '%s/projects/%s\n' "$HOME" "$name"
   fi
@@ -43,6 +62,7 @@ mode_rows() {
   printf 'recent\t⭐ Recent\tExisting Herdr workspaces\n'
   printf 'projects\t📁 Open Project\tKnown local repos\n'
   printf 'actions\t⚡ Actions\tCreate, clone, worktree\n'
+  printf 'ezgit\t🐙 EzGit\tGitHub clone/cache helpers\n'
 }
 
 recent_rows() {
@@ -61,8 +81,14 @@ project_rows() {
 
 action_rows() {
   printf 'Create workspace\tPrompt for cwd\taction:create-workspace\n'
-  printf 'Clone repository\tgit clone, then open workspace\taction:clone-repository\n'
+  printf 'Clone repository\tezgit if available, then open workspace\taction:clone-repository\n'
   printf 'New worktree\tFrom current cwd\taction:new-worktree\n'
+}
+
+ezgit_rows() {
+  printf 'Clone/open repository\tezgit if available, then open workspace\taction:clone-repository\n'
+  printf 'Refresh cache\tezgit cache refresh\taction:ezgit-refresh-cache\n'
+  printf 'Open EzGit picker\trun ezgit with your configured open_command\taction:ezgit-picker\n'
 }
 
 rows_for_mode() {
@@ -70,6 +96,7 @@ rows_for_mode() {
     recent) recent_rows ;;
     projects) project_rows ;;
     actions) action_rows ;;
+    ezgit) ezgit_rows ;;
   esac
 }
 
@@ -93,18 +120,38 @@ create_workspace() {
   herdr workspace create --cwd "$cwd" --label "$(basename "$cwd")" --focus >/dev/null
 }
 
+openable_repo() {
+  local dest=$1 dir top
+  for dir in "$dest" "$dest/main" "$dest/master"; do
+    top=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) && {
+      printf '%s\n' "$top"
+      return
+    }
+  done
+
+  find "$dest" -mindepth 1 -maxdepth 2 -type d 2>/dev/null | while IFS= read -r dir; do
+    git -C "$dir" rev-parse --show-toplevel 2>/dev/null && break
+  done
+}
+
 clone_repository() {
-  local url dest
-  printf 'Repository URL: ' >&2
+  local url dest repo
+  printf 'Repository URL or owner/repo: ' >&2
   IFS= read -r url
   [ -n "$url" ] || return 0
 
   dest=$(repo_dest "$url")
-  mkdir -p "$(dirname "$dest")"
-  if [ ! -e "$dest" ]; then
-    git clone "$url" "$dest"
+  if ezgit_cmd >/dev/null; then
+    run_ezgit --no-open "$url"
+  else
+    mkdir -p "$(dirname "$dest")"
+    if [ ! -e "$dest" ]; then
+      git clone "$url" "$dest"
+    fi
   fi
-  open_project "$dest"
+
+  repo=$(openable_repo "$dest")
+  open_project "${repo:-$dest}"
 }
 
 new_worktree() {
@@ -125,6 +172,7 @@ select_row() {
     recent) prompt='Recent> ' ;;
     projects) prompt='Open Project> ' ;;
     actions) prompt='Actions> ' ;;
+    ezgit) prompt='EzGit> ' ;;
     *) return 1 ;;
   esac
 
@@ -144,6 +192,8 @@ handle_payload() {
         create-workspace) create_workspace ;;
         clone-repository) clone_repository ;;
         new-worktree) new_worktree ;;
+        ezgit-refresh-cache) run_ezgit cache refresh ;;
+        ezgit-picker) run_ezgit ;;
       esac
       ;;
   esac
@@ -154,8 +204,10 @@ self_test() {
   HOME=/tmp/herdr-test
   [ "$(repo_dest 'git@github.com:kisw/openclaw.git')" = '/tmp/herdr-test/git/github.com/kisw/openclaw' ]
   [ "$(repo_dest 'https://github.com/lunarway/hubble')" = '/tmp/herdr-test/git/github.com/lunarway/hubble' ]
+  [ "$(repo_dest 'lunarway/hubble')" = '/tmp/herdr-test/git/github.com/lunarway/hubble' ]
   [ "$(repo_dest 'ssh://git.example.com/repo.git')" = '/tmp/herdr-test/projects/repo' ]
   [ "$(mode_rows | awk 'NR==2 {print $1}')" = 'projects' ]
+  [ "$(mode_rows | awk 'NR==4 {print $1}')" = 'ezgit' ]
   HOME=$old_home
 }
 
@@ -168,10 +220,10 @@ main() {
 
   mode=${1:-}
   case "$mode" in
-    recent|projects|actions) ;;
+    recent|projects|actions|ezgit) ;;
     "") mode=$(select_mode) || return 0 ;;
     *)
-      printf 'Usage: %s [recent|projects|actions]\n' "${0##*/}" >&2
+      printf 'Usage: %s [recent|projects|actions|ezgit]\n' "${0##*/}" >&2
       return 2
       ;;
   esac
