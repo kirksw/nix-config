@@ -200,6 +200,20 @@ let
 
         printf '%s\n' "$note_rel_path"
   '';
+
+  herdrProjectPalette = pkgs.writeShellApplication {
+    name = "herdr-project-palette";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.fzf
+      pkgs.gawk
+      pkgs.git
+      pkgs.herdr
+      pkgs.jq
+    ];
+    text = builtins.readFile ../../../scripts/herdr-project-palette.sh;
+  };
 in
 {
   options = {
@@ -210,6 +224,7 @@ in
     # development tools
     home.packages = with pkgs; [
       notesCli
+      herdrProjectPalette
       # cli tools
       lazygit # tui git client
       pet # snippet manager
@@ -249,6 +264,34 @@ in
       n = "${notesCli}/bin/notes-capture";
       np = "${notesCli}/bin/notes-capture --context personal";
       nw = "${notesCli}/bin/notes-capture --context work";
+    };
+
+    xdg.configFile."herdr/config.toml" = {
+      force = true;
+      text = ''
+        [theme]
+        name = "rose-pine"
+        auto_switch = false
+
+        [ui.toast]
+        delivery = "herdr"
+
+        [ui]
+        show_agent_labels_on_pane_borders = true
+
+        [keys]
+        previous_tab = ""
+
+        [[keys.command]]
+        key = "prefix+p"
+        type = "pane"
+        command = "herdr-project-palette"
+
+        [[keys.command]]
+        key = "cmd+p"
+        type = "pane"
+        command = "herdr-project-palette"
+      '';
     };
 
     # SSH configuration using git profiles
