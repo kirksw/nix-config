@@ -39,20 +39,38 @@ repo_dest() {
   fi
 }
 
-rows() {
+mode_rows() {
+  printf 'recent\t⭐ Recent\tExisting Herdr workspaces\n'
+  printf 'projects\t📁 Open Project\tKnown local repos\n'
+  printf 'actions\t⚡ Actions\tCreate, clone, worktree\n'
+}
+
+recent_rows() {
   herdr workspace list 2>/dev/null | jq -r '
     .result.workspaces[]?
-    | "Recent\t⭐ " + .label + "\t#" + (.number|tostring) + " · " + (.pane_count|tostring) + " panes · " + .agent_status + "\tworkspace:" + .workspace_id
+    | "⭐ " + .label + "\t#" + (.number|tostring) + " · " + (.pane_count|tostring) + " panes · " + .agent_status + "\tworkspace:" + .workspace_id
   ' || true
+}
 
+project_rows() {
   project_roots | sort -u | while IFS= read -r dir; do
     name=$(basename "$dir")
-    printf 'Open Project\t%s %s\t%s\tproject:%s\n' "$(icon_for "$name")" "$name" "$dir" "$dir"
+    printf '%s %s\t%s\tproject:%s\n' "$(icon_for "$name")" "$name" "$dir" "$dir"
   done
+}
 
-  printf 'Actions\tCreate workspace\tPrompt for cwd\taction:create-workspace\n'
-  printf 'Actions\tClone repository\tgit clone, then open workspace\taction:clone-repository\n'
-  printf 'Actions\tNew worktree\tFrom current cwd\taction:new-worktree\n'
+action_rows() {
+  printf 'Create workspace\tPrompt for cwd\taction:create-workspace\n'
+  printf 'Clone repository\tgit clone, then open workspace\taction:clone-repository\n'
+  printf 'New worktree\tFrom current cwd\taction:new-worktree\n'
+}
+
+rows_for_mode() {
+  case "$1" in
+    recent) recent_rows ;;
+    projects) project_rows ;;
+    actions) action_rows ;;
+  esac
 }
 
 open_project() {
@@ -97,24 +115,24 @@ new_worktree() {
   herdr worktree create --cwd "$PWD" --branch "$branch" --label "$(basename "$branch")" --focus >/dev/null
 }
 
-self_test() {
-  local old_home=$HOME
-  HOME=/tmp/herdr-test
-  [ "$(repo_dest 'git@github.com:kisw/openclaw.git')" = '/tmp/herdr-test/git/github.com/kisw/openclaw' ]
-  [ "$(repo_dest 'https://github.com/lunarway/hubble')" = '/tmp/herdr-test/git/github.com/lunarway/hubble' ]
-  [ "$(repo_dest 'ssh://git.example.com/repo.git')" = '/tmp/herdr-test/projects/repo' ]
-  HOME=$old_home
+select_mode() {
+  mode_rows | fzf --height=50% --border --delimiter=$'\t' --with-nth=2,3 --prompt='Palette mode> ' | awk -F '\t' '{print $1}'
 }
 
-main() {
-  local selected payload kind value
-  if [ "${1:-}" = "--self-test" ]; then
-    self_test
-    return
-  fi
+select_row() {
+  local mode=$1 prompt
+  case "$mode" in
+    recent) prompt='Recent> ' ;;
+    projects) prompt='Open Project> ' ;;
+    actions) prompt='Actions> ' ;;
+    *) return 1 ;;
+  esac
 
-  selected=$(rows | fzf --ansi --height=80% --border --delimiter=$'\t' --with-nth=1,2,3 --prompt='Open Project> ' --header='Open Project · Recent · Actions') || return 0
-  payload=$(printf '%s\n' "$selected" | awk -F '\t' '{print $4}')
+  rows_for_mode "$mode" | fzf --ansi --height=80% --border --delimiter=$'\t' --with-nth=1,2 --prompt="$prompt"
+}
+
+handle_payload() {
+  local payload=$1 kind value
   kind=${payload%%:*}
   value=${payload#*:}
 
@@ -129,6 +147,38 @@ main() {
       esac
       ;;
   esac
+}
+
+self_test() {
+  local old_home=$HOME
+  HOME=/tmp/herdr-test
+  [ "$(repo_dest 'git@github.com:kisw/openclaw.git')" = '/tmp/herdr-test/git/github.com/kisw/openclaw' ]
+  [ "$(repo_dest 'https://github.com/lunarway/hubble')" = '/tmp/herdr-test/git/github.com/lunarway/hubble' ]
+  [ "$(repo_dest 'ssh://git.example.com/repo.git')" = '/tmp/herdr-test/projects/repo' ]
+  [ "$(mode_rows | awk 'NR==2 {print $1}')" = 'projects' ]
+  HOME=$old_home
+}
+
+main() {
+  local mode selected payload
+  if [ "${1:-}" = "--self-test" ]; then
+    self_test
+    return
+  fi
+
+  mode=${1:-}
+  case "$mode" in
+    recent|projects|actions) ;;
+    "") mode=$(select_mode) || return 0 ;;
+    *)
+      printf 'Usage: %s [recent|projects|actions]\n' "${0##*/}" >&2
+      return 2
+      ;;
+  esac
+
+  selected=$(select_row "$mode") || return 0
+  payload=$(printf '%s\n' "$selected" | awk -F '\t' '{print $3}')
+  handle_payload "$payload"
 }
 
 main "$@"
