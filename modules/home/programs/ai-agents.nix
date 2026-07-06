@@ -27,6 +27,114 @@ let
   agentInputs = inputs // {
     inherit self;
   };
+  homeDir = config.home.homeDirectory;
+  xdgConfigHome = "${homeDir}/.config";
+  xdgDataHome = "${homeDir}/.local/share";
+  mkSandboxLiteralRules =
+    access: paths:
+    lib.concatMapStrings (path: ''
+      (allow ${access}
+        (literal "${path}"))
+    '') paths;
+  mkSandboxSubpathRules =
+    access: paths:
+    lib.concatMapStrings (path: ''
+      (allow ${access}
+        (subpath "${path}"))
+    '') paths;
+  claudePersonalSandboxProfile = pkgs.writeText "claude-personal.sb" ''
+    (version 1)
+    (allow default)
+
+    (deny file-read*
+      (subpath "/Library/Application Support/ClaudeCode/"))
+    (deny file-write*
+      (subpath "/Library/Application Support/ClaudeCode/"))
+  '';
+  mkPiSandboxProfile =
+    {
+      name,
+      base,
+      profile,
+      tempRoot,
+      repoRoots,
+    }:
+    let
+      tempRealRoot = lib.strings.replaceStrings [ "/tmp/" ] [ "/private/tmp/" ] tempRoot;
+      configRoot = "${xdgConfigHome}/nix-agents/pi/bases/${base}/profiles/${profile}";
+      stateRoot = "${xdgConfigHome}/nix-agents/pi/bases/${base}/state";
+      sessionRoot = "${xdgDataHome}/nix-agents/pi/sessions/${profile}";
+      traversalLiterals = [
+        homeDir
+        "${homeDir}/git"
+        "${homeDir}/git/github.com"
+        xdgConfigHome
+        "${xdgConfigHome}/nix-agents"
+        "${xdgConfigHome}/nix-agents/pi"
+        "${xdgConfigHome}/nix-agents/pi/bases"
+        "${xdgConfigHome}/nix-agents/pi/bases/${base}"
+        xdgDataHome
+        "${xdgDataHome}/nix-agents"
+        "${xdgDataHome}/nix-agents/pi"
+        "${xdgDataHome}/nix-agents/pi/sessions"
+        "/tmp"
+        "/private"
+        "/private/tmp"
+      ];
+      readOnlyLiterals = [ "${homeDir}/.gitconfig" ];
+      readOnlySubpaths = [
+        "/nix/store"
+        "/bin"
+        "/sbin"
+        "/usr"
+        "/System"
+        "/Library"
+        "/etc"
+        "/private/etc"
+        "${homeDir}/.config/git"
+        "${homeDir}/.ssh"
+        configRoot
+      ]
+      ++ repoRoots;
+      readWriteSubpaths = [
+        "/dev"
+        tempRoot
+        tempRealRoot
+        sessionRoot
+        stateRoot
+      ]
+      ++ repoRoots;
+    in
+    pkgs.writeText name ''
+      (version 1)
+      (allow default)
+
+      (deny file-read*)
+      (deny file-write*)
+
+      ${mkSandboxLiteralRules "file-read*" traversalLiterals}
+      ${mkSandboxLiteralRules "file-read*" readOnlyLiterals}
+      ${mkSandboxSubpathRules "file-read*" readOnlySubpaths}
+      ${mkSandboxSubpathRules "file-read*" readWriteSubpaths}
+      ${mkSandboxSubpathRules "file-write*" readWriteSubpaths}
+    '';
+  piWorkSandboxProfile = mkPiSandboxProfile {
+    name = "pi-work.sb";
+    base = "work";
+    profile = "work-default";
+    tempRoot = "/tmp/lunar";
+    repoRoots = [
+      "${homeDir}/git/github.com/lunarway"
+      "${homeDir}/git/github.com/kirksw/lunarOS"
+    ];
+  };
+  piPersonalSandboxProfile = mkPiSandboxProfile {
+    name = "pi-personal.sb";
+    base = "personal";
+    profile = "personal-default";
+    tempRoot = "/tmp/personal";
+    repoRoots = [ "${homeDir}/git/github.com/kirksw" ];
+  };
 
   # Modules shared across all target builds
   nixAgentsModules = localAgents.defaultModules;
@@ -76,9 +184,12 @@ let
         export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GIT_PAT_PATH")"
       fi
 
+      _nix_agents_extra_args=()
+      _nix_agents_exec=("${nixAgentsPkg}/bin/${target}")
+
       ${extraPreExec}
 
-      exec "${nixAgentsPkg}/bin/${target}" "$@"
+      exec "''${_nix_agents_exec[@]}" "''${_nix_agents_extra_args[@]}" "$@"
     '';
 
   # Build the nix-agents wrapped tool for each target
@@ -464,7 +575,16 @@ in
         '')
       ])
       (lib.mkIf config.homeModules.claudeCode.enable [
-        (mkCredWrapper "claude" claudePkg "")
+        (mkCredWrapper "claude" claudePkg ''
+          if ! is_lunar_project; then
+            _nix_agents_exec=(
+              /usr/bin/sandbox-exec
+              -f
+              "${claudePersonalSandboxProfile}"
+              "${claudePkg}/bin/claude"
+            )
+          fi
+        '')
       ])
       (lib.mkIf config.homeModules.codex.enable [
         (mkCredWrapper "codex" codexPkg ''
@@ -475,44 +595,88 @@ in
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         (mkCredWrapper "pi" piPkg ''
-          _pi_session_profile=""
-          _d="$PWD"
-          while [ "$_d" != "/" ] && [ -n "$_d" ]; do
-            if [ -f "$_d/.nix-agents-profile" ]; then
-              _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
-              break
-            fi
-            _d="''${_d%/*}"
-          done
-          if [ -z "$_pi_session_profile" ]; then
-            if is_lunar_project; then
-              _pi_session_profile="work-default"
-            else
-              _pi_session_profile="personal-default"
-            fi
-          fi
-          case "$_pi_session_profile" in
-            personal-default|work-default) ;;
-            *) _pi_session_profile="personal-default" ;;
-          esac
-          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
-          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
+                    _pi_session_profile=""
+                    _d="$PWD"
+                    while [ "$_d" != "/" ] && [ -n "$_d" ]; do
+                      if [ -f "$_d/.nix-agents-profile" ]; then
+                        _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
+                        break
+                      fi
+                      _d="''${_d%/*}"
+                    done
+                    if [ -z "$_pi_session_profile" ]; then
+                      if is_lunar_project; then
+                        _pi_session_profile="work-default"
+                      else
+                        _pi_session_profile="personal-default"
+                      fi
+                    fi
+                    case "$_pi_session_profile" in
+                      personal-default|work-default) ;;
+                      *) _pi_session_profile="personal-default" ;;
+                    esac
+                    export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
+                    mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
-          if is_lunar_project; then
-            if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-              export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-            fi
-            if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-              export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-            fi
-          else
-            if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-              export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
-            fi
-            if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
-              export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
-            fi
-          fi
+                    _pi_base="personal"
+                    _pi_tmp_root="/tmp/personal"
+                    _pi_sandbox_profile="${piPersonalSandboxProfile}"
+                    if [ "$_pi_session_profile" = "work-default" ]; then
+                      _pi_base="work"
+                      _pi_tmp_root="/tmp/lunar"
+                      _pi_sandbox_profile="${piWorkSandboxProfile}"
+                    fi
+
+                    mkdir -p "$_pi_tmp_root"
+                    export TMPDIR="$_pi_tmp_root"
+                    export TMP="$_pi_tmp_root"
+                    export TEMP="$_pi_tmp_root"
+                    _nix_agents_exec=(
+                      /usr/bin/sandbox-exec
+                      -f
+                      "$_pi_sandbox_profile"
+                      "${piPkg}/bin/pi"
+                    )
+
+                    if [ -z "''${CMUX_SOCKET_PATH:-}" ]; then
+                      # ponytail: disable package auto-extension loading, then add back everything except pi-cmux.
+                      _nix_agents_extra_args+=(--no-extensions)
+                      _pi_profile_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_base/profiles/$_pi_session_profile"
+                      while IFS= read -r _pi_ext; do
+                        [ -f "$_pi_ext" ] && _nix_agents_extra_args+=(--extension "$_pi_ext")
+                      done < <(${pkgs.python3}/bin/python3 - "$_pi_profile_dir" <<'PY'
+          import json, os, sys
+          root = sys.argv[1]
+          for dirpath, dirnames, filenames in os.walk(root):
+              dirnames[:] = [d for d in dirnames if d not in {".git", "node_modules", "sessions"}]
+              package_json = os.path.join(dirpath, "package.json")
+              if "package.json" not in filenames or "/gtwatts/pi-cmux/" in (dirpath.replace(os.sep, "/") + "/"):
+                  continue
+              try:
+                  data = json.load(open(package_json))
+              except Exception:
+                  continue
+              for ext in data.get("pi", {}).get("extensions") or data.get("extensions") or []:
+                  print(os.path.normpath(os.path.join(dirpath, ext)))
+          PY
+                      )
+                    fi
+
+                    if is_lunar_project; then
+                      if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+                        export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+                      fi
+                      if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+                        export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
+                      fi
+                    else
+                      if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+                        export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
+                      fi
+                      if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+                        export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+                      fi
+                    fi
         '')
         (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"
