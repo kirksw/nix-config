@@ -54,9 +54,7 @@ function defaultRoute(cwd: string): Route {
   const home = os.homedir();
   const workRoots = [
     path.join(home, "git/github.com/lunarway"),
-    path.join(home, "git/github.com/kirksw/lunar-notes"),
     path.join(home, "git/github.com/kirksw/lunarOS/main"),
-    path.join(home, "projects/lunar"),
   ];
   return workRoots.some((root) => cwd === root || cwd.startsWith(`${root}${path.sep}`)) ? "work" : "personal";
 }

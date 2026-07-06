@@ -204,9 +204,6 @@ let
     [projects."/Users/kisw/git/github.com/lunarway/capi-workload-clusters"]
     trust_level = "trusted"
 
-    [projects."/Users/kisw/git/github.com/kirksw/lunar-notes"]
-    trust_level = "trusted"
-
     [notice.model_migrations]
     "gpt-5.3-codex" = "gpt-5.4"
 

@@ -46,9 +46,7 @@ _: {
     work = {
       pathPrefixes = [
         "~/git/github.com/lunarway/"
-        "~/git/github.com/kirksw/lunar-notes"
         "~/git/github.com/kirksw/lunarOS"
-        "~/projects/lunar/"
       ];
       providers = [ "work-openai-key" ];
       defaultProfile = "default";
