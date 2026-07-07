@@ -5,12 +5,28 @@
 }:
 
 let
-  piPackages = import ./external/pi-packages { inherit lib; };
-  piPackageRefs = piPackages.packageRefs;
-  piFactoryPackageRefs = piPackages.packageRefsFor [
-    "pi-subagents"
-    "pi-permission-system"
-    "pi-web-access"
+  piPackageRefs = [
+    "npm:context-mode@1.0.169"
+    "npm:pi-cmux@0.1.16"
+    "npm:pi-cost@0.1.1"
+    "npm:pi-dynamic-workflows@1.0.1"
+    "npm:pi-goal-x@0.19.0"
+    "npm:pi-mcp-adapter@2.8.0"
+    "npm:pi-observational-memory@3.0.3"
+    "npm:pi-permission-system@0.8.0"
+    "npm:pi-simplify@0.2.2"
+    "npm:pi-subagents@0.34.0"
+    "npm:pi-web-access@0.13.0"
+    "npm:pi-ponytail@0.1.2"
+    "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
+    "npm:@juicesharp/rpiv-btw@1.20.0"
+    "npm:@juicesharp/rpiv-todo@1.20.0"
+  ];
+  piFactoryPackageRefs = [
+    "npm:pi-subagents@0.34.0"
+    "npm:pi-mcp-adapter@2.8.0"
+    "npm:pi-permission-system@0.8.0"
+    "npm:pi-web-access@0.13.0"
   ];
 
   piPersonalSettings = builtins.toJSON {
@@ -68,7 +84,7 @@ let
   piWorkSettings = builtins.toJSON (
     piWorkModelDefaults
     // {
-      packages = piPackageRefs ++ [ "npm:pi-mcp-adapter@2.8.0" ];
+      packages = piPackageRefs;
     }
   );
 

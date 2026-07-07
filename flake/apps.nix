@@ -142,19 +142,24 @@ let
     in
     lib.concatStringsSep "\n" (lib.mapAttrsToList syncBase baseSettings);
 
-  profileMetaFor =
-    target:
+  profileMetaForModules =
+    target: modules:
     nixAgentsLib.mkProfileMeta {
-      inherit pkgs target;
-      modules = agentModulesFor target;
+      inherit pkgs target modules;
       inputs = agentInputs;
       src = localAgentsSrc;
     };
 
+  profileMetaFor = target: profileMetaForModules target (agentModulesFor target);
+
   syncProfileCommands =
     target:
     let
-      profileMeta = profileMetaFor target;
+      profileMeta =
+        if target == "pi" then
+          (profileMetaFor target) // (profileMetaForModules target localAgents.piFactoryModules)
+        else
+          profileMetaFor target;
       targetSpec =
         {
           opencode = {
@@ -261,6 +266,11 @@ let
   );
 
   piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
+  piSubagentsSettingsFile = pkgs.writeText "pi-subagents-settings.json" ''
+    {
+      "disableDefaultAgents": true
+    }
+  '';
   codexImageGuidanceFile = pkgs.writeText "codex-image-guidance.md" ''
     ## Image generation
 
@@ -272,7 +282,6 @@ let
   '';
   codexPersonalRulesFile = pkgs.writeText "codex-personal-default.rules" agentBaseSettings.codexRules.personal-default;
   codexWorkRulesFile = pkgs.writeText "codex-work-default.rules" agentBaseSettings.codexRules.work-default;
-  piKanbanPatchDir = ../agents/external/pi-packages/patches/pi-kanban;
 
   syncAgents = pkgs.writeShellScriptBin "sync-agents" ''
     set -euo pipefail
@@ -493,29 +502,6 @@ let
       fi
     }
 
-    apply_pi_kanban_patch() {
-      patch_dir="${piKanbanPatchDir}"
-      for profile_root in \
-        "$CONFIG_BASE/pi/bases/personal/profiles/personal-default" \
-        "$CONFIG_BASE/pi/bases/work/profiles/work-default"; do
-        package_dir="$profile_root/npm/node_modules/pi-kanban"
-        if [ ! -d "$package_dir" ]; then
-          continue
-        fi
-        echo "Patching pi-kanban at $package_dir"
-        run ${pkgs.coreutils}/bin/chmod -R u+w "$package_dir" 2>/dev/null || true
-        run ${pkgs.coreutils}/bin/mkdir -p \
-          "$package_dir/lib" \
-          "$package_dir/public" \
-          "$package_dir/extensions"
-        run ${pkgs.coreutils}/bin/cp "$patch_dir/lib/pi-parsers.js" "$package_dir/lib/pi-parsers.js"
-        run ${pkgs.coreutils}/bin/cp "$patch_dir/server.js" "$package_dir/server.js"
-        run ${pkgs.coreutils}/bin/cp "$patch_dir/public/app.js" "$package_dir/public/app.js"
-        run ${pkgs.coreutils}/bin/rm -f "$package_dir/extensions/kanban.js"
-        run ${pkgs.coreutils}/bin/cp "$patch_dir/extensions/kanban.ts.txt" "$package_dir/extensions/kanban.ts"
-      done
-    }
-
     ${allBaseSettingsCommands}
 
     seed_mutable_file \
@@ -525,7 +511,15 @@ let
 
     ${allSyncCommands}
 
-    apply_pi_kanban_patch
+    seed_mutable_file \
+      "${piSubagentsSettingsFile}" \
+      "$CONFIG_BASE/pi/bases/personal/profiles/personal-default/subagents.json" \
+      0600
+
+    seed_mutable_file \
+      "${piSubagentsSettingsFile}" \
+      "$CONFIG_BASE/pi/bases/work/profiles/work-default/subagents.json" \
+      0600
 
     install_lines_once \
       "${codexPersonalRulesFile}" \
@@ -588,14 +582,4 @@ in
     };
   };
 
-  pi-update-extensions = {
-    type = "app";
-    program = "${pkgs.writeShellScriptBin "pi-update-extensions" ''
-      set -euo pipefail
-      exec ${pkgs.python3}/bin/python3 ${../agents/external/pi-packages/update.py}
-    ''}/bin/pi-update-extensions";
-    meta = {
-      description = "Check and update pi extension versions in registry.nix from npm and git upstreams.";
-    };
-  };
 }

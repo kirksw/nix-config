@@ -595,88 +595,55 @@ in
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         (mkCredWrapper "pi" piPkg ''
-                    _pi_session_profile=""
-                    _d="$PWD"
-                    while [ "$_d" != "/" ] && [ -n "$_d" ]; do
-                      if [ -f "$_d/.nix-agents-profile" ]; then
-                        _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
-                        break
-                      fi
-                      _d="''${_d%/*}"
-                    done
-                    if [ -z "$_pi_session_profile" ]; then
-                      if is_lunar_project; then
-                        _pi_session_profile="work-default"
-                      else
-                        _pi_session_profile="personal-default"
-                      fi
-                    fi
-                    case "$_pi_session_profile" in
-                      personal-default|work-default) ;;
-                      *) _pi_session_profile="personal-default" ;;
-                    esac
-                    export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
-                    mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
+          _pi_session_profile=""
+          _d="$PWD"
+          while [ "$_d" != "/" ] && [ -n "$_d" ]; do
+            if [ -f "$_d/.nix-agents-profile" ]; then
+              _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
+              break
+            fi
+            _d="''${_d%/*}"
+          done
+          if [ -z "$_pi_session_profile" ]; then
+            if is_lunar_project; then
+              _pi_session_profile="work-default"
+            else
+              _pi_session_profile="personal-default"
+            fi
+          fi
+          case "$_pi_session_profile" in
+            personal-default|work-default) ;;
+            *) _pi_session_profile="personal-default" ;;
+          esac
+          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
+          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
-                    _pi_base="personal"
-                    _pi_tmp_root="/tmp/personal"
-                    _pi_sandbox_profile="${piPersonalSandboxProfile}"
-                    if [ "$_pi_session_profile" = "work-default" ]; then
-                      _pi_base="work"
-                      _pi_tmp_root="/tmp/lunar"
-                      _pi_sandbox_profile="${piWorkSandboxProfile}"
-                    fi
+          _pi_tmp_root="/tmp/personal"
+          if [ "$_pi_session_profile" = "work-default" ]; then
+            _pi_tmp_root="/tmp/lunar"
+          fi
 
-                    mkdir -p "$_pi_tmp_root"
-                    export TMPDIR="$_pi_tmp_root"
-                    export TMP="$_pi_tmp_root"
-                    export TEMP="$_pi_tmp_root"
-                    _nix_agents_exec=(
-                      /usr/bin/sandbox-exec
-                      -f
-                      "$_pi_sandbox_profile"
-                      "${piPkg}/bin/pi"
-                    )
+          mkdir -p "$_pi_tmp_root"
+          export TMPDIR="$_pi_tmp_root"
+          export TMP="$_pi_tmp_root"
+          export TEMP="$_pi_tmp_root"
 
-                    if [ -z "''${CMUX_SOCKET_PATH:-}" ]; then
-                      # ponytail: disable package auto-extension loading, then add back everything except pi-cmux.
-                      _nix_agents_extra_args+=(--no-extensions)
-                      _pi_profile_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_base/profiles/$_pi_session_profile"
-                      while IFS= read -r _pi_ext; do
-                        [ -f "$_pi_ext" ] && _nix_agents_extra_args+=(--extension "$_pi_ext")
-                      done < <(${pkgs.python3}/bin/python3 - "$_pi_profile_dir" <<'PY'
-          import json, os, sys
-          root = sys.argv[1]
-          for dirpath, dirnames, filenames in os.walk(root):
-              dirnames[:] = [d for d in dirnames if d not in {".git", "node_modules", "sessions"}]
-              package_json = os.path.join(dirpath, "package.json")
-              if "package.json" not in filenames or "/gtwatts/pi-cmux/" in (dirpath.replace(os.sep, "/") + "/"):
-                  continue
-              try:
-                  data = json.load(open(package_json))
-              except Exception:
-                  continue
-              for ext in data.get("pi", {}).get("extensions") or data.get("extensions") or []:
-                  print(os.path.normpath(os.path.join(dirpath, ext)))
-          PY
-                      )
-                    fi
 
-                    if is_lunar_project; then
-                      if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-                        export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-                      fi
-                      if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-                        export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-                      fi
-                    else
-                      if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-                        export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
-                      fi
-                      if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
-                        export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
-                      fi
-                    fi
+          if is_lunar_project; then
+            if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+              export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+            fi
+            if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+              export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
+            fi
+          else
+            if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+              export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
+            fi
+            if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+              export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+            fi
+          fi
         '')
         (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"

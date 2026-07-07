@@ -254,14 +254,12 @@
                   inherit self system;
                   lib = nixpkgs.lib;
                 };
-                piPackages = import ./agents/external/pi-packages { lib = nixpkgs.lib; };
-                expectedPackages = builtins.toJSON (
-                  piPackages.packageRefsFor [
-                    "pi-subagents"
-                    "pi-permission-system"
-                    "pi-web-access"
-                  ]
-                );
+                expectedPackages = builtins.toJSON [
+                  "npm:pi-subagents@0.34.0"
+                  "npm:pi-mcp-adapter@2.8.0"
+                  "npm:pi-permission-system@0.8.0"
+                  "npm:pi-web-access@0.13.0"
+                ];
                 expectedPackagesFile = pkgs.writeText "factory-pi-packages.json" expectedPackages;
                 homeSettingsFile =
                   pkgs.writeText "home-factory-settings.json"
@@ -283,6 +281,8 @@
                   [ -z "$(find ${profileMeta."work-factory".storePath}/agents ${
                     profileMeta."work-factory".storePath
                   }/skills -type f -print -quit)" ]
+                  [ -f "${profileMeta."home-factory".storePath}/extensions/minimal-mode/index.ts" ]
+                  [ -f "${profileMeta."work-factory".storePath}/extensions/minimal-mode/index.ts" ]
                   python3 - "${expectedPackagesFile}" "${homeSettingsFile}" "${workSettingsFile}" <<'PY'
                   import json, sys
                   expected = json.load(open(sys.argv[1]))
