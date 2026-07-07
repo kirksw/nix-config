@@ -161,11 +161,6 @@ in
         mode = "0400";
       };
 
-      "cloudflare/tunnel/token" = {
-        sopsFile = "${self}/secrets/cloudflare/ry6a-tunnel-token.yaml";
-        key = "token";
-        mode = "0400";
-      };
     };
   };
 
@@ -230,32 +225,4 @@ in
     };
   };
 
-  systemd.services.cloudflaredTunnel = {
-    description = "Cloudflare Tunnel for cntd.io ingress";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-
-    serviceConfig = {
-      Type = "simple";
-      Restart = "always";
-      RestartSec = "5s";
-      ExecCondition = "${pkgs.bash}/bin/bash -lc '[ -s ${config.sops.secrets."cloudflare/tunnel/token".path} ] && ! grep -q REPLACE_ME ${config.sops.secrets."cloudflare/tunnel/token".path}'";
-    };
-
-    script = ''
-      set -euo pipefail
-      token="$(${pkgs.coreutils}/bin/tr -d '\n' < ${config.sops.secrets."cloudflare/tunnel/token".path})"
-      exec ${pkgs.cloudflared}/bin/cloudflared tunnel --config /etc/cloudflared/config.yml --no-autoupdate run --token "$token"
-    '';
-  };
-
-  environment.etc."cloudflared/config.yml".text = ''
-    ingress:
-      - hostname: "*.cntd.io"
-        service: https://127.0.0.1:443
-        originRequest:
-          noTLSVerify: true
-      - service: http_status:404
-  '';
 }

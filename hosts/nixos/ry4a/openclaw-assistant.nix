@@ -76,6 +76,10 @@ in
     # Runtime dir for the assembled env file
     systemd.tmpfiles.rules = [
       "d /run/openclaw-secrets 0700 agent users -"
+      "d /srv/assistant/inbox 0755 agent users -"
+      "d /srv/assistant/workspace/.tmp 0700 agent users -"
+      "d /tmp/openclaw 0700 agent users -"
+      "L+ /tmp/openclaw-transfer - - - - /tmp/openclaw"
     ];
 
     # --- Root pre-start: assemble env file from virtiofs sops secrets ---
@@ -126,20 +130,9 @@ in
           # Tailscale Serve maps the dashboard to https://<node>.<tailnet> (443).
           trustedProxies = [ "127.0.0.1/32" ];
           controlUi = {
-            allowedOrigins = [
-              "http://${cfg.router}"
-              "http://kirk-assistant"
-              "http://sanja-assistant"
-              "http://household-assistant"
-              "http://100.123.43.18"
-              "http://100.67.143.125"
-              "http://100.82.155.69"
-            ];
-            # Allow plain HTTP device auth since we're behind a trusted tailnet
-            allowInsecureAuth = true;
-            # Device auth requires crypto.subtle which needs HTTPS.
-            # We have gateway token auth + trusted tailnet, so disable device auth.
-            dangerouslyDisableDeviceAuth = true;
+            allowedOrigins = [ "https://${config.networking.hostName}.tail54de03.ts.net" ];
+            allowInsecureAuth = false;
+            dangerouslyDisableDeviceAuth = false;
           };
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
@@ -196,12 +189,14 @@ in
               "/Users/kisw/git/**"
               "/Users/kisw/Desktop/**"
               "/Users/kisw/Downloads/**"
+              "/tmp/openclaw/**"
               "/tmp/openclaw-transfer/**"
             ];
             allowWritePaths = [
               "/srv/assistant/inbox/**"
               "/srv/assistant/workspace/**"
               "/Users/kisw/Downloads/openclaw-transfer/**"
+              "/tmp/openclaw/**"
               "/tmp/openclaw-transfer/**"
             ];
             denyPaths = [
@@ -237,7 +232,6 @@ in
                 input = [
                   "text"
                   "image"
-                  "video"
                 ];
               }
               {
@@ -299,6 +293,7 @@ in
           };
         };
         agents.defaults = {
+          workspace = "/srv/assistant/workspace";
           model = {
             primary = "router-anthropic/minimax/MiniMax-M3";
             fallbacks = cfg.modelFallbacks;
@@ -324,6 +319,20 @@ in
       };
 
       environmentFiles = [ "/run/openclaw-secrets/env" ];
+      environment = {
+        TMPDIR = "/srv/assistant/workspace/.tmp";
+        TMP = "/srv/assistant/workspace/.tmp";
+        TEMP = "/srv/assistant/workspace/.tmp";
+      };
+      execStartPre = [ "${pkgs.coreutils}/bin/chmod 700 /var/lib/openclaw" ];
+      # ponytail: use the module option instead of fighting systemd.serviceConfig later.
+      workingDirectory = "/srv/assistant/workspace";
+    };
+
+    environment.etc."openclaw/openclaw.json" = {
+      mode = lib.mkForce "0600";
+      user = "agent";
+      group = "users";
     };
 
     systemd.services.openclaw-tailscale-operator = {

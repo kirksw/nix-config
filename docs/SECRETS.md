@@ -10,7 +10,7 @@ secrets/
 │   ├── default.yaml    # ZAI API key
 │   └── lunar.yaml      # OpenAI API key (lunar work), Anthropic API key (placeholder)
 ├── cloudflare/
-│   └── ry6a-tunnel-token.yaml  # Tailscale tunnel token for ry6a
+│   └── ry6a-tunnel-token.yaml  # Cloudflare tunnel token for ry6a
 ├── git/
 │   ├── kirksw.yaml    # Git profile: Kirk's personal GitHub
 │   ├── lunarway.yaml   # Git profile: Lunarway work
