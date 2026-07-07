@@ -17,6 +17,7 @@
     sessionVariables = {
       LANG = "en_US.UTF-8";
       LC_ALL = "";
+      OP_BIOMETRIC_UNLOCK_ENABLED = "true";
     };
   };
 
