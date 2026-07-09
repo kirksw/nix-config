@@ -21,10 +21,9 @@ in
       type = lib.types.enum [
         "router"
         "direct"
-        "codex"
       ];
       default = "router";
-      description = "Whether this assistant uses the router, direct API providers, or native Codex OAuth.";
+      description = "Whether this assistant uses the local home-llm-router or direct provider APIs.";
     };
 
     modelPrimary = lib.mkOption {
@@ -305,7 +304,7 @@ in
                 ];
               };
             }
-          else if cfg.providerMode == "router" then
+          else
             {
               router-anthropic = {
                 baseUrl = "http://${cfg.router}:80";
@@ -385,9 +384,7 @@ in
                   }
                 ];
               };
-            }
-          else
-            { };
+            };
         agents.defaults = {
           workspace = "/srv/assistant/workspace";
           model = {

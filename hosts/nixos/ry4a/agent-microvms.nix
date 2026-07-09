@@ -100,12 +100,20 @@ let
       mac = "02:00:00:10:00:04";
       openclaw = {
         router = "home-llm-router";
-        providerMode = "codex";
-        modelPrimary = "openai/gpt-5.4";
-        modelFallbacks = [ "openai/gpt-5.6-luna" ];
+        providerMode = "direct";
+        modelPrimary = "openai/gpt-5.6-luna";
+        modelFallbacks = [
+          "openai/gpt-5.4"
+          "minimax/MiniMax-M3"
+          "zai/glm-5.2"
+          "zai/glm-4.6v"
+        ];
         modelAllowlist = [
           "openai/gpt-5.4"
           "openai/gpt-5.6-luna"
+          "minimax/MiniMax-M3"
+          "zai/glm-5.2"
+          "zai/glm-4.6v"
         ];
         secretsFile = "sanja";
         telegramAllowFrom = [ 8771595122 ];
