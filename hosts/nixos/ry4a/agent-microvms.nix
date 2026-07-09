@@ -30,9 +30,11 @@ let
       # ponytail: upstream zips live logs during startup; marker skips that broken legacy migration.
       ${pkgs.coreutils}/bin/printf '%s\n' '{"migratedAt":"nix-preseed","archiveFilename":null}' > /var/lib/omniroute/log_archives/legacy-request-logs.json
     fi
+    # ponytail: stale probe-failed DBs make OmniRoute restore broken state forever.
+    ${pkgs.coreutils}/bin/rm -f /var/lib/omniroute/storage.sqlite.probe-failed-*
     if [ ! -e /var/lib/omniroute/storage.sqlite ]; then
-      # ponytail: fresh test VM, stale probe-failed DBs only make OmniRoute restore a broken DB forever.
-      ${pkgs.coreutils}/bin/rm -f /var/lib/omniroute/storage.sqlite.probe-failed-*
+      # ponytail: disposable test VM; no primary DB means backup/server state is just poison.
+      ${pkgs.coreutils}/bin/rm -rf /var/lib/omniroute/db_backups /var/lib/omniroute/server
     fi
     ${pkgs.coreutils}/bin/chown -R router:router /var/lib/omniroute
   '';
@@ -582,7 +584,7 @@ let
         networking.firewall = {
           enable = true;
           allowedTCPPorts = [
-            routerServicePort
+            routerHttpPort
             22
           ];
         };
@@ -598,6 +600,12 @@ let
           "d /var/lib/omniroute 0700 router router -"
           "d /var/lib/omniroute/ssh 0700 root root -"
         ];
+
+        services.nginx = {
+          enable = true;
+          recommendedProxySettings = true;
+          virtualHosts."_".locations."/".proxyPass = "http://127.0.0.1:${toString routerServicePort}";
+        };
 
         systemd.services.omniroute = {
           wantedBy = [ "multi-user.target" ];
@@ -639,7 +647,7 @@ let
               from = "host";
               proto = "tcp";
               host.port = router.hostPort;
-              guest.port = routerServicePort;
+              guest.port = routerHttpPort;
             }
             {
               from = "host";
