@@ -21,9 +21,10 @@ in
       type = lib.types.enum [
         "router"
         "direct"
+        "codex"
       ];
       default = "router";
-      description = "Whether this assistant uses the local home-llm-router or direct provider APIs.";
+      description = "Whether this assistant uses the router, direct API providers, or native Codex OAuth.";
     };
 
     modelPrimary = lib.mkOption {
@@ -31,6 +32,13 @@ in
       default = "router-anthropic/minimax/MiniMax-M3";
       description = "Default model identifier for this assistant.";
     };
+
+    modelAllowlist = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "The complete model allowlist when non-empty.";
+    };
+
     sopsDir = lib.mkOption {
       type = lib.types.str;
       description = "virtiofs-mounted sops secrets directory readable by the keys group.";
@@ -297,7 +305,7 @@ in
                 ];
               };
             }
-          else
+          else if cfg.providerMode == "router" then
             {
               router-anthropic = {
                 baseUrl = "http://${cfg.router}:80";
@@ -377,7 +385,9 @@ in
                   }
                 ];
               };
-            };
+            }
+          else
+            { };
         agents.defaults = {
           workspace = "/srv/assistant/workspace";
           model = {
@@ -392,6 +402,9 @@ in
             mode = "off";
             backend = "docker";
           };
+        }
+        // lib.optionalAttrs (cfg.modelAllowlist != [ ]) {
+          models = lib.genAttrs cfg.modelAllowlist (_: { });
         };
         channels.telegram = {
           enabled = true;

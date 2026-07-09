@@ -100,11 +100,12 @@ let
       mac = "02:00:00:10:00:04";
       openclaw = {
         router = "home-llm-router";
-        providerMode = "direct";
-        modelPrimary = "minimax/MiniMax-M3";
-        modelFallbacks = [
-          "zai/glm-5.2"
-          "zai/glm-4.6v"
+        providerMode = "codex";
+        modelPrimary = "openai/gpt-5.4";
+        modelFallbacks = [ "openai/gpt-5.6-luna" ];
+        modelAllowlist = [
+          "openai/gpt-5.4"
+          "openai/gpt-5.6-luna"
         ];
         secretsFile = "sanja";
         telegramAllowFrom = [ 8771595122 ];
@@ -265,6 +266,7 @@ let
                 assistant.openclaw.providerMode = assistant.openclaw.providerMode or "router";
                 assistant.openclaw.modelPrimary =
                   assistant.openclaw.modelPrimary or "router-anthropic/minimax/MiniMax-M3";
+                assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
