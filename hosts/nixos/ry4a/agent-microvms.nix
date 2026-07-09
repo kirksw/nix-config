@@ -19,6 +19,30 @@ let
     pkgs.which
   ];
 
+  openclawAcpxOverlay = final: prev: {
+    openclawRuntimePlugins = prev.openclawRuntimePlugins // {
+      acpx = prev.openclawRuntimePlugins.acpx.overrideAttrs (_: {
+        # ponytail: upstream installer's fs.cpSync trips over the Nix store; plain cp works.
+        installPhase = ''
+          runHook preInstall
+
+          mkdir -p "$out"
+          cp -r ./. "$out/"
+          rm -rf "$out/node_modules/.bin"
+
+          if [ -n "''${OPENCLAW_GATEWAY_PACKAGE:-}" ] && [ -e "$OPENCLAW_GATEWAY_PACKAGE/lib/openclaw/package.json" ]; then
+            mkdir -p "$out/node_modules"
+            ln -sfn "$OPENCLAW_GATEWAY_PACKAGE/lib/openclaw" "$out/node_modules/openclaw"
+          fi
+
+          runHook postInstall
+        '';
+      });
+    };
+
+    openclaw-runtime-plugin-acpx = final.openclawRuntimePlugins.acpx;
+  };
+
   assistants = [
     {
       name = "personal-assistant";
@@ -176,7 +200,10 @@ let
                     "router-openai/cx/gpt-5.4"
                     "router-anthropic/glm/glm-5.2"
                   ];
-                nixpkgs.overlays = [ inputs.nix-openclaw.overlays.default ];
+                nixpkgs.overlays = [
+                  inputs.nix-openclaw.overlays.default
+                  openclawAcpxOverlay
+                ];
               })
             ]
           else
