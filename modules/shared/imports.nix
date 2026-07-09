@@ -1,4 +1,4 @@
 [
-  ./nixpkgs-config.nix
   ./cacerts.nix
+  ./nixpkgs-config.nix
 ]

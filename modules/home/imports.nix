@@ -3,8 +3,8 @@
   ./programs/ai.nix
   ./programs/appearance-sync.nix
   ./programs/baseline.nix
-  ./programs/colima.nix
   ./programs/cmux.nix
+  ./programs/colima.nix
   ./programs/communication.nix
   ./programs/cursor.nix
   ./programs/developer.nix

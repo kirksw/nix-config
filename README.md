@@ -40,4 +40,4 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 - `deploy` is intentionally retained as a custom flake output for `deploy-rs` compatibility.
 - `nix flake check` may print `unknown flake output 'deploy'`; this warning is expected.
 - `nix-agents` is consumed as the reusable generator/wrapper library; concrete agent configuration lives in `agents/`.
-- Work-only backend engineering practices are exposed through the `backend-practices` MCP server and loaded on demand.
+- Work-only backend engineering practices are exposed through the `lunar-skills` MCP server and loaded on demand.
