@@ -103,10 +103,9 @@ let
         providerMode = "direct";
         modelPrimary = "openai/gpt-5.6-luna";
         modelFallbacks = [
-          "openai/gpt-5.4"
           "minimax/MiniMax-M3"
           "zai/glm-5.2"
-          "zai/glm-4.6v"
+          "openai/gpt-5.4"
         ];
         modelAllowlist = [
           "openai/gpt-5.4"
@@ -340,6 +339,17 @@ let
 
           services.openssh = {
             enable = true;
+            hostKeys = [
+              {
+                path = "/srv/assistant/ssh/ssh_host_ed25519_key";
+                type = "ed25519";
+              }
+              {
+                path = "/srv/assistant/ssh/ssh_host_rsa_key";
+                type = "rsa";
+                bits = 4096;
+              }
+            ];
             settings = {
               PasswordAuthentication = false;
               PermitRootLogin = "prohibit-password";
@@ -366,6 +376,7 @@ let
             "d /srv/assistant/home 0700 agent users -"
             "d /srv/assistant/workspace 0755 agent users -"
             "d /srv/assistant/kb 0755 agent users -"
+            "d /srv/assistant/ssh 0700 root root -"
             "d /var/lib/openclaw 0700 agent users -"
             "d /var/lib/openclaw/config 0700 agent users -"
             "d /var/lib/openclaw/state 0700 agent users -"
