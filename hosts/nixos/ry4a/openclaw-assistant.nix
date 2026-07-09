@@ -17,6 +17,20 @@ in
       description = "Hostname of the LLM router VM (Tailscale name).";
     };
 
+    providerMode = lib.mkOption {
+      type = lib.types.enum [
+        "router"
+        "direct"
+      ];
+      default = "router";
+      description = "Whether this assistant uses the local home-llm-router or direct provider APIs.";
+    };
+
+    modelPrimary = lib.mkOption {
+      type = lib.types.str;
+      default = "router-anthropic/minimax/MiniMax-M3";
+      description = "Default model identifier for this assistant.";
+    };
     sopsDir = lib.mkOption {
       type = lib.types.str;
       description = "virtiofs-mounted sops secrets directory readable by the keys group.";
@@ -98,8 +112,16 @@ in
         ${pkgs.coreutils}/bin/install -d -m 0700 /run/openclaw-secrets
         {
           echo "TELEGRAM_BOT_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/telegram_bot_token)"
-          echo "LLM_ROUTER_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/llm_router_api_key)"
           echo "GATEWAY_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/gateway_token)"
+          if [ -f ${cfg.sopsDir}/llm_router_api_key ]; then
+            echo "LLM_ROUTER_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/llm_router_api_key)"
+          fi
+          if [ -f ${cfg.sopsDir}/minimax_api_key ]; then
+            echo "MINIMAX_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/minimax_api_key)"
+          fi
+          if [ -f ${cfg.sopsDir}/zai_api_key ]; then
+            echo "ZAI_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/zai_api_key)"
+          fi
         } > /run/openclaw-secrets/env
         ${pkgs.coreutils}/bin/chown agent:users /run/openclaw-secrets/env
       '';
@@ -212,90 +234,154 @@ in
             followSymlinks = false;
           };
         };
-        models.providers = {
-          router-anthropic = {
-            baseUrl = "http://${cfg.router}:80";
-            api = "anthropic-messages";
-            apiKey = {
-              source = "env";
-              provider = "default";
-              id = "LLM_ROUTER_API_KEY";
-            };
-            models = [
-              {
-                id = "minimax/MiniMax-M3";
-                name = "MiniMax M3";
-                api = "anthropic-messages";
-                contextWindow = 1000000;
-                maxTokens = 524288;
-                reasoning = true;
-                input = [
-                  "text"
-                  "image"
+        models.providers =
+          if cfg.providerMode == "direct" then
+            {
+              minimax = {
+                baseUrl = "https://api.minimax.io/v1";
+                api = "openai-completions";
+                apiKey = {
+                  source = "env";
+                  provider = "default";
+                  id = "MINIMAX_API_KEY";
+                };
+                models = [
+                  {
+                    id = "MiniMax-M3";
+                    name = "MiniMax M3";
+                    contextWindow = 1000000;
+                    maxTokens = 524288;
+                    reasoning = true;
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                  }
+                  {
+                    id = "MiniMax-M2.7-highspeed";
+                    name = "MiniMax M2.7 Highspeed";
+                    contextWindow = 204800;
+                    maxTokens = 204800;
+                    reasoning = true;
+                  }
                 ];
-              }
-              {
-                id = "minimax/MiniMax-M2.7-highspeed";
-                name = "MiniMax M2.7 Highspeed";
-                api = "anthropic-messages";
-                contextWindow = 204800;
-                maxTokens = 204800;
-                reasoning = true;
-              }
-              # home-llm-router currently exposes GLM as glm/*, not zai/*.
-              {
-                id = "glm/glm-5.2";
-                name = "GLM 5.2";
-                api = "anthropic-messages";
-                contextWindow = 1000000;
-                maxTokens = 131072;
-                reasoning = true;
-              }
-              {
-                id = "glm/glm-4.6v";
-                name = "GLM 4.6V";
-                api = "anthropic-messages";
-                contextWindow = 128000;
-                maxTokens = 131072;
-                input = [
-                  "text"
-                  "image"
+              };
+
+              zai = {
+                baseUrl = "https://api.z.ai/api/paas/v4/";
+                api = "openai-completions";
+                apiKey = {
+                  source = "env";
+                  provider = "default";
+                  id = "ZAI_API_KEY";
+                };
+                models = [
+                  {
+                    id = "glm-5.2";
+                    name = "GLM 5.2";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.6v";
+                    name = "GLM 4.6V";
+                    contextWindow = 128000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                  }
                 ];
-              }
-            ];
-          };
-          router-openai = {
-            baseUrl = "http://${cfg.router}:80/v1";
-            api = "openai-completions";
-            apiKey = {
-              source = "env";
-              provider = "default";
-              id = "LLM_ROUTER_API_KEY";
+              };
+            }
+          else
+            {
+              router-anthropic = {
+                baseUrl = "http://${cfg.router}:80";
+                api = "anthropic-messages";
+                apiKey = {
+                  source = "env";
+                  provider = "default";
+                  id = "LLM_ROUTER_API_KEY";
+                };
+                models = [
+                  {
+                    id = "minimax/MiniMax-M3";
+                    name = "MiniMax M3";
+                    api = "anthropic-messages";
+                    contextWindow = 1000000;
+                    maxTokens = 524288;
+                    reasoning = true;
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                  }
+                  {
+                    id = "minimax/MiniMax-M2.7-highspeed";
+                    name = "MiniMax M2.7 Highspeed";
+                    api = "anthropic-messages";
+                    contextWindow = 204800;
+                    maxTokens = 204800;
+                    reasoning = true;
+                  }
+                  # home-llm-router currently exposes GLM as glm/*, not zai/*.
+                  {
+                    id = "glm/glm-5.2";
+                    name = "GLM 5.2";
+                    api = "anthropic-messages";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm/glm-4.6v";
+                    name = "GLM 4.6V";
+                    api = "anthropic-messages";
+                    contextWindow = 128000;
+                    maxTokens = 131072;
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                  }
+                ];
+              };
+              router-openai = {
+                baseUrl = "http://${cfg.router}:80/v1";
+                api = "openai-completions";
+                apiKey = {
+                  source = "env";
+                  provider = "default";
+                  id = "LLM_ROUTER_API_KEY";
+                };
+                models = [
+                  {
+                    id = "cx/gpt-5.3-codex";
+                    name = "GPT 5.3 Codex";
+                    api = "openai-completions";
+                  }
+                  {
+                    id = "cx/gpt-5.4";
+                    name = "GPT 5.4";
+                    api = "openai-completions";
+                  }
+                  {
+                    id = "cx/gpt-5.5";
+                    name = "GPT 5.5";
+                    api = "openai-completions";
+                    reasoning = true;
+                  }
+                ];
+              };
             };
-            models = [
-              {
-                id = "cx/gpt-5.3-codex";
-                name = "GPT 5.3 Codex";
-                api = "openai-completions";
-              }
-              {
-                id = "cx/gpt-5.4";
-                name = "GPT 5.4";
-                api = "openai-completions";
-              }
-              {
-                id = "cx/gpt-5.5";
-                name = "GPT 5.5";
-                api = "openai-completions";
-                reasoning = true;
-              }
-            ];
-          };
-        };
         agents.defaults = {
           workspace = "/srv/assistant/workspace";
           model = {
-            primary = "router-anthropic/minimax/MiniMax-M3";
+            primary = cfg.modelPrimary;
             fallbacks = cfg.modelFallbacks;
           };
           # ponytail: hide model chain-of-thought; turn back on only if answer quality tanks.

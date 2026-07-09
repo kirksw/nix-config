@@ -100,15 +100,16 @@ let
       mac = "02:00:00:10:00:04";
       openclaw = {
         router = "home-llm-router";
+        providerMode = "direct";
+        modelPrimary = "minimax/MiniMax-M3";
+        modelFallbacks = [
+          "zai/glm-5.2"
+          "zai/glm-4.6v"
+        ];
         secretsFile = "sanja";
         telegramAllowFrom = [ 8771595122 ];
-        modelFallbacks = [
-          "router-openai/cx/gpt-5.4"
-          "router-anthropic/glm/glm-5.2"
-        ];
         sopsSecrets = [
           "telegram_bot_token"
-          "llm_router_api_key"
           "gateway_token"
         ];
       };
@@ -121,11 +122,16 @@ let
       mac = "02:00:00:10:00:05";
       openclaw = {
         router = "home-llm-router";
+        providerMode = "direct";
+        modelPrimary = "minimax/MiniMax-M3";
+        modelFallbacks = [
+          "zai/glm-5.2"
+          "zai/glm-4.6v"
+        ];
         secretsFile = "kirk";
         telegramAllowFrom = [ 8504646361 ];
         sopsSecrets = [
           "telegram_bot_token"
-          "llm_router_api_key"
           "gateway_token"
         ];
       };
@@ -170,25 +176,62 @@ let
     };
   };
 
+  directProviderSecretKeys = {
+    minimax_api_key = {
+      sopsFile = "${self}/secrets/api/default.yaml";
+      key = "minimax";
+    };
+    zai_api_key = {
+      sopsFile = "${self}/secrets/api/default.yaml";
+      key = "zai";
+    };
+  };
+
   # Sops secrets for OpenClaw-enabled assistants.
-  # Each key from <name>.yaml becomes a file under /run/secrets/assistants/<name>/.
+  # Per-assistant keys come from secrets/assistants/<name>.yaml; direct-provider
+  # credentials (MINIMAX/ZAI) are reused from secrets/api/default.yaml and mounted
+  # alongside them under /run/secrets/assistants/<name>/.
   # Group-readable so the VM's agent user (in keys group) can read via virtiofs.
   mkOpenClawSopsSecrets =
     assistant:
     let
       sf = assistant.openclaw.secretsFile;
+      sopsKeys = builtins.listToAttrs (
+        map (key: {
+          name = "assistants/${sf}/${key}";
+          value = {
+            sopsFile = "${self}/secrets/assistants/${sf}.yaml";
+            inherit key;
+            mode = "0440";
+            group = "keys";
+          };
+        }) assistant.openclaw.sopsSecrets
+      );
+      directSopsKeys =
+        if assistant ? openclaw then
+          if (assistant.openclaw.providerMode or "router") == "direct" then
+            builtins.listToAttrs (
+              map
+                (name: {
+                  value = {
+                    inherit (directProviderSecretKeys.${name}) key;
+                    sopsFile = directProviderSecretKeys.${name}.sopsFile;
+                    mode = "0440";
+                    group = "keys";
+                  };
+                  name = "assistants/${sf}/${name}";
+                })
+                [
+                  "minimax_api_key"
+                  "zai_api_key"
+                ]
+            )
+          else
+            { }
+        else
+          { };
     in
-    builtins.listToAttrs (
-      map (key: {
-        name = "assistants/${sf}/${key}";
-        value = {
-          sopsFile = "${self}/secrets/assistants/${sf}.yaml";
-          inherit key;
-          mode = "0440";
-          group = "keys";
-        };
-      }) assistant.openclaw.sopsSecrets
-    );
+    sopsKeys // directSopsKeys;
 
   mkVm =
     assistant:
@@ -219,6 +262,9 @@ let
               ./openclaw-assistant.nix
               ({ ... }: {
                 assistant.openclaw.router = assistant.openclaw.router;
+                assistant.openclaw.providerMode = assistant.openclaw.providerMode or "router";
+                assistant.openclaw.modelPrimary =
+                  assistant.openclaw.modelPrimary or "router-anthropic/minimax/MiniMax-M3";
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
