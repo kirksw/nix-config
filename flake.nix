@@ -41,7 +41,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    llm-agents.url = "github:numtide/llm-agents.nix";
     nix-agents.url = "github:kirksw/nix-agents/main";
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
@@ -78,7 +77,6 @@
       flake-utils,
       deploy-rs,
       lunar-tools,
-      llm-agents,
       nix-agents,
       git-hooks,
       neovim-nightly-overlay,
@@ -138,7 +136,6 @@
           raw = import ./flake/hosts/darwin {
             inherit
               lunar-tools
-              llm-agents
               nix-agents
               neovim-nightly-overlay
               ;

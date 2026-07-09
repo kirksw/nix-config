@@ -20,9 +20,9 @@ let
   localAgentsSrc = ../../../agents;
   workOpenAIBaseUrl = "https://eu.api.openai.com/v1";
   omnigentVendorPath = lib.makeBinPath [
-    pkgs.llm-agents.claude-code
-    pkgs.llm-agents.codex
-    pkgs.llm-agents.pi
+    self.packages.${system}.claude-code
+    self.packages.${system}.codex
+    self.packages.${system}.pi
   ];
   agentInputs = inputs // {
     inherit self;
@@ -196,7 +196,7 @@ let
   opencodePkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "opencode";
-    tool = pkgs.llm-agents.opencode;
+    tool = self.packages.${system}.opencode;
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "opencode";
@@ -216,7 +216,7 @@ let
   claudePkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "claude";
-    tool = pkgs.llm-agents.claude-code;
+    tool = self.packages.${system}.claude-code;
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "claude";
@@ -236,7 +236,7 @@ let
   codexPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "codex";
-    tool = pkgs.llm-agents.codex;
+    tool = self.packages.${system}.codex;
     agentSystem = nixAgentsLib.mkAgentSystem {
       inherit pkgs;
       target = "codex";
@@ -288,7 +288,7 @@ let
   piPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "pi";
-    tool = pkgs.llm-agents.pi;
+    tool = self.packages.${system}.pi;
     agentSystem = piAgentSystem;
     profileMeta = piProfileMeta;
   });
@@ -300,7 +300,7 @@ let
         nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
           inherit pkgs profile;
           target = "pi";
-          tool = pkgs.llm-agents.pi;
+          tool = self.packages.${system}.pi;
           agentSystem = piFactoryAgentSystem;
           profileMeta = piFactoryProfileMeta;
         })
@@ -326,7 +326,7 @@ let
       # hooks, which disables policy enforcement. We only bridge auth.json.
       export CODEX_HOME="$OMNIGENT_CONFIG_HOME/codex-home"
       export CLAUDE_CONFIG_DIR="$OMNIGENT_CONFIG_HOME/claude-code"
-      export OMNIGENT_CLAUDE_BIN="${pkgs.llm-agents.claude-code}/bin/claude"
+      export OMNIGENT_CLAUDE_BIN="${self.packages.${system}.claude-code}/bin/claude"
       mkdir -p "$CODEX_HOME" "$CLAUDE_CONFIG_DIR"
       if [ -f "$HOME/.codex/auth.json" ]; then
         ln -snf "$HOME/.codex/auth.json" "$CODEX_HOME/auth.json"
@@ -395,7 +395,7 @@ let
 
       export CODEX_HOME="$OMNIGENT_CONFIG_HOME/codex-home"
       export CLAUDE_CONFIG_DIR="$OMNIGENT_CONFIG_HOME/claude-code"
-      export OMNIGENT_CLAUDE_BIN="${pkgs.llm-agents.claude-code}/bin/claude"
+      export OMNIGENT_CLAUDE_BIN="${self.packages.${system}.claude-code}/bin/claude"
       mkdir -p "$CODEX_HOME" "$CLAUDE_CONFIG_DIR"
       if [ -f "$HOME/.codex/auth.json" ]; then
         ln -snf "$HOME/.codex/auth.json" "$CODEX_HOME/auth.json"

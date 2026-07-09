@@ -1,6 +1,5 @@
 {
   lunar-tools,
-  llm-agents,
   nix-agents,
   ...
 }:
@@ -39,7 +38,6 @@
   };
   overlays = [
     lunar-tools.overlays.default
-    llm-agents.overlays.default
     nix-agents.overlays.default
   ];
   enableHomebrew = true;
