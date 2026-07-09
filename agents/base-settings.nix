@@ -5,12 +5,15 @@
 }:
 
 let
+  piHerdrPackage = "${self}/agents/packages/pi-herdr";
+
   piPackageRefs = [
     "npm:context-mode@1.0.169"
     "npm:pi-cmux@0.1.16"
     "npm:pi-cost@0.1.1"
     "npm:pi-dynamic-workflows@1.0.1"
     "npm:pi-goal-x@0.19.0"
+    piHerdrPackage
     "npm:pi-mcp-adapter@2.8.0"
     "npm:pi-observational-memory@3.0.3"
     "npm:pi-permission-system@0.8.0"

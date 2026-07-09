@@ -82,6 +82,7 @@ let
 
   localAgents = import ../agents { inherit pkgs; };
   localAgentsSrc = ../agents;
+  piCommonChainsSrc = ../agents/targets/pi/chains/common;
   agentInputs = inputs // {
     inherit self;
   };
@@ -225,6 +226,13 @@ let
           fileCommands = lib.concatMapStringsSep "\n" (file: ''
             sync_file "${meta.storePath}/${file}" "${profileDir}/${file}"
           '') targetSpec.files;
+          extraDirCommands =
+            if target == "pi" && builtins.elem profileName [ "personal-default" "work-default" ] then
+              ''
+                sync_tree "${piCommonChainsSrc}" "${profileDir}/chains"
+              ''
+            else
+              "";
           postCommands =
             if target == "codex" then
               ''
@@ -242,6 +250,7 @@ let
           mkdir_p "${profileDir}"
           ${dirCommands}
           ${fileCommands}
+          ${extraDirCommands}
           ${postCommands}
         '';
     in

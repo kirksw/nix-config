@@ -214,6 +214,26 @@ let
     ];
     text = builtins.readFile ../../../scripts/herdr-project-palette.sh;
   };
+
+  herdrSmartFocus = pkgs.writeShellApplication {
+    name = "herdr-smart-focus";
+    runtimeInputs = [
+      pkgs.gnugrep
+      pkgs.herdr
+      pkgs.jq
+    ];
+    text = ''
+      direction="$1"
+      key="$2"
+      pane_id="$(herdr pane current --current | jq -r '.result.pane.pane_id')"
+
+      if herdr pane process-info --current | jq -r '.result.process_info.foreground_processes[].name' | grep -Eiq '^(g?view|n?vim?x?)(diff)?$|^tmux$'; then
+        herdr pane send-keys "$pane_id" "$key"
+      else
+        herdr pane focus --current --direction "$direction"
+      fi
+    '';
+  };
 in
 {
   options = {
@@ -225,6 +245,7 @@ in
     home.packages = with pkgs; [
       notesCli
       herdrProjectPalette
+      herdrSmartFocus
       # cli tools
       lazygit # tui git client
       pet # snippet manager
@@ -304,22 +325,42 @@ in
         command = "herdr-project-palette ezgit"
 
         [[keys.command]]
-        key = "prefix+h"
+        key = "ctrl+j"
         type = "shell"
-        command = "herdr pane resize --current --direction left --amount 5"
+        command = "herdr-smart-focus left ctrl+j"
+
+        [[keys.command]]
+        key = "ctrl+k"
+        type = "shell"
+        command = "herdr-smart-focus down ctrl+k"
+
+        [[keys.command]]
+        key = "ctrl+l"
+        type = "shell"
+        command = "herdr-smart-focus up ctrl+l"
+
+        [[keys.command]]
+        key = "ctrl+;"
+        type = "shell"
+        command = "herdr-smart-focus right ctrl+;"
 
         [[keys.command]]
         key = "prefix+j"
         type = "shell"
-        command = "herdr pane resize --current --direction down --amount 5"
+        command = "herdr pane resize --current --direction left --amount 5"
 
         [[keys.command]]
         key = "prefix+k"
         type = "shell"
-        command = "herdr pane resize --current --direction up --amount 5"
+        command = "herdr pane resize --current --direction down --amount 5"
 
         [[keys.command]]
         key = "prefix+l"
+        type = "shell"
+        command = "herdr pane resize --current --direction up --amount 5"
+
+        [[keys.command]]
+        key = "prefix+;"
         type = "shell"
         command = "herdr pane resize --current --direction right --amount 5"
       '';

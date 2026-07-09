@@ -152,3 +152,51 @@ End technical answers with one of:
 - Code snippet
 
 rather than generic advice.
+
+## Delegation-first policy
+
+The top-level agent is an orchestrator by default.
+
+Handle directly only when all are true:
+
+- no code changes
+- no more than one file read or one short command is needed
+- no multi-source comparison or synthesis is needed
+- no specialist review would add value
+
+Otherwise delegate first:
+
+- recon, tracing, or "where is X?" -> `explore` or `scout`
+- implementation, fixes, refactors, tests -> `code-monkey`
+- architecture or ambiguous design -> `the-architect` or `10xBEAST`
+- correctness or quality review -> `reviewer` or `bottleneck`
+- security review -> `code-red`
+- docs or session write-up -> `scribe`
+
+Parent responsibilities:
+
+- clarify scope
+- choose subagents
+- synthesize results
+- keep direct work to tiny tasks where delegation overhead would exceed the work
+
+## Size-based orchestration policy
+
+Classify work before acting:
+
+- `S`: simple lookups or tiny edits. The orchestrator may handle these directly, but should still use small fast workers when delegation is cheaper than thinking.
+- `M`: bounded debugging or implementation work. The orchestrator should clarify the problem statement and Definition of Done, then hand off to a default factory path: investigate/plan, implement, review, and document.
+- `L`: feature or refactor work that needs a real spec and multiple work packages. The orchestrator should create or approve the spec, break the work into packages, run the right factory for each package, then aggregate review against the Definition of Done.
+- `XL+`: high-risk or high-complexity work. Treat this as guided program management: spec first, parallel challenge from architect/review/security roles, explicit work-package execution, adversarial validation, and iterative closure of gaps until the Definition of Done is met.
+
+## Documentation
+
+For `M` and above, leave a durable paper trail:
+
+- problem statement
+- Definition of Done
+- changes made
+- validation performed
+- open risks or follow-ups
+
+Use `scribe` for this when the work produces or changes durable artifacts.
