@@ -90,34 +90,14 @@ in
   };
 
   config = lib.mkIf config.homeModules.sops.enable {
-    home.activation.retrieveSopsAgeKey = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
-      SOPS_KEY_DIR="$HOME/.config/sops/age"
-      SOPS_KEY_FILE="$SOPS_KEY_DIR/keys.txt"
-
-      mkdir -p "$SOPS_KEY_DIR"
-      rm -f "$SOPS_KEY_FILE"
-
-      if ! ${pkgs.proton-pass-cli}/bin/pass-cli item view \
-          --vault-name macos \
-          --item-title nix-sops-age \
-          --field note > "$SOPS_KEY_FILE" 2>&1; then
-        echo "ERROR: Failed to retrieve SOPS age key from Proton Pass"
-        echo "Ensure pass-cli is logged in: pass-cli login"
-        rm -f "$SOPS_KEY_FILE"
-        exit 1
-      fi
-
-      chmod 400 "$SOPS_KEY_FILE"
-      echo "Retrieved SOPS age key from Proton Pass"
-    '';
-
     home.sessionVariables = {
-      SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+      SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/yubikey-identities.txt";
+      SOPS_AGE_KEY_CMD = "cat ${config.home.homeDirectory}/.config/sops/age/yubikey-identities.txt";
     };
 
     sops = {
       defaultSopsFormat = "yaml";
-      age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+      age.keyFile = "${config.home.homeDirectory}/.config/sops/age/yubikey-identities.txt";
       # define the required secrets for git profiles
       secrets =
         generateGitSecrets {
@@ -152,7 +132,7 @@ in
     # Make flux AGE key available for sops CLI usage (e.g., decrypting k8s-config secrets)
     home.activation.appendFluxAgeKey = lib.mkIf config.homeModules.sops.enableFluxKey (
       lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        FLUX_KEY_PATH="$HOME/.config/sops/age/keys.txt"
+        FLUX_KEY_PATH="$HOME/.config/sops/age/yubikey-identities.txt"
         FLUX_KEY_SECRET="${config.sops.secrets."k8s/flux".path}"
 
         # Ensure the directory exists

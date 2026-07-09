@@ -1,34 +1,48 @@
 keys:
-  - &main age15p8k9vll4k7uqgmqydcn5n09dzc4dlw4nq6zwlnunnurpxg8wqlsyu9mlz
+  - &yubikey-main age1yubikey1qvz5vfsh7xv4wvt7c8jxjzh9vgqpnvvnyc5pdxtyq22uacyyjuepxl5v39h
+  - &yubikey-backup age1yubikey1q2nwpd9tj446fluvv3pgexq8vq669aq0c8tt6d09z0hhzgkmrh7dszy0hs2
+  - &manual age15p8k9vll4k7uqgmqydcn5n09dzc4dlw4nq6zwlnunnurpxg8wqlsyu9mlz
   - &k8s age1e4scgj83r7yddwk96sm8ghdes309e7lze2rq73ufmngkhpaa74vsqndxsx
 
 creation_rules:
   - path_regex: secrets/ssh/ry(4a|6a|6b)-root\.yaml$
     key_groups:
       - age:
-          - *main
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
           - *k8s
   - path_regex: secrets/k8s/.*\.yaml$
     key_groups:
       - age:
-          - *main
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
           - *k8s
   - path_regex: secrets/cloudflare/.*\.yaml$
     key_groups:
       - age:
-          - *main
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
           - *k8s
   - path_regex: secrets/tailscale/agent-microvms\.yaml$
     key_groups:
       - age:
-          - *main
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
           - *k8s
   - path_regex: secrets/assistants/.*\.yaml$
     key_groups:
       - age:
-          - *main
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
           - *k8s
   - path_regex: secrets/.*\.yaml$
     key_groups:
       - age:
-          - *main
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
