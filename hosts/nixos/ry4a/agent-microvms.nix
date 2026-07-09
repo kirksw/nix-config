@@ -411,6 +411,8 @@ let
             HOME = "/var/lib/9router";
           };
           serviceConfig = {
+            # ponytail: mounted MicroVM volume can come up root-owned; chown once before 9router writes its DB.
+            ExecStartPre = "+${pkgs.coreutils}/bin/chown -R router:router /var/lib/9router";
             ExecStart = "${routerPackage}/bin/9router --port ${toString routerServicePort} --host 127.0.0.1 --no-browser --skip-update --log";
             Restart = "always";
             RestartSec = "5s";
