@@ -12,12 +12,30 @@ let
   routerHttpPort = 80;
   routerServicePort = 20128;
   routerPackage = self.packages.${pkgs.system}."9router";
+  omniRoutePackage = self.packages.${pkgs.system}.omniroute;
+  tailscaleAuthKeyFile = config.sops.secrets."tailscale/microvms/authKey".path;
+  tailscaleAuthKeyDir = builtins.dirOf tailscaleAuthKeyFile;
   routerRuntimePackages = [
     pkgs.inetutils
     pkgs.nodejs
     pkgs.procps
     pkgs.which
   ];
+
+  omniRoutePreStart = pkgs.writeShellScript "omniroute-pre-start" ''
+    set -eu
+
+    ${pkgs.coreutils}/bin/install -d -o router -g router -m 0700 /var/lib/omniroute /var/lib/omniroute/log_archives
+    if [ ! -e /var/lib/omniroute/log_archives/legacy-request-logs.json ]; then
+      # ponytail: upstream zips live logs during startup; marker skips that broken legacy migration.
+      ${pkgs.coreutils}/bin/printf '%s\n' '{"migratedAt":"nix-preseed","archiveFilename":null}' > /var/lib/omniroute/log_archives/legacy-request-logs.json
+    fi
+    if [ ! -e /var/lib/omniroute/storage.sqlite ]; then
+      # ponytail: fresh test VM, stale probe-failed DBs only make OmniRoute restore a broken DB forever.
+      ${pkgs.coreutils}/bin/rm -f /var/lib/omniroute/storage.sqlite.probe-failed-*
+    fi
+    ${pkgs.coreutils}/bin/chown -R router:router /var/lib/omniroute
+  '';
 
   openclawAcpxOverlay = final: prev: {
     openclawRuntimePlugins = prev.openclawRuntimePlugins // {
@@ -133,6 +151,13 @@ let
       mac = "02:00:00:10:00:12";
     }
   ];
+
+  testRouter = {
+    name = "test-llm-router";
+    hostPort = 20131;
+    sshPort = 20231;
+    mac = "02:00:00:10:00:13";
+  };
 
   mkSopsSecret = assistant: {
     name = assistant.authSecret;
@@ -494,6 +519,164 @@ let
       };
     };
   };
+
+  mkOmniRouterVm = router: {
+    name = router.name;
+    value = {
+      autostart = true;
+      # ponytail: avoid deploy-rs rollback on transient parallel MicroVM boot failures; restart target VMs manually when needed.
+      restartIfChanged = false;
+      config = {
+        networking.hostName = router.name;
+        system.stateVersion = "25.05";
+
+        nix.settings.experimental-features = [
+          "nix-command"
+          "flakes"
+        ];
+
+        environment.systemPackages = [
+          omniRoutePackage
+          pkgs.curl
+          pkgs.htop
+          pkgs.jq
+        ]
+        ++ routerRuntimePackages;
+
+        users.groups.router = { };
+        users.users = {
+          root.openssh.authorizedKeys.keys = [ rootSshKey ];
+          router = {
+            isSystemUser = true;
+            group = "router";
+            home = "/var/lib/omniroute";
+            createHome = false;
+          };
+        };
+
+        services.openssh = {
+          enable = true;
+          hostKeys = [
+            {
+              path = "/var/lib/omniroute/ssh/ssh_host_ed25519_key";
+              type = "ed25519";
+            }
+            {
+              path = "/var/lib/omniroute/ssh/ssh_host_rsa_key";
+              type = "rsa";
+              bits = 4096;
+            }
+          ];
+          settings = {
+            PasswordAuthentication = false;
+            PermitRootLogin = "prohibit-password";
+          };
+        };
+
+        services.tailscale = {
+          enable = true;
+          authKeyFile = "/run/host-secrets/tailscale/authKey";
+        };
+        systemd.services.tailscaled.restartIfChanged = false;
+
+        networking.firewall = {
+          enable = true;
+          allowedTCPPorts = [
+            routerServicePort
+            22
+          ];
+        };
+        networking.nameservers = [
+          "100.100.100.100"
+          "8.8.8.8"
+          "1.1.1.1"
+        ];
+        networking.search = [ "tail54de03.ts.net" ];
+        systemd.network.enable = true;
+
+        systemd.tmpfiles.rules = [
+          "d /var/lib/omniroute 0700 router router -"
+          "d /var/lib/omniroute/ssh 0700 root root -"
+        ];
+
+        systemd.services.omniroute = {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          path = routerRuntimePackages;
+          environment = {
+            DATA_DIR = "/var/lib/omniroute";
+            HOME = "/var/lib/omniroute";
+            PORT = toString routerServicePort;
+            OMNIROUTE_NO_UPDATE_NOTIFIER = "1";
+            OMNIROUTE_SKIP_DB_HEALTHCHECK = "1";
+          };
+          serviceConfig = {
+            ExecStartPre = "+${omniRoutePreStart}";
+            ExecStart = "${omniRoutePackage}/bin/omniroute";
+            Restart = "always";
+            RestartSec = "5s";
+            User = "router";
+            Group = "router";
+            # ponytail: omniroute's packaged server expects process cwd to be the app root.
+            WorkingDirectory = "${omniRoutePackage}/lib/node_modules/omniroute";
+          };
+        };
+
+        microvm = {
+          hypervisor = "qemu";
+          mem = 4096;
+          vcpu = 2;
+          interfaces = [
+            {
+              type = "user";
+              id = "qemu";
+              mac = router.mac;
+            }
+          ];
+          forwardPorts = [
+            {
+              from = "host";
+              proto = "tcp";
+              host.port = router.hostPort;
+              guest.port = routerServicePort;
+            }
+            {
+              from = "host";
+              proto = "tcp";
+              host.port = router.sshPort;
+              guest.port = 22;
+            }
+          ];
+          volumes = [
+            {
+              image = "/var/lib/microvms/${router.name}/omniroute.img";
+              mountPoint = "/var/lib/omniroute";
+              size = 8192;
+              fsType = "ext4";
+              autoCreate = true;
+            }
+            {
+              image = "/var/lib/microvms/${router.name}/tailscale.img";
+              mountPoint = "/var/lib/tailscale";
+              size = 1024;
+              fsType = "ext4";
+              autoCreate = true;
+            }
+          ];
+          shares = [
+            {
+              source = tailscaleAuthKeyDir;
+              mountPoint = "/run/host-secrets/tailscale";
+              tag = "tailscale-secrets";
+              proto = "virtiofs";
+              readOnly = true;
+            }
+          ];
+        };
+      };
+    };
+  };
 in
 {
   sops.secrets =
@@ -506,12 +689,16 @@ in
   networking.firewall.interfaces.tailscale0.allowedTCPPorts = builtins.concatMap (router: [
     router.hostPort
     router.sshPort
-  ]) llmRouters;
+  ]) (llmRouters ++ [ testRouter ]);
 
   systemd.tmpfiles.rules =
     (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -") assistants)
-    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") llmRouters);
+    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") (
+      llmRouters ++ [ testRouter ]
+    ));
 
   microvm.vms =
-    builtins.listToAttrs (map mkVm assistants) // builtins.listToAttrs (map mkRouterVm llmRouters);
+    builtins.listToAttrs (map mkVm assistants)
+    // builtins.listToAttrs (map mkRouterVm llmRouters)
+    // builtins.listToAttrs [ (mkOmniRouterVm testRouter) ];
 }
