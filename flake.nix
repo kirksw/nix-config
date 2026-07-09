@@ -33,7 +33,7 @@
     };
 
     lunar-tools = {
-      url = "git+ssh://git@github.com/lunarway/lw-nix?ref=feat/refactor";
+      url = "git+ssh://git@github.com/lunarway/lw-nix?ref=master";
     };
 
     sops-nix = {
