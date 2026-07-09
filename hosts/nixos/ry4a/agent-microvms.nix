@@ -33,8 +33,8 @@ let
     # ponytail: stale probe-failed DBs make OmniRoute restore broken state forever.
     ${pkgs.coreutils}/bin/rm -f /var/lib/omniroute/storage.sqlite.probe-failed-*
     if [ ! -e /var/lib/omniroute/storage.sqlite ]; then
-      # ponytail: disposable test VM; no primary DB means backup/server state is just poison.
-      ${pkgs.coreutils}/bin/rm -rf /var/lib/omniroute/db_backups /var/lib/omniroute/server
+      # ponytail: disposable test VM; no primary DB means preserved state is just poison.
+      ${pkgs.coreutils}/bin/rm -rf /var/lib/omniroute/db_backups /var/lib/omniroute/logs /var/lib/omniroute/server
     fi
     ${pkgs.coreutils}/bin/chown -R router:router /var/lib/omniroute
   '';
