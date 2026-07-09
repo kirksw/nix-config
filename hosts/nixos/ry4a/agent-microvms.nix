@@ -582,7 +582,7 @@ let
         networking.firewall = {
           enable = true;
           allowedTCPPorts = [
-            routerServicePort
+            routerHttpPort
             22
           ];
         };
@@ -598,6 +598,12 @@ let
           "d /var/lib/omniroute 0700 router router -"
           "d /var/lib/omniroute/ssh 0700 root root -"
         ];
+
+        services.nginx = {
+          enable = true;
+          recommendedProxySettings = true;
+          virtualHosts."_".locations."/".proxyPass = "http://127.0.0.1:${toString routerServicePort}";
+        };
 
         systemd.services.omniroute = {
           wantedBy = [ "multi-user.target" ];
@@ -639,7 +645,7 @@ let
               from = "host";
               proto = "tcp";
               host.port = router.hostPort;
-              guest.port = routerServicePort;
+              guest.port = routerHttpPort;
             }
             {
               from = "host";
