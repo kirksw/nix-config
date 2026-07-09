@@ -133,11 +133,14 @@ let
       openclaw = {
         router = "home-llm-router";
         providerMode = "direct";
-        modelPrimary = "minimax/MiniMax-M3";
+        # ponytail: no model allowlist here; Kirk and its future subagents may use the full provider catalog.
+        modelPrimary = "openai/gpt-5.6-luna";
         modelFallbacks = [
+          "minimax/MiniMax-M3"
           "zai/glm-5.2"
-          "zai/glm-4.6v"
         ];
+        thinkingDefault = "medium";
+        reasoningDefault = "on";
         secretsFile = "kirk";
         telegramAllowFrom = [ 8504646361 ];
         sopsSecrets = [
