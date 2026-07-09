@@ -114,6 +114,8 @@ let
           "zai/glm-5.2"
           "zai/glm-4.6v"
         ];
+        thinkingDefault = "medium";
+        reasoningDefault = "on";
         secretsFile = "sanja";
         telegramAllowFrom = [ 8771595122 ];
         sopsSecrets = [
@@ -274,6 +276,8 @@ let
                 assistant.openclaw.modelPrimary =
                   assistant.openclaw.modelPrimary or "router-anthropic/minimax/MiniMax-M3";
                 assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
+                assistant.openclaw.thinkingDefault = assistant.openclaw.thinkingDefault or "off";
+                assistant.openclaw.reasoningDefault = assistant.openclaw.reasoningDefault or "off";
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];

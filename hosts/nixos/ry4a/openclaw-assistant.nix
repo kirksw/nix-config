@@ -38,6 +38,22 @@ in
       description = "The complete model allowlist when non-empty.";
     };
 
+    thinkingDefault = lib.mkOption {
+      type = lib.types.str;
+      default = "off";
+      description = "Default thinking level for supported models.";
+    };
+
+    reasoningDefault = lib.mkOption {
+      type = lib.types.enum [
+        "on"
+        "off"
+        "stream"
+      ];
+      default = "off";
+      description = "Default reasoning visibility.";
+    };
+
     sopsDir = lib.mkOption {
       type = lib.types.str;
       description = "virtiofs-mounted sops secrets directory readable by the keys group.";
@@ -391,9 +407,8 @@ in
             primary = cfg.modelPrimary;
             fallbacks = cfg.modelFallbacks;
           };
-          # ponytail: hide model chain-of-thought; turn back on only if answer quality tanks.
-          thinkingDefault = "off";
-          reasoningDefault = "off";
+          thinkingDefault = cfg.thinkingDefault;
+          reasoningDefault = cfg.reasoningDefault;
           sandbox = {
             # Docker sandbox is available, but sessions are not forced into it.
             mode = "off";
