@@ -27,7 +27,6 @@ in
       hamctl
       hubble
       dagger
-      gitnow
       lunarctl
       cursor-cli
       amp-cli
