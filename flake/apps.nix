@@ -227,7 +227,13 @@ let
             sync_file "${meta.storePath}/${file}" "${profileDir}/${file}"
           '') targetSpec.files;
           extraDirCommands =
-            if target == "pi" && builtins.elem profileName [ "personal-default" "work-default" ] then
+            if
+              target == "pi"
+              && builtins.elem profileName [
+                "personal-default"
+                "work-default"
+              ]
+            then
               ''
                 sync_tree "${piCommonChainsSrc}" "${profileDir}/chains"
               ''
@@ -277,7 +283,10 @@ let
   piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
   piSubagentsSettingsFile = pkgs.writeText "pi-subagents-settings.json" ''
     {
-      "disableDefaultAgents": true
+      "disableDefaultAgents": true,
+      "subagents": {
+        "disableBuiltins": true
+      }
     }
   '';
   codexImageGuidanceFile = pkgs.writeText "codex-image-guidance.md" ''
