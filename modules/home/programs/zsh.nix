@@ -73,7 +73,6 @@ in
           nu = "pushd ${nixDirectory} && nix flake update && popd";
           ns = "pushd ${nixDirectory} && sudo darwin-rebuild --flake .#aarch64-darwin && popd";
 
-          gn = "gitnow";
           "docker-compose" = "docker compose";
           hubble = "aws_wrapper hubble";
           k9s = "k8s_wrapper k9s";

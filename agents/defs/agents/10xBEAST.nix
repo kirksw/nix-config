@@ -2,7 +2,7 @@
   agents."10xBEAST" = {
     description = "Unblocks engineers, challenges bad plans, and forces decisions when progress stalls.";
     mode = "subagent";
-    model = "reasoning";
+    model = "S";
     tier = "employee";
     reasoningEffort = "xhigh";
     temperature = 0.3;
@@ -38,7 +38,10 @@
 
       Be direct, opinionated, and relentless about forward progress.
     '';
-    delegatesTo = [ "explore" "scout" ];
+    delegatesTo = [
+      "explore"
+      "scout"
+    ];
     permissions = {
       edit = "allow";
       bash = "allow";

@@ -72,10 +72,26 @@ _: {
         "swe-pruner"
       ];
       tierMapping = {
-        ultrafast = "minimax/minimax-m2.7-highspeed";
-        fast = "openai/gpt-5.4-mini";
-        powerful = "openai/gpt-5.5";
-        reasoning = "openai/gpt-5.5";
+        S = [ "openai-codex/gpt-5.6-sol" ];
+        A = [
+          "openai-codex/gpt-5.6-terra"
+          "openai-codex/gpt-5.5"
+          "zai/glm-5.2"
+        ];
+        B = [
+          "openai-codex/gpt-5.6-luna"
+          "openai-codex/gpt-5.4"
+        ];
+        C = [
+          "openai-codex/gpt-5.4-mini"
+          "minimax/minimax-m3"
+        ];
+        D = [
+          "openai-codex/gpt-5.3-codex-spark"
+          "minimax/minimax-m2.7-highspeed"
+          "zai/glm-5-turbo"
+        ];
+        E = [ "openai-codex/gpt-5.4-nano" ];
       };
     };
 
@@ -117,11 +133,26 @@ _: {
         "sourcegraph"
       ];
       tierMapping = {
-        ultrafast = "openai/gpt-5.3-codex-spark";
-        fast = "openai/gpt-5.4-mini";
-        balanced = "anthropic/claude-sonnet-4-6";
-        powerful = "openai/gpt-5.5";
-        reasoning = "anthropic/claude-opus-4-8";
+        S = [
+          "openai/gpt-5.6-sol"
+          "anthropic/claude-fable-5"
+        ];
+        A = [
+          "openai/gpt-5.6-terra"
+          "anthropic/claude-opus-4-8"
+          "openai/gpt-5.5"
+        ];
+        B = [
+          "openai/gpt-5.6-luna"
+          "anthropic/claude-sonnet-4-6"
+          "openai/gpt-5.4"
+        ];
+        C = [ "openai/gpt-5.4-mini" ];
+        D = [ "openai/gpt-5.3-codex-spark" ];
+        E = [
+          "anthropic/claude-haiku-4-5-20251001"
+          "openai/gpt-5.4-nano"
+        ];
       };
       permissions = {
         edit = null;

@@ -33,7 +33,9 @@
     };
 
     lunar-tools = {
-      url = "git+ssh://git@github.com/lunarway/lw-nix?ref=feat/refactor";
+      url = "git+ssh://git@github.com/lunarway/lw-nix?ref=fix/lunarctl-vendor-hook";
+      inputs.nixpkgs.url = "github:NixOS/nixpkgs/18dd725c29603f582cf1900e0d25f9f1063dbf11";
+      inputs.lunarctl.inputs.lunarctl.url = "git+ssh://git@github.com/lunarway/lunarctl?rev=149c51bec4176d1705bf6d38a40c56222ef84d2a";
     };
 
     sops-nix = {

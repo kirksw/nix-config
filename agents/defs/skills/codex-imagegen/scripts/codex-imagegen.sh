@@ -73,7 +73,7 @@ Rules:
 
 if ! codex \
 	--ask-for-approval never \
-	--enable imagegenext \
+	--enable image_generation \
 	-c suppress_unstable_features_warning=true \
 	exec \
 	--ignore-user-config \

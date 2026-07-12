@@ -30,9 +30,11 @@ let
       # ponytail: upstream zips live logs during startup; marker skips that broken legacy migration.
       ${pkgs.coreutils}/bin/printf '%s\n' '{"migratedAt":"nix-preseed","archiveFilename":null}' > /var/lib/omniroute/log_archives/legacy-request-logs.json
     fi
+    # ponytail: stale probe-failed DBs make OmniRoute restore broken state forever.
+    ${pkgs.coreutils}/bin/rm -f /var/lib/omniroute/storage.sqlite.probe-failed-*
     if [ ! -e /var/lib/omniroute/storage.sqlite ]; then
-      # ponytail: fresh test VM, stale probe-failed DBs only make OmniRoute restore a broken DB forever.
-      ${pkgs.coreutils}/bin/rm -f /var/lib/omniroute/storage.sqlite.probe-failed-*
+      # ponytail: disposable test VM; no primary DB means preserved state is just poison.
+      ${pkgs.coreutils}/bin/rm -rf /var/lib/omniroute/db_backups /var/lib/omniroute/logs /var/lib/omniroute/server
     fi
     ${pkgs.coreutils}/bin/chown -R router:router /var/lib/omniroute
   '';
@@ -98,15 +100,26 @@ let
       mac = "02:00:00:10:00:04";
       openclaw = {
         router = "home-llm-router";
+        providerMode = "direct";
+        modelPrimary = "openai/gpt-5.6-luna";
+        modelFallbacks = [
+          "minimax/MiniMax-M3"
+          "zai/glm-5.2"
+          "openai/gpt-5.4"
+        ];
+        modelAllowlist = [
+          "openai/gpt-5.4"
+          "openai/gpt-5.6-luna"
+          "minimax/MiniMax-M3"
+          "zai/glm-5.2"
+          "zai/glm-4.6v"
+        ];
+        thinkingDefault = "medium";
+        reasoningDefault = "on";
         secretsFile = "sanja";
         telegramAllowFrom = [ 8771595122 ];
-        modelFallbacks = [
-          "router-openai/cx/gpt-5.4"
-          "router-anthropic/glm/glm-5.2"
-        ];
         sopsSecrets = [
           "telegram_bot_token"
-          "llm_router_api_key"
           "gateway_token"
         ];
       };
@@ -119,11 +132,19 @@ let
       mac = "02:00:00:10:00:05";
       openclaw = {
         router = "home-llm-router";
+        providerMode = "direct";
+        # ponytail: no model allowlist here; Kirk and its future subagents may use the full provider catalog.
+        modelPrimary = "openai/gpt-5.6-luna";
+        modelFallbacks = [
+          "minimax/MiniMax-M3"
+          "zai/glm-5.2"
+        ];
+        thinkingDefault = "medium";
+        reasoningDefault = "on";
         secretsFile = "kirk";
         telegramAllowFrom = [ 8504646361 ];
         sopsSecrets = [
           "telegram_bot_token"
-          "llm_router_api_key"
           "gateway_token"
         ];
       };
@@ -168,25 +189,62 @@ let
     };
   };
 
+  directProviderSecretKeys = {
+    minimax_api_key = {
+      sopsFile = "${self}/secrets/api/default.yaml";
+      key = "minimax";
+    };
+    zai_api_key = {
+      sopsFile = "${self}/secrets/api/default.yaml";
+      key = "zai";
+    };
+  };
+
   # Sops secrets for OpenClaw-enabled assistants.
-  # Each key from <name>.yaml becomes a file under /run/secrets/assistants/<name>/.
+  # Per-assistant keys come from secrets/assistants/<name>.yaml; direct-provider
+  # credentials (MINIMAX/ZAI) are reused from secrets/api/default.yaml and mounted
+  # alongside them under /run/secrets/assistants/<name>/.
   # Group-readable so the VM's agent user (in keys group) can read via virtiofs.
   mkOpenClawSopsSecrets =
     assistant:
     let
       sf = assistant.openclaw.secretsFile;
+      sopsKeys = builtins.listToAttrs (
+        map (key: {
+          name = "assistants/${sf}/${key}";
+          value = {
+            sopsFile = "${self}/secrets/assistants/${sf}.yaml";
+            inherit key;
+            mode = "0440";
+            group = "keys";
+          };
+        }) assistant.openclaw.sopsSecrets
+      );
+      directSopsKeys =
+        if assistant ? openclaw then
+          if (assistant.openclaw.providerMode or "router") == "direct" then
+            builtins.listToAttrs (
+              map
+                (name: {
+                  value = {
+                    inherit (directProviderSecretKeys.${name}) key;
+                    sopsFile = directProviderSecretKeys.${name}.sopsFile;
+                    mode = "0440";
+                    group = "keys";
+                  };
+                  name = "assistants/${sf}/${name}";
+                })
+                [
+                  "minimax_api_key"
+                  "zai_api_key"
+                ]
+            )
+          else
+            { }
+        else
+          { };
     in
-    builtins.listToAttrs (
-      map (key: {
-        name = "assistants/${sf}/${key}";
-        value = {
-          sopsFile = "${self}/secrets/assistants/${sf}.yaml";
-          inherit key;
-          mode = "0440";
-          group = "keys";
-        };
-      }) assistant.openclaw.sopsSecrets
-    );
+    sopsKeys // directSopsKeys;
 
   mkVm =
     assistant:
@@ -217,6 +275,12 @@ let
               ./openclaw-assistant.nix
               ({ ... }: {
                 assistant.openclaw.router = assistant.openclaw.router;
+                assistant.openclaw.providerMode = assistant.openclaw.providerMode or "router";
+                assistant.openclaw.modelPrimary =
+                  assistant.openclaw.modelPrimary or "router-anthropic/minimax/MiniMax-M3";
+                assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
+                assistant.openclaw.thinkingDefault = assistant.openclaw.thinkingDefault or "off";
+                assistant.openclaw.reasoningDefault = assistant.openclaw.reasoningDefault or "off";
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
@@ -282,6 +346,17 @@ let
 
           services.openssh = {
             enable = true;
+            hostKeys = [
+              {
+                path = "/srv/assistant/ssh/ssh_host_ed25519_key";
+                type = "ed25519";
+              }
+              {
+                path = "/srv/assistant/ssh/ssh_host_rsa_key";
+                type = "rsa";
+                bits = 4096;
+              }
+            ];
             settings = {
               PasswordAuthentication = false;
               PermitRootLogin = "prohibit-password";
@@ -308,6 +383,7 @@ let
             "d /srv/assistant/home 0700 agent users -"
             "d /srv/assistant/workspace 0755 agent users -"
             "d /srv/assistant/kb 0755 agent users -"
+            "d /srv/assistant/ssh 0700 root root -"
             "d /var/lib/openclaw 0700 agent users -"
             "d /var/lib/openclaw/config 0700 agent users -"
             "d /var/lib/openclaw/state 0700 agent users -"

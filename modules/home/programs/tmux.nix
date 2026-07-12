@@ -115,6 +115,17 @@ in
         # combining tmux and nvim status lines
         set -g status-style bg=default
 
+        # Smart pane switching with awareness of nvim splits.
+        is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|n?vim?x?)(diff)?$'"
+        bind-key -n 'C-j' if-shell "$is_vim" 'send-keys C-j' 'if -F "#{pane_at_left}" "run-shell \"test -n \\\"$HERDR_ENV\\\" && herdr pane focus --current --direction left || true\"" "select-pane -L"'
+        bind-key -n 'C-k' if-shell "$is_vim" 'send-keys C-k' 'if -F "#{pane_at_bottom}" "run-shell \"test -n \\\"$HERDR_ENV\\\" && herdr pane focus --current --direction down || true\"" "select-pane -D"'
+        bind-key -n 'C-l' if-shell "$is_vim" 'send-keys C-l' 'if -F "#{pane_at_top}" "run-shell \"test -n \\\"$HERDR_ENV\\\" && herdr pane focus --current --direction up || true\"" "select-pane -U"'
+        bind-key -n 'C-:' if-shell "$is_vim" 'send-keys C-:' 'if -F "#{pane_at_right}" "run-shell \"test -n \\\"$HERDR_ENV\\\" && herdr pane focus --current --direction right || true\"" "select-pane -R"'
+        bind-key -T copy-mode-vi 'C-j' select-pane -L
+        bind-key -T copy-mode-vi 'C-k' select-pane -D
+        bind-key -T copy-mode-vi 'C-l' select-pane -U
+        bind-key -T copy-mode-vi 'C-:' select-pane -R
+
         # pane management binds
         unbind %
         bind | split-window -h
@@ -122,10 +133,10 @@ in
         bind - split-window -v
         #
         # keybinds for pane resizing
-        bind -r j resize-pane -D 5
-        bind -r k resize-pane -U 5
-        bind -r l resize-pane -R 5
-        bind -r h resize-pane -L 5
+        bind -r j resize-pane -L 5
+        bind -r k resize-pane -D 5
+        bind -r l resize-pane -U 5
+        bind -r \; resize-pane -R 5
         bind -r m resize-pane -Z
 
         # copy mode binds

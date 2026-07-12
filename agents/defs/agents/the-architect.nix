@@ -2,7 +2,7 @@
   agents.the-architect = {
     description = "Designs system architecture, API boundaries, and implementation plans for complex changes.";
     mode = "subagent";
-    model = "reasoning";
+    model = "S";
     tier = "employee";
     reasoningEffort = "xhigh";
     temperature = 0.2;

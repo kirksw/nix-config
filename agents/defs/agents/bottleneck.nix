@@ -2,7 +2,7 @@
   agents.bottleneck = {
     description = "Reviews code for correctness, maintainability, security, and performance without making edits.";
     mode = "subagent";
-    model = "powerful";
+    model = "A";
     tier = "employee";
     temperature = 0.1;
     prompt = ''

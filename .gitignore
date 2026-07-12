@@ -40,3 +40,4 @@ progress.md
 
 # Pi local cache
 .pi/cache/
+.pi-subagents/
