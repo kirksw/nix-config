@@ -40,7 +40,61 @@ let
     packages = piFactoryPackageRefs;
   };
 
-  # Temporary shim until pi-coding-agent's built-in ZAI model registry includes GLM-5.2.
+  # Temporary shim until pi-coding-agent includes these models built-in.
+  pi56Models = [
+    {
+      id = "gpt-5.6-sol";
+      name = "GPT-5.6 Sol";
+      reasoning = true;
+      input = [
+        "text"
+        "image"
+      ];
+      cost = {
+        input = 5;
+        output = 30;
+        cacheRead = 0.5;
+        cacheWrite = 6.25;
+      };
+      contextWindow = 1050000;
+      maxTokens = 128000;
+    }
+    {
+      id = "gpt-5.6-terra";
+      name = "GPT-5.6 Terra";
+      reasoning = true;
+      input = [
+        "text"
+        "image"
+      ];
+      cost = {
+        input = 2.5;
+        output = 15;
+        cacheRead = 0.25;
+        cacheWrite = 3.125;
+      };
+      contextWindow = 1050000;
+      maxTokens = 128000;
+    }
+    {
+      id = "gpt-5.6-luna";
+      name = "GPT-5.6 Luna";
+      reasoning = true;
+      input = [
+        "text"
+        "image"
+      ];
+      cost = {
+        input = 1;
+        output = 6;
+        cacheRead = 0.1;
+        cacheWrite = 1.25;
+      };
+      contextWindow = 1050000;
+      maxTokens = 128000;
+    }
+  ];
+
   piPersonalModels = builtins.toJSON {
     providers.zai.models = [
       {
@@ -68,6 +122,7 @@ let
         maxTokens = 131072;
       }
     ];
+    providers.openai-codex.models = pi56Models;
   };
 
   piWorkModelDefaults = {
@@ -75,6 +130,9 @@ let
     defaultModel = "gpt-5.4";
     defaultThinkingLevel = "medium";
     enabledModels = [
+      "gpt-5.6-sol"
+      "gpt-5.6-terra"
+      "gpt-5.6-luna"
       "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
@@ -99,7 +157,10 @@ let
   );
 
   piWorkModels = builtins.toJSON {
-    providers.openai.baseUrl = "https://eu.api.openai.com/v1";
+    providers.openai = {
+      baseUrl = "https://eu.api.openai.com/v1";
+      models = pi56Models;
+    };
   };
 
   piWorkMcp = builtins.toJSON {
@@ -122,7 +183,7 @@ let
         lifecycle = "lazy";
       };
       hubble-mcp = {
-        url = "https://hubble-mcp.lunar.tech/mcp/";
+        url = "https://hubble-mcp.prod.lunar.tech/mcp/";
         auth = "oauth";
         lifecycle = "lazy";
       };
@@ -162,7 +223,7 @@ let
     suppress_unstable_features_warning = true
 
     [features]
-    imagegenext = true
+    image_generation = true
   '';
 
   codexPersonalRules = ''
@@ -185,7 +246,7 @@ let
     suppress_unstable_features_warning = true
 
     [features]
-    imagegenext = true
+    image_generation = true
 
     [projects."/Users/kisw/git/github.com/lunarway/hubble-continuum"]
     trust_level = "trusted"
