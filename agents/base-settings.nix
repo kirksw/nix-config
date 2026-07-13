@@ -40,91 +40,6 @@ let
     packages = piFactoryPackageRefs;
   };
 
-  # Temporary shim until pi-coding-agent includes these models built-in.
-  pi56Models = [
-    {
-      id = "gpt-5.6-sol";
-      name = "GPT-5.6 Sol";
-      reasoning = true;
-      input = [
-        "text"
-        "image"
-      ];
-      cost = {
-        input = 5;
-        output = 30;
-        cacheRead = 0.5;
-        cacheWrite = 6.25;
-      };
-      contextWindow = 1050000;
-      maxTokens = 128000;
-    }
-    {
-      id = "gpt-5.6-terra";
-      name = "GPT-5.6 Terra";
-      reasoning = true;
-      input = [
-        "text"
-        "image"
-      ];
-      cost = {
-        input = 2.5;
-        output = 15;
-        cacheRead = 0.25;
-        cacheWrite = 3.125;
-      };
-      contextWindow = 1050000;
-      maxTokens = 128000;
-    }
-    {
-      id = "gpt-5.6-luna";
-      name = "GPT-5.6 Luna";
-      reasoning = true;
-      input = [
-        "text"
-        "image"
-      ];
-      cost = {
-        input = 1;
-        output = 6;
-        cacheRead = 0.1;
-        cacheWrite = 1.25;
-      };
-      contextWindow = 1050000;
-      maxTokens = 128000;
-    }
-  ];
-
-  piPersonalModels = builtins.toJSON {
-    providers.zai.models = [
-      {
-        id = "glm-5.2";
-        name = "GLM-5.2";
-        reasoning = true;
-        input = [ "text" ];
-        cost = {
-          input = 0;
-          output = 0;
-          cacheRead = 0;
-          cacheWrite = 0;
-        };
-        compat = {
-          supportsDeveloperRole = false;
-          thinkingFormat = "zai";
-          zaiToolStream = true;
-        };
-        thinkingLevelMap = {
-          low = "high";
-          high = "max";
-          xhigh = "max";
-        };
-        contextWindow = 1000000;
-        maxTokens = 131072;
-      }
-    ];
-    providers.openai-codex.models = pi56Models;
-  };
-
   piWorkModelDefaults = {
     defaultProvider = "openai";
     defaultModel = "gpt-5.4";
@@ -157,10 +72,7 @@ let
   );
 
   piWorkModels = builtins.toJSON {
-    providers.openai = {
-      baseUrl = "https://eu.api.openai.com/v1";
-      models = pi56Models;
-    };
+    providers.openai.baseUrl = "https://eu.api.openai.com/v1";
   };
 
   piWorkMcp = builtins.toJSON {
@@ -325,11 +237,9 @@ in
 
     pi = {
       personal = {
-        "models.json" = piPersonalModels;
         "settings.json" = piPersonalSettings;
       };
       home-factory = {
-        "models.json" = piPersonalModels;
         "settings.json" = piHomeFactorySettings;
       };
       work = {
