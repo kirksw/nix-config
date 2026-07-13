@@ -222,6 +222,9 @@ in
           enabled = true;
           config.dreaming.enabled = true;
         };
+        plugins.entries.memory-wiki = {
+          enabled = true;
+        };
         plugins.entries.file-transfer = {
           enabled = true;
           config.nodes."*" = {
