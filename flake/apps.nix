@@ -298,9 +298,6 @@ let
 
     Use Mermaid, Graphviz, SVG, HTML/CSS/canvas, or another deterministic format when the user explicitly asks for that format, or when the requested diagram is clearly better as code-native structured output than as a generated bitmap.
   '';
-  codexPersonalRulesFile = pkgs.writeText "codex-personal-default.rules" agentBaseSettings.codexRules.personal-default;
-  codexWorkRulesFile = pkgs.writeText "codex-work-default.rules" agentBaseSettings.codexRules.work-default;
-
   syncAgents = pkgs.writeShellScriptBin "sync-agents" ''
     set -euo pipefail
 
@@ -539,12 +536,8 @@ let
       "$CONFIG_BASE/pi/bases/work/profiles/work-default/subagents.json" \
       0600
 
-    install_lines_once \
-      "${codexPersonalRulesFile}" \
-      "$CONFIG_BASE/codex/bases/personal/profiles/personal-default/rules/default.rules"
-
-    install_lines_once \
-      "${codexWorkRulesFile}" \
+    run ${pkgs.coreutils}/bin/rm -f \
+      "$CONFIG_BASE/codex/bases/personal/profiles/personal-default/rules/default.rules" \
       "$CONFIG_BASE/codex/bases/work/profiles/work-default/rules/default.rules"
 
     if [ "$DRY_RUN" -eq 1 ]; then

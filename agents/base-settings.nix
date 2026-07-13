@@ -133,97 +133,16 @@ let
   codexPersonalSettings = ''
     approvals_reviewer = "guardian_subagent"
     suppress_unstable_features_warning = true
-
-    [features]
-    image_generation = true
-  '';
-
-  codexPersonalRules = ''
-    prefix_rule(pattern=["git", "add"], decision="allow")
-    prefix_rule(pattern=["git", "clone"], decision="allow")
-    prefix_rule(pattern=["git", "fetch"], decision="allow")
-    prefix_rule(pattern=["git", "ls-remote"], decision="allow")
-    prefix_rule(pattern=["git", "pull"], decision="allow")
-    prefix_rule(pattern=["gh", "pr", "merge"], decision="allow")
-    prefix_rule(pattern=["nix", "build"], decision="allow")
-    prefix_rule(pattern=["nix", "eval", "--impure", "--expr"], decision="allow")
   '';
 
   codexWorkSettings = ''
-    model = "gpt-5.5"
-    model_reasoning_effort = "high"
     openai_base_url = "https://eu.api.openai.com/v1"
-    plan_mode_reasoning_effort = "high"
     approvals_reviewer = "guardian_subagent"
     suppress_unstable_features_warning = true
-
-    [features]
-    image_generation = true
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-continuum"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-dbt"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/lunar-way-hubble-transformations"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/data-agents"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-flink-platform"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-rbac-controller"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-sandbox-finance"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/aws-lunar-data-prod-resources"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-wiki"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-starrocks"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/hubble-async-schema-ingestion"]
-    trust_level = "trusted"
-
-    [projects."/Users/kisw/git/github.com/lunarway/capi-workload-clusters"]
-    trust_level = "trusted"
-
-    [notice.model_migrations]
-    "gpt-5.3-codex" = "gpt-5.4"
-
-    [tui]
-    theme = "catppuccin-latte"
-
-    [tui.model_availability_nux]
-    "gpt-5.5" = 4
-
-  '';
-
-  codexWorkRules = ''
-    prefix_rule(pattern=["docker", "version"], decision="allow")
-    prefix_rule(pattern=["git", "clone"], decision="allow")
-    prefix_rule(pattern=["git", "fetch"], decision="allow")
-    prefix_rule(pattern=["git", "ls-remote"], decision="allow")
-    prefix_rule(pattern=["git", "pull"], decision="allow")
-    prefix_rule(pattern=["git", "push", "origin"], decision="allow")
-    prefix_rule(pattern=["nix", "develop", "--command", "mill"], decision="allow")
   '';
 in
 {
   inherit piWorkAuth;
-
-  codexRules = {
-    personal-default = codexPersonalRules;
-    work-default = codexWorkRules;
-  };
 
   targets = {
     codex = {
