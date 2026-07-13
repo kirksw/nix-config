@@ -272,6 +272,9 @@ let
           if assistant ? openclaw then
             [
               inputs.nix-openclaw.nixosModules.openclaw-gateway
+              ({ ... }: {
+                _module.args.self = self;
+              })
               ./openclaw-assistant.nix
               ({ ... }: {
                 assistant.openclaw.router = assistant.openclaw.router;
@@ -281,6 +284,8 @@ let
                 assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
                 assistant.openclaw.thinkingDefault = assistant.openclaw.thinkingDefault or "off";
                 assistant.openclaw.reasoningDefault = assistant.openclaw.reasoningDefault or "off";
+                assistant.openclaw.sherpaRuntimeDir = self.packages.${pkgs.system}."sherpa-onnx-runtime";
+                assistant.openclaw.sherpaModelDir = self.packages.${pkgs.system}."sherpa-onnx-lessac-model";
                 # sopsDir is the virtiofs mount point where the VM reads shared secrets
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
@@ -312,19 +317,31 @@ let
             ASSISTANT_WORKSPACE = "/srv/assistant/workspace";
           };
 
-          environment.systemPackages = with pkgs; [
-            curl
-            fd
-            git
-            htop
-            jq
-            neovim
-            nodejs
-            openssh
-            python3
-            ripgrep
-            tmux
-          ];
+          environment.systemPackages =
+            with pkgs;
+            [
+              curl
+              fd
+              git
+              htop
+              jq
+              neovim
+              nodejs
+              openssh
+              python3
+              ripgrep
+              tmux
+            ]
+            ++ lib.optionals (assistant ? openclaw) [
+              self.packages.${pkgs.system}.gifgrep
+              self.packages.${pkgs.system}."sherpa-onnx-runtime"
+              self.packages.${pkgs.system}."sherpa-onnx-lessac-model"
+              github-cli
+              openai-whisper
+              poppler-utils
+              qpdf
+              tesseract
+            ];
 
           environment.etc = {
             "assistant/kb-repo".source = kbRepoFile;

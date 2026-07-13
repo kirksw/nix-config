@@ -1,6 +1,7 @@
 # OpenClaw gateway configuration for assistant microVMs.
 # Imported into a VM config when the assistant definition has `openclaw.router` set.
 {
+  self,
   config,
   lib,
   pkgs,
@@ -57,6 +58,16 @@ in
     sopsDir = lib.mkOption {
       type = lib.types.str;
       description = "virtiofs-mounted sops secrets directory readable by the keys group.";
+    };
+
+    sherpaRuntimeDir = lib.mkOption {
+      type = lib.types.path;
+      description = "Pinned Sherpa-ONNX runtime directory for the local TTS skill.";
+    };
+
+    sherpaModelDir = lib.mkOption {
+      type = lib.types.path;
+      description = "Pinned Sherpa-ONNX voice model directory for the local TTS skill.";
     };
 
     telegramAllowFrom = lib.mkOption {
@@ -159,9 +170,16 @@ in
       stateDir = "/var/lib/openclaw";
       port = 18789;
       servicePath = [
+        self.packages.${pkgs.system}.gifgrep
+        cfg.sherpaRuntimeDir
         pkgs.docker
+        pkgs.github-cli
+        pkgs.openai-whisper
+        pkgs.poppler-utils
+        pkgs.qpdf
         pkgs.sudo
         pkgs.tailscale
+        pkgs.tesseract
       ];
       config = {
         gateway = {
@@ -224,6 +242,18 @@ in
         };
         plugins.entries.memory-wiki = {
           enabled = true;
+        };
+        skills.entries = {
+          gifgrep.enabled = true;
+          github.enabled = true;
+          openai-whisper.enabled = true;
+          sherpa-onnx-tts = {
+            enabled = true;
+            env = {
+              SHERPA_ONNX_RUNTIME_DIR = "${cfg.sherpaRuntimeDir}";
+              SHERPA_ONNX_MODEL_DIR = "${cfg.sherpaModelDir}";
+            };
+          };
         };
         plugins.entries.file-transfer = {
           enabled = true;
