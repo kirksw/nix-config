@@ -129,6 +129,7 @@ _: {
         "lunar-skills"
         "swe-pruner"
         "granola"
+        "grafana"
         "linear"
         "sourcegraph"
       ];

@@ -6,6 +6,7 @@
 
 let
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
+  piSubagentsPackage = "${self}/agents/packages/pi-subagents";
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -14,11 +15,11 @@ let
     "npm:pi-dynamic-workflows@1.0.1"
     "npm:pi-goal-x@0.19.0"
     piHerdrPackage
-    "npm:pi-mcp-adapter@2.8.0"
+    "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-observational-memory@3.0.3"
     "npm:pi-permission-system@0.8.0"
     "npm:pi-simplify@0.2.2"
-    "npm:pi-subagents@0.34.0"
+    piSubagentsPackage
     "npm:pi-web-access@0.13.0"
     "npm:pi-ponytail@0.1.2"
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
@@ -26,18 +27,20 @@ let
     "npm:@juicesharp/rpiv-todo@1.20.0"
   ];
   piFactoryPackageRefs = [
-    "npm:pi-subagents@0.34.0"
-    "npm:pi-mcp-adapter@2.8.0"
+    piSubagentsPackage
+    "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-permission-system@0.8.0"
     "npm:pi-web-access@0.13.0"
   ];
 
   piPersonalSettings = builtins.toJSON {
     packages = piPackageRefs;
+    subagents.disableBuiltins = true;
   };
 
   piHomeFactorySettings = builtins.toJSON {
     packages = piFactoryPackageRefs;
+    subagents.disableBuiltins = true;
   };
 
   piWorkModelDefaults = {
@@ -61,6 +64,7 @@ let
     piWorkModelDefaults
     // {
       packages = piPackageRefs;
+      subagents.disableBuiltins = true;
     }
   );
 
@@ -68,6 +72,7 @@ let
     piWorkModelDefaults
     // {
       packages = piFactoryPackageRefs;
+      subagents.disableBuiltins = true;
     }
   );
 
@@ -84,6 +89,10 @@ let
       granola = {
         url = "https://mcp.granola.ai/mcp";
         auth = "oauth";
+        lifecycle = "lazy";
+      };
+      grafana = {
+        url = "https://mcp-grafana.lunar.tech/mcp";
         lifecycle = "lazy";
       };
       linear = {

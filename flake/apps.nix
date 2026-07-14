@@ -536,6 +536,11 @@ let
       "$CONFIG_BASE/pi/bases/work/profiles/work-default/subagents.json" \
       0600
 
+    seed_mutable_file \
+      "${piSubagentsSettingsFile}" \
+      "$HOME/.pi/agent/subagents.json" \
+      0600
+
     run ${pkgs.coreutils}/bin/rm -f \
       "$CONFIG_BASE/codex/bases/personal/profiles/personal-default/rules/default.rules" \
       "$CONFIG_BASE/codex/bases/work/profiles/work-default/rules/default.rules"
