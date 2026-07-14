@@ -97,7 +97,8 @@ in
 
     sops = {
       defaultSopsFormat = "yaml";
-      age.keyFile = "${config.home.homeDirectory}/.config/sops/age/yubikey-identities.txt";
+      # launchd cannot touch a YubiKey; keep its noninteractive fallback separate from CLI use.
+      age.keyFile = "${config.home.homeDirectory}/.config/age/keys.txt";
       # define the required secrets for git profiles
       secrets =
         generateGitSecrets {

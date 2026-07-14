@@ -16,6 +16,25 @@ HOSTNAME="$1"; shift || true
 FLAKE_SYSTEM="darwinConfigurations.${HOSTNAME}.system"
 SWITCH_FAILED=0
 
+if [[ -n "${SUDO_USER:-}" ]]; then
+  INVOKING_USER="$SUDO_USER"
+else
+  INVOKING_USER="$(id -un)"
+fi
+INVOKING_HOME="$(dscl . -read "/Users/${INVOKING_USER}" NFSHomeDirectory 2>/dev/null | awk '{print $2}' || true)"
+YUBIKEY_IDENTITY_FILE="${INVOKING_HOME}/.config/sops/age/yubikey-identities.txt"
+
+if [[ -z "$INVOKING_HOME" || ! -f "$YUBIKEY_IDENTITY_FILE" ]]; then
+  echo "${RED}YubiKey AGE identity file is unavailable for ${INVOKING_USER}; refusing to continue.${NC}" >&2
+  exit 1
+fi
+
+SOPS_BIN="$(command -v sops || true)"
+if [[ -z "$SOPS_BIN" ]]; then
+  echo "${RED}sops is unavailable; refusing to continue.${NC}" >&2
+  exit 1
+fi
+
 restore_aerospace_on_failure() {
   status=$?
   if [ "$status" -eq 0 ] || [ "$SWITCH_FAILED" -ne 1 ]; then
@@ -37,6 +56,17 @@ restore_aerospace_on_failure() {
 }
 
 trap restore_aerospace_on_failure EXIT
+
+echo "${YELLOW}Touch YubiKey now: verifying secret decryption...${NC}"
+if [[ -n "${SUDO_USER:-}" ]]; then
+  sudo -u "$INVOKING_USER" -- env -u SOPS_AGE_KEY_CMD \
+    SOPS_AGE_KEY_FILE="$YUBIKEY_IDENTITY_FILE" \
+    "$SOPS_BIN" decrypt --output /dev/null secrets/api/lunar.yaml
+else
+  env -u SOPS_AGE_KEY_CMD \
+    SOPS_AGE_KEY_FILE="$YUBIKEY_IDENTITY_FILE" \
+    "$SOPS_BIN" decrypt --output /dev/null secrets/api/lunar.yaml
+fi
 
 echo "${YELLOW}Starting build...${NC}"
 nix --extra-experimental-features 'nix-command flakes' build ".#${FLAKE_SYSTEM}" "$@"

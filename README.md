@@ -18,7 +18,8 @@ Nix flake repository for macOS (`nix-darwin`) and Linux (`NixOS`) hosts.
 - Clone: `git clone git@github.com:kirksw/nix-config.git`
 - Install pre-commit hooks: `nix run .#install-hooks`
 - Validate: `nix flake check --no-build`
-- macOS build/switch: `apps/aarch64-darwin/build` / `apps/aarch64-darwin/switch`
+- Lunar macOS build-only: `apps/aarch64-darwin/build lunar`
+- Lunar macOS activation: `sudo apps/aarch64-darwin/switch lunar` (required because it performs YubiKey and SOPS preflight)
 - Linux switch: `apps/x86_64-linux/switch <hostname>`
 
 ## Daily Commands

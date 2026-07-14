@@ -40,7 +40,7 @@
   environment.variables = {
     EDITOR = "nvim";
     VISUAL = "nvim";
-    SOPS_AGE_KEY_FILE = "$HOME/.config/age/keys.txt";
+    SOPS_AGE_KEY_FILE = "$HOME/.config/sops/age/yubikey-identities.txt";
   };
 
   ids.gids.nixbld = 350;

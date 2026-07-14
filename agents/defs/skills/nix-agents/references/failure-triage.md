@@ -36,7 +36,7 @@ nix build .#darwinConfigurations.lunar.config.system.build.toplevel --no-link
 
 Use `nix build .#darwinConfigurations.lunar.system --no-link --dry-run` when you only need a quick dependency/evaluation check.
 
-Only run or ask for `sudo darwin-rebuild switch --flake .#lunar` when activation behavior matters. In noninteractive agent sessions, sudo may hang silently; ask the user to run the switch from their terminal when needed.
+Only run or ask for `sudo apps/aarch64-darwin/switch lunar` when activation behavior matters; it is required because it performs YubiKey and SOPS preflight before switching. In noninteractive agent sessions, sudo may hang silently; ask the user to run the switch from their terminal when needed.
 
 ## Sync-App Discovery
 

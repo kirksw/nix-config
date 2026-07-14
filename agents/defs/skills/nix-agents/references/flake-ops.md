@@ -50,7 +50,7 @@ For Darwin/Home Manager changes, prefer build-oriented validation from the agent
 nix build .#darwinConfigurations.lunar.config.system.build.toplevel --no-link
 ```
 
-Use `sudo darwin-rebuild switch --flake .#lunar` only when activation behavior matters. In noninteractive tool sessions, sudo may hang; ask the user to run the switch from their terminal when needed.
+Use `apps/aarch64-darwin/build lunar` for build-only checks, then `sudo apps/aarch64-darwin/switch lunar` when activation behavior matters. The wrapper is required because it performs YubiKey/SOPS preflight before switching. In noninteractive tool sessions, sudo may hang; ask the user to run the switch from their terminal when needed.
 
 ## Using `nix-agents` In Your Own Flake
 
