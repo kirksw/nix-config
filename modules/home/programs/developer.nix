@@ -300,6 +300,9 @@ in
         [ui]
         show_agent_labels_on_pane_borders = true
 
+        [session]
+        resume_agents_on_restore = true
+
         [keys]
         prefix = "ctrl+a"
         goto = ""

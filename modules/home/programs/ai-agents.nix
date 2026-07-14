@@ -18,6 +18,18 @@ let
       args;
   localAgents = import ../../../agents { inherit pkgs; };
   localAgentsSrc = ../../../agents;
+  # Herdr v0.7.3's official Pi integration reports lifecycle state and the native
+  # session path that Herdr needs to resume Pi panes after a restart.
+  herdrPiIntegration = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.7.3/src/integration/assets/pi/herdr-agent-state.ts";
+    hash = "sha256-9V5YmMiqvdt79H+jkKNd41KA4SGS1t8rU0DDXT836W8=";
+  };
+  herdrPiIntegrationTargets = [
+    "nix-agents/pi/bases/personal/profiles/personal-default/extensions/herdr-agent-state.ts"
+    "nix-agents/pi/bases/work/profiles/work-default/extensions/herdr-agent-state.ts"
+    "nix-agents/pi/bases/home-factory/profiles/home-factory/extensions/herdr-agent-state.ts"
+    "nix-agents/pi/bases/work-factory/profiles/work-factory/extensions/herdr-agent-state.ts"
+  ];
   workOpenAIBaseUrl = "https://eu.api.openai.com/v1";
   omnigentVendorPath = lib.makeBinPath [
     self.packages.${system}.claude-code
@@ -459,6 +471,12 @@ in
   };
 
   config = {
+    xdg.configFile = lib.mkIf config.homeModules.piCodingAgent.enable (
+      lib.genAttrs herdrPiIntegrationTargets (_: {
+        source = herdrPiIntegration;
+      })
+    );
+
     # --- sops secrets (shared across all ai tools) ---
     sops.secrets = lib.mkMerge [
       (lib.mkIf
