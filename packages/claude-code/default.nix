@@ -66,7 +66,7 @@ stdenv.mkDerivation {
     version="$(${lib.getExe curl} -fsSL "$base_url/latest" | tr -d '[:space:]')"
     manifest="$(${lib.getExe curl} -fsSL "$base_url/$version/manifest.json")"
     hashes="$(
-      printf '%s' "$manifest" | ${lib.getExe jq} -r '{"x86_64-linux": .platforms."linux-x64".checksum, "aarch64-linux": .platforms."linux-arm64".checksum, "x86_64-darwin": .platforms."darwin-x64".checksum, "aarch64-darwin": .platforms."darwin-arm64".checksum} | to_entries[] | @tsv' |
+      printf '%s' "$manifest" | ${lib.getExe jq} -r '{"x86_64-linux": .platforms."linux-x64".checksum, "aarch64-linux": .platforms."linux-arm64".checksum, "x86_64-darwin": .platforms."darwin-x64".checksum, "aarch64-darwin": .platforms."darwin-arm64".checksum} | to_entries[] | [.key, .value] | @tsv' |
         while IFS=$'\t' read -r nix_platform checksum; do
           hash="$(${lib.getExe nix} hash convert --hash-algo sha256 --to sri "$checksum")"
           ${lib.getExe jq} -n --arg platform "$nix_platform" --arg hash "$hash" '{($platform): $hash}'

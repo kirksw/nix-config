@@ -1,16 +1,16 @@
 {
   "gitbutlerCliVersions": {
-    "version": "0.20.4",
-    "build": "3116",
+    "version": "0.21.0",
+    "build": "3133",
     "urls": {
       "macos": {
         "aarch64": {
-          "url": "https://releases.gitbutler.com/releases/release/0.20.4-3116/macos/aarch64/GitButler.app.tar.gz",
-          "hash": "1ynl05250j3l1a0i5pajgis3757jzgvg339njmdkqvhvnjpqmv2q"
+          "url": "https://releases.gitbutler.com/releases/release/0.21.0-3133/macos/aarch64/GitButler.app.tar.gz",
+          "hash": "04wnfwda2vhcjsm9j8lsc932xfl9k5c2dxs6ql3ifqv3fhd71ia1"
         },
         "x86_64": {
-          "url": "https://releases.gitbutler.com/releases/release/0.20.4-3116/macos/x86_64/GitButler.app.tar.gz",
-          "hash": "0p1bdkhqppk2qmpg3dycbcw9c9040nqmkm727ynb25v03lrll4n6"
+          "url": "https://releases.gitbutler.com/releases/release/0.21.0-3133/macos/x86_64/GitButler.app.tar.gz",
+          "hash": "0phq0j8b5sbnn3xvwc47qvw51a0gbvdna2hka4vn1cgnzpi5al80"
         }
       }
     }

@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "codex": {
-    "version": "0.144.0",
+    "version": "0.144.3",
     "hashes": {
-      "x86_64-linux": "sha512-GmKtQeX+cO9lN7mQD1FEVcXYEMLMgMByHwZdvlluH0bj/+c2ind3hwbRtE3eECFDekNhEiB80Ez0FfbkyFQqoA==",
-      "aarch64-linux": "sha512-k++xhZrn9P3laO00Q92APG6mdOFDD66nUBo+8ExCa1NXi2pjLEMLC4+UNJTUUtUT1PEflOZ5pDKxPXgzaiFFFg==",
-      "x86_64-darwin": "sha512-4p2jxRbN+Khg5UQzpkzT9upFj+qkEF/abmdvrtflkkWmVKP6Nt+yi8ospdqv9PDqvQ9SotPvX7iXaFaeUTrtmA==",
-      "aarch64-darwin": "sha512-rqFAJdOa2I0VRgepVsSZeLxs96+Y+LXTjccOOvH6894FyaFAYPZ/o+6hgpB1iGHxxdoY/DsGa8jrJC8Leqn9Kg=="
+      "x86_64-linux": "sha512-xtDY5sWQPbYBj2lLWZJvc0jBre0XQ7ZmN4VbSEvazbQ2X7uHhm1D/0oZ7AI+SgC/VfZrUhvxRHd43/AmXSaAzA==",
+      "aarch64-linux": "sha512-mJgDUmoPMry9a7g6ywsMQ4uQko2K0uHLqzEITUJMXiNNbCRBQKS+PxDWBlSK0bF0v72uAhWRRRGvPXslwhIdyg==",
+      "x86_64-darwin": "sha512-308U0s7AeRg3AlnxJtmJk03yRRriEplC6ceFoB3OpWh+przqt8/u6MKDVU3KHdjb+vasa0IpmDWv5VrFw3oJAw==",
+      "aarch64-darwin": "sha512-v/yT1wqslBcwquUvUPZvAdYyiZcCBIUL+pE4ymHpbUMVduwDJBw1EjLroOhe9FkYFDHzWGyv7YEw7iIV4k+0dA=="
     }
   }
 }

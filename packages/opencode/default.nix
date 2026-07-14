@@ -83,7 +83,7 @@ stdenv.mkDerivation {
     version="$(${lib.getExe curl} -fsSL https://api.github.com/repos/anomalyco/opencode/releases/latest | ${lib.getExe jq} -r '.tag_name | ltrimstr("v")')"
     assets_json='{"x86_64-linux":"opencode-linux-x64.tar.gz","aarch64-linux":"opencode-linux-arm64.tar.gz","x86_64-darwin":"opencode-darwin-x64.zip","aarch64-darwin":"opencode-darwin-arm64.zip"}'
     hashes="$(
-      printf '%s' "$assets_json" | ${lib.getExe jq} -r 'to_entries[] | @tsv' |
+      printf '%s' "$assets_json" | ${lib.getExe jq} -r 'to_entries[] | [.key, .value] | @tsv' |
         while IFS=$'\t' read -r nix_platform asset; do
           url="https://github.com/anomalyco/opencode/releases/download/v$version/$asset"
           hash="$(${lib.getExe nix} hash convert --hash-algo sha256 --to sri \

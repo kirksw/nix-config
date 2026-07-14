@@ -255,7 +255,7 @@
                 };
                 expectedPackages = builtins.toJSON [
                   "npm:pi-subagents@0.34.0"
-                  "npm:pi-mcp-adapter@2.8.0"
+                  "npm:pi-mcp-adapter@2.11.0"
                   "npm:pi-permission-system@0.8.0"
                   "npm:pi-web-access@0.13.0"
                 ];

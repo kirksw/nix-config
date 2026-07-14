@@ -58,7 +58,7 @@ stdenv.mkDerivation {
     version="$(${nodejs_22}/bin/npm view @openai/codex version --json | ${lib.getExe jq} -r .)"
     platform_json='{"x86_64-linux":"linux-x64","aarch64-linux":"linux-arm64","x86_64-darwin":"darwin-x64","aarch64-darwin":"darwin-arm64"}'
     hashes="$(
-      printf '%s' "$platform_json" | ${lib.getExe jq} -r 'to_entries[] | @tsv' |
+      printf '%s' "$platform_json" | ${lib.getExe jq} -r 'to_entries[] | [.key, .value] | @tsv' |
         while IFS=$'\t' read -r nix_platform npm_platform; do
           hash="$(${nodejs_22}/bin/npm view "@openai/codex@$version-$npm_platform" dist.integrity --json | ${lib.getExe jq} -r .)"
           ${lib.getExe jq} -n --arg platform "$nix_platform" --arg hash "$hash" '{($platform): $hash}'
