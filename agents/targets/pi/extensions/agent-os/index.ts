@@ -19,6 +19,7 @@ import * as path from "node:path";
 import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Markdown } from "@earendil-works/pi-tui";
+import { handleBlocker } from "./commands/blocker.ts";
 import { handleCapture } from "./commands/capture.js";
 import { handleFocus } from "./commands/focus.js";
 import { emit } from "./commands/output.js";
@@ -26,6 +27,7 @@ import { handleRender } from "./commands/render.js";
 import { handleStatus } from "./commands/status.js";
 import { handleWorkpackage } from "./commands/workpackage.js";
 import { handlePromote } from "./commands/promote.ts";
+import { handleOutcome } from "./commands/outcome.ts";
 import { handleInbox, handleSend, handleAck, pollMailbox } from "./commands/mailbox.js";
 import { handleTodo } from "./commands/todo.js";
 import {
@@ -136,6 +138,8 @@ const agentOsSubcommands = [
 	["thread", "Select or switch the active thread"],
 	["new-thread", "Create a thread"],
 	["capture", "Capture text to the active thread"],
+	["blocker", "Add or resolve blockers"],
+	["outcome", "Add or transition outcomes"],
 	["focus", "Show the current focus"],
 	["render", "Render Agent OS markdown"],
 	["promote", "Confirm Factory output promotion to wiki"],
@@ -215,11 +219,13 @@ function help(): string {
 		"- `/agent-os thread [slug|list]`  (no slug opens an interactive picker)",
 		"- `/agent-os new-thread <title> --kind <kind>` (OKF kind vocabulary)",
 		"- `/agent-os capture [text]`",
+		"- `/agent-os blocker add <text> | resolve <id>`",
+		"- `/agent-os outcome add <title> --goal <goal> | set <id> <state>`",
 		"- `/agent-os focus`",
 		"- `/agent-os render`",
 		"- `/agent-os promote <thread> <workpackage>` (confirm Factory output → wiki)",
 		"- `/agent-os reconcile [<slug>]`",
-		"- `/agent-os workpackage [id|path|clear|spar <title>]` (alias: `/agent-os wp`)",
+		"- `/agent-os workpackage [id|path|clear|delete-all|spar <title>|status <id> <state>]` (alias: `/agent-os wp`)",
 		"- `/agent-os inbox`, `/agent-os send`, `/agent-os ack`",
 		"- `/agent-os todo add|done|list`",
 	].join("\n");
@@ -426,6 +432,12 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 						break;
 					case "capture":
 						output = await handleCapture(rest, agentos, getActive);
+						break;
+					case "blocker":
+						output = await handleBlocker(rest, agentos, getActive);
+						break;
+					case "outcome":
+						output = await handleOutcome(rest, agentos);
 						break;
 					case "focus":
 						if (agentos.mode !== "OS") throw new Error(`${agentos.policy?.role} cannot access workspace-wide focus`);

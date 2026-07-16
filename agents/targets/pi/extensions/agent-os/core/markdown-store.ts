@@ -376,6 +376,11 @@ export async function writeMarkdownRecord(workspacePath: string, threadSlug: str
 
 export async function writeBlockerDocument(workspacePath: string, threadSlug: string | undefined, blocker: BlockerRecord): Promise<string> {
 	recordId(blocker.id);
+	if (threadSlug && (threadSlug.includes("/") || threadSlug.includes("\\") || threadSlug === "." || threadSlug === "..")) {
+		throw new Error("thread slug must be a directory-safe path segment");
+	}
+	if (!blocker.text.trim()) throw new Error("blocker text is required");
+	if (blocker.status !== "open" && blocker.status !== "resolved") throw new Error(`invalid blocker status: ${blocker.status}`);
 	const root = threadSlug ? path.join(workspacePath, "threads", threadSlug, "blockers") : path.join(workspacePath, "inbox", "blockers");
 	const file = path.join(root, `${blocker.id}.md`);
 	await writeMarkdownDocument(file, { type: "Blocker", id: blocker.id, ...(threadSlug ? { thread: threadSlug } : {}), status: blocker.status, createdAt: blocker.createdAt, updatedAt: blocker.updatedAt }, `# Blocker\n\n${blocker.text}\n`);
@@ -384,6 +389,7 @@ export async function writeBlockerDocument(workspacePath: string, threadSlug: st
 
 export async function writeOutcomeDocument(workspacePath: string, outcome: OutcomeRecord): Promise<string> {
 	recordId(outcome.id);
+	if (!outcome.title.trim() || !outcome.goal.trim()) throw new Error("outcome title and goal are required");
 	if (!["planned", "in_progress", "done", "blocked", "archived"].includes(outcome.state)) throw new Error(`invalid outcome state: ${outcome.state}`);
 	const file = path.join(workspacePath, "outcomes", `${outcome.id}.md`);
 	await writeMarkdownDocument(file, { type: "Outcome", id: outcome.id, title: outcome.title, ...(outcome.thread ? { thread: outcome.thread } : {}), ...(outcome.workpackage ? { workpackage: outcome.workpackage } : {}), goal: outcome.goal, result: outcome.result, state: outcome.state, createdAt: outcome.createdAt, updatedAt: outcome.updatedAt, closedAt: outcome.closedAt }, `# ${outcome.title}\n\n${outcome.result ?? outcome.goal}\n`);
