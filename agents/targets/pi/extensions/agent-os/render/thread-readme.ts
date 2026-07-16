@@ -4,20 +4,20 @@ import type {
 	BlockerRecord,
 	DecisionRecord,
 	ThreadRecord,
-	WorkpackageRecord,
+	TaskRecord,
 } from "../core/schema.js";
-import { latestRunOutcome, type WorkpackageRunOutcome } from "../core/workpackage.js";
+import { latestRunOutcome, type TaskRunOutcome } from "../core/task.js";
 import type { RenderResult } from "./markdown.js";
 import { writeGeneratedSection, yamlString } from "./markdown.js";
 
-export async function latestWorkpackageOutcomes(
-	workpackages: WorkpackageRecord[],
-): Promise<ReadonlyMap<string, WorkpackageRunOutcome>> {
-	const entries = await Promise.all(workpackages.map(async (workpackage) => [
-		workpackage.id,
-		await latestRunOutcome(workpackage),
+export async function latestTaskOutcomes(
+	tasks: TaskRecord[],
+): Promise<ReadonlyMap<string, TaskRunOutcome>> {
+	const entries = await Promise.all(tasks.map(async (task) => [
+		task.id,
+		await latestRunOutcome(task),
 	] as const));
-	return new Map(entries.filter((entry): entry is [string, WorkpackageRunOutcome] => Boolean(entry[1])));
+	return new Map(entries.filter((entry): entry is [string, TaskRunOutcome] => Boolean(entry[1])));
 }
 
 export function threadReadmeFallback(thread: ThreadRecord): string {
@@ -46,9 +46,9 @@ export function threadGeneratedSection(
 	thread: ThreadRecord,
 	blockers: BlockerRecord[],
 	decisions: DecisionRecord[],
-	workpackages: WorkpackageRecord[] = [],
-	activeWorkpackagePath?: string,
-	runOutcomes: ReadonlyMap<string, WorkpackageRunOutcome> = new Map(),
+	tasks: TaskRecord[] = [],
+	activeTaskPath?: string,
+	runOutcomes: ReadonlyMap<string, TaskRunOutcome> = new Map(),
 ): string {
 	const openBlockers = blockers.filter(
 		(b) => (b.threadId === thread.id || b.threadId === thread.slug) && b.status !== "resolved",
@@ -57,9 +57,9 @@ export function threadGeneratedSection(
 		.filter((d) => d.threadId === thread.id || d.threadId === thread.slug)
 		.slice(-5)
 		.reverse();
-	const threadWorkpackages = workpackages.filter((workpackage) => workpackage.thread === thread.slug);
-	const active = activeWorkpackagePath
-		? threadWorkpackages.find((workpackage) => path.resolve(workpackage.path) === path.resolve(activeWorkpackagePath))
+	const threadTasks = tasks.filter((task) => task.thread === thread.slug);
+	const active = activeTaskPath
+		? threadTasks.find((task) => path.resolve(task.path) === path.resolve(activeTaskPath))
 		: undefined;
 	return [
 		"## Agent OS state",
@@ -69,14 +69,14 @@ export function threadGeneratedSection(
 		`- Kind: ${thread.kind}`,
 		`- Updated: ${thread.updatedAt ?? thread.createdAt}`,
 		"",
-		"### Workpackages",
+		"### Tasks",
 		"",
-		`- Active workpackage: ${active?.id ?? "None"}`,
-		...(threadWorkpackages.length === 0
+		`- Active task: ${active?.id ?? "None"}`,
+		...(threadTasks.length === 0
 			? ["- None"]
-			: threadWorkpackages.map((workpackage) => {
-				const outcome = runOutcomes.get(workpackage.id);
-				return `- ${workpackage.id}: ${workpackage.status} — ${workpackage.title} (last run: ${outcome?.outcome ?? "none"})`;
+			: threadTasks.map((task) => {
+				const outcome = runOutcomes.get(task.id);
+				return `- ${task.id}: ${task.status} — ${task.title} (last run: ${outcome?.outcome ?? "none"})`;
 			})),
 		"",
 		"### Open blockers",
@@ -114,14 +114,14 @@ export async function renderThreadReadme(
 	thread: ThreadRecord,
 	blockers: BlockerRecord[],
 	decisions: DecisionRecord[],
-	workpackages: WorkpackageRecord[] = [],
-	activeWorkpackagePath?: string,
-	runOutcomes: ReadonlyMap<string, WorkpackageRunOutcome> = new Map(),
+	tasks: TaskRecord[] = [],
+	activeTaskPath?: string,
+	runOutcomes: ReadonlyMap<string, TaskRunOutcome> = new Map(),
 ): Promise<RenderResult> {
 	const readme = safeThreadReadmePath(workspacePath, thread);
 	return writeGeneratedSection(
 		readme,
 		threadReadmeFallback(thread),
-		threadGeneratedSection(thread, blockers, decisions, workpackages, activeWorkpackagePath, runOutcomes),
+		threadGeneratedSection(thread, blockers, decisions, tasks, activeTaskPath, runOutcomes),
 	);
 }

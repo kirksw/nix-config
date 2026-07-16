@@ -11,8 +11,8 @@ import type {
 	OutcomeRecord,
 	ThreadRecord,
 	ThreadLinear,
-	WorkpackageRecord,
-	WorkpackageStatus,
+	TaskRecord,
+	TaskStatus,
 } from "./schema.js";
 
 export interface MarkdownDocument {
@@ -257,15 +257,15 @@ export async function readMarkdownOutcomes(workspacePath: string): Promise<Outco
 		if (typeof fm.id !== "string" || typeof fm.title !== "string" || typeof fm.goal !== "string" || typeof state !== "string" || !["planned", "in_progress", "done", "blocked", "archived"].includes(state)) continue;
 		const resolvedCreatedAt = await resolveCreatedAt(fm, file);
 		if (fm.updatedAt !== undefined && !isIsoTimestamp(fm.updatedAt)) throw new Error(`updatedAt is invalid for ${file}`);
-		outcomes.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, fm.id), type: "outcome", title: fm.title, ...(typeof fm.thread === "string" ? { thread: fm.thread } : {}), ...(typeof fm.workpackage === "string" ? { workpackage: fm.workpackage } : {}), goal: fm.goal, ...(typeof fm.result === "string" ? { result: fm.result } : {}), state: state as OutcomeRecord["state"], ...(typeof fm.closedAt === "string" ? { closedAt: fm.closedAt } : {}) });
+		outcomes.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, fm.id), type: "outcome", title: fm.title, ...(typeof fm.thread === "string" ? { thread: fm.thread } : {}), ...(typeof fm.task === "string" ? { task: fm.task } : {}), goal: fm.goal, ...(typeof fm.result === "string" ? { result: fm.result } : {}), state: state as OutcomeRecord["state"], ...(typeof fm.closedAt === "string" ? { closedAt: fm.closedAt } : {}) });
 	}
 	return outcomes;
 }
 
-export async function readMarkdownWorkpackages(workspacePath: string): Promise<WorkpackageRecord[]> {
-	const result: WorkpackageRecord[] = [];
+export async function readMarkdownTasks(workspacePath: string): Promise<TaskRecord[]> {
+	const result: TaskRecord[] = [];
 	for (const thread of await fs.readdir(path.join(workspacePath, "threads")).catch(() => [])) {
-		const root = path.join(workspacePath, "threads", thread, "workpackages");
+		const root = path.join(workspacePath, "threads", thread, "tasks");
 		for (const bundleId of await fs.readdir(root).catch(() => [])) {
 			const bundle = path.join(root, bundleId);
 			const stat = await fs.stat(bundle).catch(() => undefined);
@@ -273,37 +273,37 @@ export async function readMarkdownWorkpackages(workspacePath: string): Promise<W
 			const packagePath = path.join(bundle, "package.md");
 			if (!(await fs.stat(packagePath).catch(() => undefined))?.isFile()) continue;
 			const entries = await fs.readdir(bundle);
-			const expected = ["package.md", "input", "runs", "output"];
-			if (entries.some((entry) => !expected.includes(entry)) || expected.some((entry) => !entries.includes(entry))) throw new Error(`non-canonical workpackage bundle: ${bundle}`);
-			for (const directory of ["input", "runs", "output"]) {
-				if (!(await fs.stat(path.join(bundle, directory)).catch(() => undefined))?.isDirectory()) throw new Error(`non-canonical workpackage bundle: ${bundle}`);
+			const expected = ["package.md", "input", "runs", "artifacts"];
+			if (entries.some((entry) => !expected.includes(entry)) || expected.some((entry) => !entries.includes(entry))) throw new Error(`non-canonical task bundle: ${bundle}`);
+			for (const directory of ["input", "runs", "artifacts"]) {
+				if (!(await fs.stat(path.join(bundle, directory)).catch(() => undefined))?.isDirectory()) throw new Error(`non-canonical task bundle: ${bundle}`);
 			}
 			const document = await readDocument(packagePath);
 			const fm = document.frontmatter;
-			if (String(fm.type ?? "").toLowerCase() !== "workpackage") continue;
+			if (String(fm.type ?? "").toLowerCase() !== "task") continue;
 			const id = typeof fm.id === "string" && fm.id.trim() ? fm.id.trim() : bundleId;
 			const title = typeof fm.title === "string" && fm.title.trim() ? fm.title.trim() : firstH1(document.body) ?? id;
 			const physicalThread = typeof fm.thread === "string" && fm.thread.trim() ? fm.thread.trim() : thread;
 			const status = typeof fm.status === "string" && ["draft", "specced", "running", "review", "done", "failed"].includes(fm.status) ? fm.status : "draft";
-			if (physicalThread !== thread) throw new Error(`workpackage ownership mismatch for ${packagePath}: ${physicalThread} != ${thread}`);
+			if (physicalThread !== thread) throw new Error(`task ownership mismatch for ${packagePath}: ${physicalThread} != ${thread}`);
 			const resolvedCreatedAt = await resolveCreatedAt(fm, packagePath);
-			result.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, id), type: "workpackage", title, thread: physicalThread, status: status as WorkpackageStatus, path: bundle, packagePath, goal: typeof fm.goal === "string" ? fm.goal : undefined, notes: typeof fm.notes === "string" ? fm.notes : undefined });
+			result.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, id), type: "task", title, thread: physicalThread, status: status as TaskStatus, path: bundle, packagePath, goal: typeof fm.goal === "string" ? fm.goal : undefined, notes: typeof fm.notes === "string" ? fm.notes : undefined });
 		}
 	}
 	return result;
 }
 
 export async function readMarkdownData(workspacePath: string): Promise<LifeOsData> {
-	const [threads, decisions, blockers, candidates, metrics, outcomes, workpackages] = await Promise.all([
+	const [threads, decisions, blockers, candidates, metrics, outcomes, tasks] = await Promise.all([
 		readMarkdownThreads(workspacePath),
 		readMarkdownRecords(workspacePath, "decisions"),
 		readMarkdownRecords(workspacePath, "blockers"),
 		readMarkdownRecords(workspacePath, "candidates"),
 		readMarkdownMetrics(workspacePath),
 		readMarkdownOutcomes(workspacePath),
-		readMarkdownWorkpackages(workspacePath),
+		readMarkdownTasks(workspacePath),
 	]);
-	return { threads, workpackages, outcomes, decisions: decisions as DecisionRecord[], blockers: blockers as BlockerRecord[], candidates: candidates as CandidateRecord[], metrics, edges: [] };
+	return { threads, tasks, outcomes, decisions: decisions as DecisionRecord[], blockers: blockers as BlockerRecord[], candidates: candidates as CandidateRecord[], metrics, edges: [] };
 }
 
 function quote(value: string): string {
@@ -325,7 +325,7 @@ export async function writeMarkdownDocument(file: string, fields: Record<string,
 	await fs.rename(temporary, file);
 }
 
-const THREAD_DIRECTORIES = ["plans", "research", "artifacts", "decisions", "blockers", "candidates", "sessions", "workpackages"];
+const THREAD_DIRECTORIES = ["plans", "research", "artifacts", "decisions", "blockers", "candidates", "sessions", "tasks"];
 
 export async function writeThreadDocument(workspacePath: string, thread: ThreadRecord): Promise<string> {
 	if (!thread.slug || thread.slug.includes("/") || thread.slug.includes("\\")) throw new Error("thread slug must be directory-safe");
@@ -392,7 +392,7 @@ export async function writeOutcomeDocument(workspacePath: string, outcome: Outco
 	if (!outcome.title.trim() || !outcome.goal.trim()) throw new Error("outcome title and goal are required");
 	if (!["planned", "in_progress", "done", "blocked", "archived"].includes(outcome.state)) throw new Error(`invalid outcome state: ${outcome.state}`);
 	const file = path.join(workspacePath, "outcomes", `${outcome.id}.md`);
-	await writeMarkdownDocument(file, { type: "Outcome", id: outcome.id, title: outcome.title, ...(outcome.thread ? { thread: outcome.thread } : {}), ...(outcome.workpackage ? { workpackage: outcome.workpackage } : {}), goal: outcome.goal, result: outcome.result, state: outcome.state, createdAt: outcome.createdAt, updatedAt: outcome.updatedAt, closedAt: outcome.closedAt }, `# ${outcome.title}\n\n${outcome.result ?? outcome.goal}\n`);
+	await writeMarkdownDocument(file, { type: "Outcome", id: outcome.id, title: outcome.title, ...(outcome.thread ? { thread: outcome.thread } : {}), ...(outcome.task ? { task: outcome.task } : {}), goal: outcome.goal, result: outcome.result, state: outcome.state, createdAt: outcome.createdAt, updatedAt: outcome.updatedAt, closedAt: outcome.closedAt }, `# ${outcome.title}\n\n${outcome.result ?? outcome.goal}\n`);
 	return file;
 }
 

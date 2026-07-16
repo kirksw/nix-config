@@ -7,7 +7,7 @@ import { unreadMessages } from "../core/mailbox.js";
 
 export type ActiveBindingLookup = (
 	workspacePath: string | null,
-) => { thread?: string; workpackage?: string };
+) => { thread?: string; task?: string };
 
 function tableCell(value: string): string {
 	return value.replace(/\r?\n/g, " ").replace(/\|/g, "\\|").trim() || "n/a";
@@ -18,13 +18,13 @@ export async function statusMarkdown(
 	activeBinding: ActiveBindingLookup,
 ): Promise<string> {
 	const binding = activeBinding(agentos.workspacePath);
-	const mode = inferMode(binding.thread, binding.workpackage);
+	const mode = inferMode(binding.thread, binding.task);
 	const dirty =
 		agentos.repoExists && agentos.repoPath
 			? await gitDirty(agentos.repoPath)
 			: "repo missing";
 	const unread = agentos.workspacePath
-		? (await unreadMessages(agentos.workspacePath, mode, binding.thread, binding.workpackage)).length
+		? (await unreadMessages(agentos.workspacePath, mode, binding.thread, binding.task)).length
 		: 0;
 	const rows: Array<[string, string]> = [
 		["Mode", mode],
@@ -32,7 +32,7 @@ export async function statusMarkdown(
 		["Policy read", agentos.policy?.readDescription ?? "unresolved"],
 		["Policy write", agentos.policy?.writeDescription ?? "unresolved"],
 		["Thread", binding.thread ?? "none"],
-		["Workpackage", binding.workpackage ?? "none"],
+		["Task", binding.task ?? "none"],
 		["Unread mailbox", String(unread)],
 		["Repo", agentos.repoPath ?? "n/a"],
 		["Repo exists", agentos.repoExists ? "yes" : "no"],

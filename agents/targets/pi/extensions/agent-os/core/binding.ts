@@ -3,7 +3,7 @@ import * as path from "node:path";
 export type AgentOsBinding = {
 	version: 1;
 	thread?: string;
-	workpackage?: string;
+	task?: string;
 	project: string;
 	workspace?: string;
 	scope?: string;
@@ -29,10 +29,10 @@ export function activeThreadFor(
 	return env.AGENT_OS_THREAD_ID ?? (workspacePath ? activeThreads.get(workspacePath) : undefined);
 }
 
-export function activeWorkpackageFor(
+export function activeTaskFor(
 	env: Record<string, string | undefined>,
 ): string | undefined {
-	return env.AGENT_OS_WORKPACKAGE;
+	return env.AGENT_OS_TASK;
 }
 
 export function bindRestoredThread(
@@ -59,8 +59,8 @@ export function restoreBinding(
 			? binding.workspace.slice(0, -"/workspace".length)
 			: binding.workspace;
 		env.AGENT_OS_THREAD_ID = binding.thread;
-		if (binding.workpackage) env.AGENT_OS_WORKPACKAGE = binding.workpackage;
-		else delete env.AGENT_OS_WORKPACKAGE;
+		if (binding.task) env.AGENT_OS_TASK = binding.task;
+		else delete env.AGENT_OS_TASK;
 		env.AGENT_OS_PROJECT_ROOT = binding.project;
 		if (workspace) env.AGENT_OS_WORKSPACE_ROOT = workspace;
 		if (binding.scope) env.AGENT_OS_SCOPE = binding.scope;

@@ -34,6 +34,8 @@ let
   ];
 
   piPersonalSettings = builtins.toJSON {
+    defaultProvider = "openai-codex";
+    defaultModel = "gpt-5.6-luna";
     packages = piPackageRefs;
     subagents.disableBuiltins = true;
   };
@@ -45,7 +47,7 @@ let
 
   piWorkModelDefaults = {
     defaultProvider = "openai";
-    defaultModel = "gpt-5.4";
+    defaultModel = "gpt-5.6-luna";
     defaultThinkingLevel = "medium";
     enabledModels = [
       "gpt-5.6-sol"
@@ -57,6 +59,9 @@ let
       "gpt-5.3-codex-spark"
       "claude-opus-4-8"
       "claude-sonnet-4-6"
+      "amazon-bedrock/eu.anthropic.claude-sonnet-5"
+      "amazon-bedrock/eu.anthropic.claude-opus-4-8"
+      "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
     ];
   };
 
@@ -127,6 +132,8 @@ let
     if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
       export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
     fi
+    export AWS_PROFILE="lw-employee-ai"
+    export AWS_REGION="eu-west-1"
   '';
 
   piWorkAuth = builtins.toJSON {

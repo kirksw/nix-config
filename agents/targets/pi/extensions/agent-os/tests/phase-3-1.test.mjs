@@ -5,11 +5,11 @@ import os from "node:os";
 import path from "node:path";
 import { handleBlocker } from "../commands/blocker.ts";
 import { handleOutcome } from "../commands/outcome.ts";
-import { handleWorkpackage } from "../commands/workpackage.ts";
+import { handleTask } from "../commands/task.ts";
 import { readMarkdownData } from "../core/markdown-store.ts";
 import { initializeThread, initializeWorkspace } from "../core/layout.ts";
 import { policyFor } from "../core/policy.ts";
-import { createWorkpackage } from "../core/workpackage.ts";
+import { createTask } from "../core/task.ts";
 
 function context(workspace, mode = "OS", thread) {
   return {
@@ -71,17 +71,17 @@ test("outcomes follow planned to in_progress to a terminal state", async () => {
   await assert.rejects(() => handleOutcome(`set ${id} planned`, agentos), /invalid outcome transition/);
 });
 
-test("workpackage status command enforces transitions and updates package.md", async () => {
+test("task status command enforces transitions and updates package.md", async () => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-phase-3-1-"));
   await initializeWorkspace(workspace);
-  const created = await createWorkpackage(workspace, "thread-a", "Ship commands");
+  const created = await createTask(workspace, "thread-a", "Ship commands");
   const agentos = context(workspace, "Thread", "thread-a");
   const before = (await fs.readFile(created.packagePath, "utf8")).match(/updatedAt: "([^"]+)"/)[1];
   await new Promise((resolve) => setTimeout(resolve, 2));
-  const result = await handleWorkpackage(`status ${created.id} specced`, agentos, { thread: "thread-a" }, () => {});
+  const result = await handleTask(`status ${created.id} specced`, agentos, { thread: "thread-a" }, () => {});
   assert.match(result.output, /specced/);
   const packageText = await fs.readFile(created.packagePath, "utf8");
   const after = packageText.match(/updatedAt: "([^"]+)"/)[1];
   assert.notEqual(after, before);
-  await assert.rejects(() => handleWorkpackage(`status ${created.id} done`, agentos, { thread: "thread-a" }, () => {}), /invalid workpackage transition/);
+  await assert.rejects(() => handleTask(`status ${created.id} done`, agentos, { thread: "thread-a" }, () => {}), /invalid task transition/);
 });

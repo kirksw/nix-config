@@ -186,8 +186,8 @@ Classify work before acting:
 
 - `S`: simple lookups or tiny edits. The orchestrator may handle these directly, but should still use small fast workers when delegation is cheaper than thinking.
 - `M`: bounded debugging or implementation work. The orchestrator should clarify the problem statement and Definition of Done, then hand off to a default factory path: investigate/plan, implement, review, and document.
-- `L`: feature or refactor work that needs a real spec and multiple work packages. The orchestrator should create or approve the spec, break the work into packages, run the right factory for each package, then aggregate review against the Definition of Done.
-- `XL+`: high-risk or high-complexity work. Treat this as guided program management: spec first, parallel challenge from architect/review/security roles, explicit work-package execution, adversarial validation, and iterative closure of gaps until the Definition of Done is met.
+- `L`: feature or refactor work that needs a real spec and multiple tasks. The orchestrator should create or approve the spec, break the work into packages, run the right factory for each package, then aggregate review against the Definition of Done.
+- `XL+`: high-risk or high-complexity work. Treat this as guided program management: spec first, parallel challenge from architect/review/security roles, explicit task execution, adversarial validation, and iterative closure of gaps until the Definition of Done is met.
 
 ## Documentation
 

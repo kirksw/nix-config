@@ -293,7 +293,7 @@ function analyzeDirtyChunks(initialStatus: string): DirtyChunk[] {
 function buildBranchAdvice(chunks: DirtyChunk[]): string {
   if (chunks.length === 0) return "clean";
   if (chunks.length === 1) return "one logical chunk; current branch is fine";
-  return `multiple chunks detected; keep one branch if they share a goal/workpackage, split only if unrelated (${chunks.map((chunk) => chunk.name).join(", ")})`;
+  return `multiple chunks detected; keep one branch if they share a goal/task, split only if unrelated (${chunks.map((chunk) => chunk.name).join(", ")})`;
 }
 
 function formatDirtyAnalysis(chunks: DirtyChunk[], branchAdvice: string): string[] {

@@ -5,9 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { migrateGeneratedMarkers, replaceGeneratedBlock } from "../render/markdown.ts";
 import { readMarkdownData, readMarkdownThreads, writeMetricDocument, writeOutcomeDocument, writeThreadDocument } from "../core/markdown-store.ts";
-import { createWorkpackage, transitionWorkpackage } from "../core/workpackage.ts";
+import { createTask, transitionTask } from "../core/task.ts";
 import { initializeWorkspace, validateWorkspaceLayout } from "../core/layout.ts";
-import { promoteOutputToWiki } from "../core/promotion.ts";
+import { promoteArtifactToWiki } from "../core/promotion.ts";
 
 test("generated sections use canonical markers and migrate legacy pairs explicitly", () => {
   const legacy = "notes\n<!-- agentic-os:generated:start -->\nold\n<!-- agentic-os:generated:end -->\n";
@@ -58,27 +58,27 @@ test("Metric persistence uses the canonical thread artifact path", async () => {
   assert.match((await fs.readdir(path.join(workspace, "threads", "thread", "artifacts", "metrics")))[0], /metric-1/);
 });
 
-test("Workpackage lifecycle accepts only canonical transitions", async () => {
+test("Task lifecycle accepts only canonical transitions", async () => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-phase-1-2-"));
   await initializeWorkspace(workspace);
-  const created = await createWorkpackage(workspace, "thread", "Build");
-  for (const status of ["specced", "running", "review", "done"]) await transitionWorkpackage(workspace, "thread", created.id, status);
-  await assert.rejects(() => transitionWorkpackage(workspace, "thread", created.id, "draft"), /invalid workpackage transition/);
-  const failed = await createWorkpackage(workspace, "thread", "Fail");
-  await transitionWorkpackage(workspace, "thread", failed.id, "specced");
-  await assert.rejects(() => transitionWorkpackage(workspace, "thread", failed.id, "review"), /invalid workpackage transition/);
+  const created = await createTask(workspace, "thread", "Build");
+  for (const status of ["specced", "running", "review", "done"]) await transitionTask(workspace, "thread", created.id, status);
+  await assert.rejects(() => transitionTask(workspace, "thread", created.id, "draft"), /invalid task transition/);
+  const failed = await createTask(workspace, "thread", "Fail");
+  await transitionTask(workspace, "thread", failed.id, "specced");
+  await assert.rejects(() => transitionTask(workspace, "thread", failed.id, "review"), /invalid task transition/);
 });
 
-test("Factory output promotion is explicit and confirmation-gated", async () => {
+test("Factory artifact promotion is explicit and confirmation-gated", async () => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-phase-1-2-"));
   await initializeWorkspace(workspace);
-  const output = path.join(workspace, "threads", "thread", "workpackages", "build", "output");
+  const output = path.join(workspace, "threads", "thread", "tasks", "build", "artifacts");
   await fs.mkdir(output, { recursive: true });
   await fs.writeFile(path.join(output, "proposal.md"), "proposal", "utf8");
-  const proposal = await promoteOutputToWiki(workspace, "thread", "build", false);
+  const proposal = await promoteArtifactToWiki(workspace, "thread", "build", false);
   assert.deepEqual(proposal, { files: ["proposal.md"], promoted: false });
   assert.equal(await fs.stat(path.join(workspace, "wiki", "proposal.md")).catch(() => null), null);
-  const promoted = await promoteOutputToWiki(workspace, "thread", "build", true);
+  const promoted = await promoteArtifactToWiki(workspace, "thread", "build", true);
   assert.deepEqual(promoted, { files: ["proposal.md"], promoted: true });
   assert.equal(await fs.readFile(path.join(workspace, "wiki", "proposal.md"), "utf8"), "proposal");
 });

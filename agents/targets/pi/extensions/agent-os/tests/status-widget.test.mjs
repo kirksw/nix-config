@@ -14,7 +14,7 @@ test("renders thread and factory context with unread messages", () => {
   assert.match(thread, /󰭹 Thread  ·  @continuum  ·  󰍡 2/);
   assert.equal(thread.endsWith("lunarOS"), true);
 
-  const factory = statusWidgetLine("Factory", "continuum", "wp-07", 1, "lifeOS", 70);
-  assert.match(factory, / Factory  ·  @continuum  ·   wp-07  ·  󰍡 1/);
+  const factory = statusWidgetLine("Factory", "continuum", "task-07", 1, "lifeOS", 70);
+  assert.match(factory, / Factory  ·  @continuum  ·   task-07  ·  󰍡 1/);
   assert.equal(factory.endsWith("lifeOS"), true);
 });

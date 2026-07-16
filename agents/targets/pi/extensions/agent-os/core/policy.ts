@@ -9,7 +9,7 @@ export interface AgentOsPolicy {
 	mode: AgentOsMode;
 	workspacePath: string;
 	threadPath?: string;
-	workpackagePath?: string;
+	taskPath?: string;
 	canRead(file: string): boolean;
 	canWrite(file: string): boolean;
 	readDescription: string;
@@ -30,23 +30,23 @@ function threadWriteAllowed(threadPath: string, file: string): boolean {
 	if (!inside(threadPath, file, true)) return false;
 	const relative = path.relative(path.resolve(threadPath), path.resolve(file));
 	const parts = relative.split(path.sep).filter(Boolean);
-	if (parts[0] !== "workpackages") return true;
+	if (parts[0] !== "tasks") return true;
 	if (parts.length < 2) return false;
 	return parts[2] === "package.md" || parts[2] === "input";
 }
 
-function factoryWriteAllowed(workpackagePath: string, file: string): boolean {
-	if (!inside(workpackagePath, file, true)) return false;
-	const relative = path.relative(path.resolve(workpackagePath), path.resolve(file));
+function factoryWriteAllowed(taskPath: string, file: string): boolean {
+	if (!inside(taskPath, file, true)) return false;
+	const relative = path.relative(path.resolve(taskPath), path.resolve(file));
 	const [area] = relative.split(path.sep).filter(Boolean);
-	return area === "runs" || area === "output";
+	return area === "runs" || area === "artifacts";
 }
 
 export function policyFor(
 	workspacePath: string,
 	mode: AgentOsMode,
 	thread?: string,
-	workpackagePath?: string,
+	taskPath?: string,
 ): AgentOsPolicy {
 	if (mode === "OS") {
 		return {
@@ -75,21 +75,21 @@ export function policyFor(
 		};
 	}
 
-	if (!workpackagePath) throw new Error("FactoryOS requires a workpackage binding");
-	const packagePath = path.resolve(workpackagePath);
-	if (!inside(path.join(threadPath, "workpackages"), packagePath)) {
-		throw new Error("FactoryOS workpackage must belong to the selected thread");
+	if (!taskPath) throw new Error("FactoryOS requires a task binding");
+	const packagePath = path.resolve(taskPath);
+	if (!inside(path.join(threadPath, "tasks"), packagePath)) {
+		throw new Error("FactoryOS task must belong to the selected thread");
 	}
 	return {
 		role: "FactoryOS",
 		mode,
 		workspacePath,
 		threadPath,
-		workpackagePath: packagePath,
+		taskPath: packagePath,
 		canRead: (file) => inside(packagePath, file, true),
 		canWrite: (file) => factoryWriteAllowed(packagePath, file),
 		readDescription: packagePath,
-		writeDescription: `${packagePath}/runs and ${packagePath}/output`,
+		writeDescription: `${packagePath}/runs and ${packagePath}/artifacts`,
 	};
 }
 

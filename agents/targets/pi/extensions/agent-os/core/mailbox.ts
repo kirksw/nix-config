@@ -2,13 +2,13 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AgentOsMode } from "./mode.js";
-import { normalizeWorkpackageId, runtimeFilePath } from "./runtime.ts";
+import { normalizeTaskId, runtimeFilePath } from "./runtime.ts";
 
 export interface AgentOsMessage {
 	id: string;
 	createdAt: string;
-	from: { mode: AgentOsMode; thread?: string; workpackage?: string };
-	to: { mode: AgentOsMode; thread?: string; workpackage?: string };
+	from: { mode: AgentOsMode; thread?: string; task?: string };
+	to: { mode: AgentOsMode; thread?: string; task?: string };
 	subject?: string;
 	body: string;
 	status?: "unread" | "acked";
@@ -19,9 +19,9 @@ export function mailboxPath(
 	workspacePath: string,
 	mode: AgentOsMode,
 	thread?: string,
-	workpackage?: string,
+	task?: string,
 ): string {
-	return runtimeFilePath(workspacePath, "mailbox", { mode, thread, workpackage });
+	return runtimeFilePath(workspacePath, "mailbox", { mode, thread, task });
 }
 
 export async function readMessages(file: string): Promise<AgentOsMessage[]> {
@@ -41,14 +41,14 @@ function matchesActiveScope(
 	message: AgentOsMessage,
 	mode: AgentOsMode,
 	thread?: string,
-	workpackage?: string,
+	task?: string,
 ): boolean {
 	return (
 		message.to.mode === mode &&
 		(mode === "OS" || message.to.thread === thread) &&
 		(mode !== "Factory" ||
-			(Boolean(workpackage) &&
-				normalizeWorkpackageId(message.to.workpackage) === normalizeWorkpackageId(workpackage)))
+			(Boolean(task) &&
+				normalizeTaskId(message.to.task) === normalizeTaskId(task)))
 	);
 }
 
@@ -56,11 +56,11 @@ export async function unreadMessages(
 	workspacePath: string,
 	mode: AgentOsMode,
 	thread?: string,
-	workpackage?: string,
+	task?: string,
 ): Promise<AgentOsMessage[]> {
-	const messages = await readMessages(mailboxPath(workspacePath, mode, thread, workpackage));
+	const messages = await readMessages(mailboxPath(workspacePath, mode, thread, task));
 	return messages.filter(
-		(message) => message.status !== "acked" && matchesActiveScope(message, mode, thread, workpackage),
+		(message) => message.status !== "acked" && matchesActiveScope(message, mode, thread, task),
 	);
 }
 
@@ -68,7 +68,7 @@ export async function appendMessage(
 	workspacePath: string,
 	message: AgentOsMessage,
 ): Promise<void> {
-	const file = mailboxPath(workspacePath, message.to.mode, message.to.thread, message.to.workpackage);
+	const file = mailboxPath(workspacePath, message.to.mode, message.to.thread, message.to.task);
 	await fs.mkdir(path.dirname(file), { recursive: true });
 	await fs.appendFile(file, `${JSON.stringify(message)}\n`, "utf8");
 }
@@ -78,9 +78,9 @@ export async function ackMessages(
 	ids: string[] | "all",
 	mode: AgentOsMode,
 	thread?: string,
-	workpackage?: string,
+	task?: string,
 ): Promise<number> {
-	const file = mailboxPath(workspacePath, mode, thread, workpackage);
+	const file = mailboxPath(workspacePath, mode, thread, task);
 	const messages = await readMessages(file);
 	const selected = new Set(ids === "all" ? [] : ids);
 	let count = 0;
@@ -88,7 +88,7 @@ export async function ackMessages(
 	for (const message of messages) {
 		if (
 			message.status !== "acked" &&
-			matchesActiveScope(message, mode, thread, workpackage) &&
+			matchesActiveScope(message, mode, thread, task) &&
 			(ids === "all" || selected.has(message.id))
 		) {
 			message.status = "acked";

@@ -12,7 +12,7 @@ Grounding sources:
 
 - `core/schema.ts` — current record interfaces and vocabulary.
 - `core/markdown-store.ts` — Markdown parsing, discovery, and writers.
-- `core/workpackage.ts` — workpackage discovery and status handling.
+- `core/task.ts` — task discovery and status handling.
 - `core/policy.ts` — tier capability boundaries.
 - `render/markdown.ts`, `render/thread-readme.ts`, `render/tracker.ts`, `render/focus.ts` — generated views and markers.
 
@@ -21,16 +21,16 @@ Grounding sources:
 | Tier | Binding | Read boundary | Write boundary | Owns |
 | --- | --- | --- | --- | --- |
 | **OS** | No thread selected | Entire workspace | Entire workspace | `inbox/`, `threads/`, `wiki/`, `runtime/`, `outcomes/` |
-| **ThreadOS** | One thread selected | `threads/<thread>/` | Thread-owned files, plus that thread's `workpackages/<wp>/package.md` and `input/` | Thread records and workpackage inputs |
-| **FactoryOS** | One thread and one workpackage selected | `threads/<thread>/workpackages/<wp>/` | `runs/` and `output/` inside the selected bundle | Execution data and proposed output |
+| **ThreadOS** | One thread selected | `threads/<thread>/` | Thread-owned files, plus that thread's `tasks/<task>/package.md` and `input/` | Thread records and task inputs |
+| **FactoryOS** | One thread and one task selected | `threads/<thread>/tasks/<task>/` | `runs/` and `artifacts/` inside the selected bundle | Execution data and proposed artifact |
 
 These boundaries are enforced by `core/policy.ts` through `canRead`, `canWrite`, `assertPolicyRead`, and `assertPolicyWrite`. The policy is a capability boundary, not merely a display mode. OS mode is intentionally unrestricted inside the workspace; ThreadOS and FactoryOS are confined to their selected roots.
 
 The record ownership is:
 
 - **OS:** workspace-level `Outcome` records, unassigned inbox records, and cross-thread coordination.
-- **ThreadOS:** `Thread`, `Blocker`, `Decision`, `Candidate`, and `Metric` records, plus the `Workpackage` specification and inputs.
-- **FactoryOS:** a selected `Workpackage` bundle; it writes only working data under `runs/` and `output/`, not canonical ThreadOS records.
+- **ThreadOS:** `Thread`, `Blocker`, `Decision`, `Candidate`, and `Metric` records, plus the `Task` specification and inputs.
+- **FactoryOS:** a selected `Task` bundle; it writes only working data under `runs/` and `artifacts/`, not canonical ThreadOS records.
 
 > Contract change: adopt the five-directory workspace root and the ownership table above in workspace initialization and validation. Current policy permits the required boundaries but does not create or validate all canonical directories.
 
@@ -47,7 +47,7 @@ id: thread:example
 # Human-readable body
 ```
 
-Canonical `type` values are `Outcome`, `Thread`, `Workpackage`, `Blocker`, `Decision`, `Candidate`, and `Metric`. Readers compare `type` case-insensitively. The body is the fallback for `text` fields. Canonical timestamps are ISO-8601 strings.
+Canonical `type` values are `Outcome`, `Thread`, `Task`, `Blocker`, `Decision`, `Candidate`, and `Metric`. Readers compare `type` case-insensitively. The body is the fallback for `text` fields. Canonical timestamps are ISO-8601 strings.
 
 `parseMarkdownDocument()` in `core/markdown-store.ts` currently accepts only scalar, single-line `key: value` entries. It recognizes quoted strings, booleans, numbers, and `null`; it does not parse YAML arrays, objects, comments, or multiline values. Structured fields below are therefore normative contract data, but are not yet readable by the current parser unless serialized using a future structured representation.
 
@@ -63,7 +63,7 @@ Canonical location: `outcomes/<id>.md`.
 | `id` | yes | string; stable outcome identifier |
 | `title` | yes | string |
 | `thread` | no | string thread slug |
-| `workpackage` | no | string workpackage identifier |
+| `task` | no | string task identifier |
 | `goal` | yes | string |
 | `result` | no | string |
 | `state` | yes | `planned`, `in_progress`, `done`, `blocked`, or `archived` |
@@ -114,24 +114,24 @@ Current support:
 
 `linear` is deliberately split into the two external-reference groups `initiatives` and `projects`. Each value is a stable Linear identifier. `kbs` records knowledge-base references as `{id, scope, note}`. `repos` records repository references without requiring the extension to guess or clone a repository.
 
-### 2.3 Workpackage
+### 2.3 Task
 
 Canonical location and bundle root:
 
 ```text
-threads/<thread>/workpackages/<wp>/
+threads/<thread>/tasks/<task>/
 ├── package.md
 ├── input/
 ├── runs/
-└── output/
+└── artifacts/
 ```
 
 Canonical `package.md` frontmatter:
 
 | Field | Required | Type / values |
 | --- | --- | --- |
-| `type` | yes | `Workpackage` |
-| `id` | yes | string; stable workpackage identifier |
+| `type` | yes | `Task` |
+| `id` | yes | string; stable task identifier |
 | `title` | yes | string |
 | `thread` | yes | string thread slug |
 | `status` | yes | `draft`, `specced`, `running`, `review`, `done`, or `failed` |
@@ -140,9 +140,9 @@ Canonical `package.md` frontmatter:
 | `goal` | no | string |
 | `notes` | no | string |
 
-`core/workpackage.ts` currently reads `id`, `workpackage`, or `slug`, plus `title` and `status`, using a flat line regex. `createWorkpackage()` writes `type`, `id`, `title`, `thread`, `status: draft`, and `timestamp`. Workpackages are not part of `LifeOsData` and are not discovered by `readMarkdownData()`.
+`core/task.ts` currently reads `id`, `task`, or `slug`, plus `title` and `status`, using a flat line regex. `createTask()` writes `type`, `id`, `title`, `thread`, `status: draft`, and `timestamp`. Tasks are not part of `LifeOsData` and are not discovered by `readMarkdownData()`.
 
-> Contract change: make `Workpackage` a first-class record with canonical timestamp fields, canonical `status`, and bundle validation. `timestamp` is a compatibility alias during migration only.
+> Contract change: make `Task` a first-class record with canonical timestamp fields, canonical `status`, and bundle validation. `timestamp` is a compatibility alias during migration only.
 
 ### 2.4 Blocker
 
@@ -222,9 +222,9 @@ Canonical location: `threads/<thread>/artifacts/metrics/<id>.md` (the current re
 
 > Contract change: define the canonical thread metric path and add a writer that preserves the complete Metric schema.
 
-## 3. Workpackage lifecycle
+## 3. Task lifecycle
 
-The only canonical workpackage states are:
+The only canonical task states are:
 
 ```text
 draft → specced → running → review → done
@@ -243,7 +243,7 @@ Allowed transitions are exactly:
 
 `done` and `failed` are terminal. No other transition, including a terminal-state reset or a direct jump, is allowed.
 
-Current `core/workpackage.ts` behavior is not this state machine: it lowercases and normalizes arbitrary status text, then `listWorkpackages()` hides statuses in `CLOSED_STATUSES` (`closed`, `completed`, `done`, `failed`, `cancelled`, `canceled`). Creation starts at `draft`, but there is no transition API or validation.
+Current `core/task.ts` behavior is not this state machine: it lowercases and normalizes arbitrary status text, then `listTasks()` hides statuses in `CLOSED_STATUSES` (`closed`, `completed`, `done`, `failed`, `cancelled`, `canceled`). Creation starts at `draft`, but there is no transition API or validation.
 
 > Contract change: replace free-text status normalization and the `CLOSED_STATUSES` blocklist with explicit validation of the lifecycle and allowed transitions above. The only terminal statuses are `done` and `failed`.
 
@@ -274,28 +274,28 @@ threads/<thread>/
 ├── blockers/
 ├── candidates/
 ├── sessions/
-└── workpackages/
+└── tasks/
 ```
 
-Every workpackage has exactly this bundle shape:
+Every task has exactly this bundle shape:
 
 ```text
-threads/<thread>/workpackages/<wp>/
+threads/<thread>/tasks/<task>/
 ├── package.md
 ├── input/
 ├── runs/
-└── output/
+└── artifacts/
 ```
 
 Current support and deltas:
 
 - `core/markdown-store.ts` recursively scans Markdown below the workspace; thread discovery specifically requires `threads/<slug>/README.md`.
 - `commands/thread.ts` creates `artifacts/` and uses `decisions/`, `blockers/`, and `candidates/`; it does not create or validate `plans/`, `research/`, or `sessions/`.
-- `core/workpackage.ts` discovers immediate bundle directories containing `package.md`, while retaining legacy flat `.md` records.
-- `runtime/` contains JSONL transport under OS, thread, and workpackage scopes; it is operational data, not Markdown records.
+- `core/task.ts` discovers immediate bundle directories containing `package.md`, while retaining legacy flat `.md` records.
+- `runtime/` contains JSONL transport under OS, thread, and task scopes; it is operational data, not Markdown records.
 - Current code does not create or validate `wiki/` or `outcomes/`.
 
-> Contract change: initialize and validate exactly the five top-level directories, create the complete thread shape, reject non-canonical workpackage bundles, and retire legacy flat workpackage resolution after migration.
+> Contract change: initialize and validate exactly the five top-level directories, create the complete thread shape, reject non-canonical task bundles, and retire legacy flat task resolution after migration.
 
 ## 5. Generated sections
 
@@ -328,16 +328,16 @@ Current rendering leaves a detected legacy pair unchanged with a migration warni
 
 ## 6. Wiki/OS seam
 
-Factory output is working data, not canonical knowledge:
+Factory artifact is working data, not canonical knowledge:
 
 ```text
-threads/<thread>/workpackages/<wp>/output/  # Factory working data
+threads/<thread>/tasks/<task>/artifacts/  # Factory working data
 wiki/                                        # promoted, durable knowledge
 ```
 
-Promotion from a workpackage's `output/` into `wiki/` is explicit, user-confirmed, and never automatic. A factory may prepare proposed files in `output/`; it may not write `wiki/`, promote by changing a status field, or silently copy output during rendering or reconciliation.
+Promotion from a task's `artifacts/` into `wiki/` is explicit, user-confirmed, and never automatic. A factory may prepare proposed files in `artifacts/`; it may not write `wiki/`, promote by changing a status field, or silently copy artifact during rendering or reconciliation.
 
-Current `core/policy.ts` permits FactoryOS writes only under `runs/` and `output/`. No current code path promotes output into `wiki/`, and `render/*` only updates generated views.
+Current `core/policy.ts` permits FactoryOS writes only under `runs/` and `artifacts/`. No current code path promotes output into `wiki/`, and `render/*` only updates generated views.
 
 > Contract change: add an explicit promotion workflow that shows the proposed files and requires a user confirmation before writing to `wiki/`. Keep automatic promotion prohibited.
 
@@ -346,9 +346,9 @@ Current `core/policy.ts` permits FactoryOS writes only under `runs/` and `output
 - [ ] Add `OutcomeRecord`, outcome discovery, and outcome persistence.
 - [ ] Add structured, lossless persistence for Thread `linear`, `kbs`, and `repos`.
 - [ ] Persist canonical timestamps and record sources; retain aliases only for migration.
-- [ ] Make Workpackage a first-class record and enforce its state machine.
+- [ ] Make Task a first-class record and enforce its state machine.
 - [ ] Replace `CLOSED_STATUSES` with terminal-state handling for `done` and `failed`.
 - [ ] Initialize and validate the five-directory root, complete thread shape, and bundle shape.
-- [ ] Retire legacy flat workpackage resolution after migration.
+- [ ] Retire legacy flat task resolution after migration.
 - [ ] Canonicalize legacy generated markers through an explicit migration path.
-- [ ] Add user-confirmed Factory `output/` → `wiki/` promotion.
+- [ ] Add user-confirmed Factory `artifacts/` → `wiki/` promotion.

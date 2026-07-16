@@ -14,14 +14,14 @@ function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
 }
 
 function threadLine(thread: ThreadRecord, data: LifeOsData): string {
-	const owned = data.workpackages.filter((workpackage) => workpackage.thread === thread.slug);
+	const owned = data.tasks.filter((task) => task.thread === thread.slug);
 	const openBlockers = data.blockers.filter((blocker) =>
 		(blocker.threadId === thread.id || blocker.threadId === thread.slug) && blocker.status !== "resolved",
 	).length;
 	const progress = owned.length === 0
 		? "none"
-		: owned.map((workpackage) => `${workpackage.id} (${workpackage.status})`).join(", ");
-	return `- [${thread.title}](threads/${thread.slug}/) — ${thread.kind}, status: ${thread.status}, stage: ${thread.stage}, open blockers: ${openBlockers}, workpackages: ${progress}`;
+		: owned.map((task) => `${task.id} (${task.status})`).join(", ");
+	return `- [${thread.title}](threads/${thread.slug}/) — ${thread.kind}, status: ${thread.status}, stage: ${thread.stage}, open blockers: ${openBlockers}, tasks: ${progress}`;
 }
 
 export function trackerSection(data: LifeOsData): string {
@@ -50,7 +50,7 @@ export function trackerSection(data: LifeOsData): string {
 		`- Open blockers: ${data.blockers.filter((b) => b.status !== "resolved").length}`,
 	);
 	lines.push(`- Metrics: ${data.metrics.length}`);
-	lines.push(`- Workpackages: ${data.workpackages.length}`);
+	lines.push(`- Tasks: ${data.tasks.length}`);
 	return lines.join("\n");
 }
 

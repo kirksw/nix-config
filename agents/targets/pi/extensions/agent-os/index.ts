@@ -11,7 +11,7 @@
  *   /agent-os capture [text]
  *   /agent-os focus
  *   /agent-os render
- *   /agent-os workpackage (alias: /agent-os wp)
+ *   /agent-os task (alias: /agent-os task)
  */
 
 import * as fs from "node:fs/promises";
@@ -22,10 +22,10 @@ import { Markdown } from "@earendil-works/pi-tui";
 import { handleBlocker } from "./commands/blocker.ts";
 import { handleCapture } from "./commands/capture.js";
 import { handleFocus } from "./commands/focus.js";
-import { emit } from "./commands/output.js";
+import { emit } from "./commands/artifacts.js";
 import { handleRender } from "./commands/render.js";
 import { handleStatus } from "./commands/status.js";
-import { handleWorkpackage } from "./commands/workpackage.js";
+import { handleTask } from "./commands/task.js";
 import { handlePromote } from "./commands/promote.ts";
 import { handleOutcome } from "./commands/outcome.ts";
 import { handleInbox, handleSend, handleAck, pollMailbox } from "./commands/mailbox.js";
@@ -36,11 +36,11 @@ import {
 	handleReconcile,
 } from "./commands/thread.js";
 import { pickThread } from "./commands/thread-picker.js";
-import { pickWorkpackage } from "./commands/workpackage-picker.js";
+import { pickTask } from "./commands/task-picker.js";
 import { resolveAgentOsContext } from "./core/repo.js";
 import {
 	activeThreadFor,
-	activeWorkpackageFor,
+	activeTaskFor,
 	bindRestoredThread,
 	shouldStartThreadSession,
 	restoreBinding,
@@ -49,7 +49,7 @@ import {
 import { inferMode } from "./core/mode.js";
 import { runtimeFilePath } from "./core/runtime.ts";
 import { migrateLegacyRuntime } from "./core/runtime-migration.ts";
-import { resolveWorkpackage, type WorkpackageRecord } from "./core/workpackage.js";
+import { resolveTask, type TaskRecord } from "./core/task.js";
 import { policyPrompt, shellMentionsProtectedWorkspace } from "./core/policy.js";
 import { herdrCreateArgs, herdrFactoryRunArgs, herdrRunArgs, rootPaneId } from "./core/herdr-launch.ts";
 import { statusWidgetLine } from "./core/status-widget.ts";
@@ -63,12 +63,12 @@ async function recordLifecycle(
 	const agentos = await resolveAgentOsContext(ctx);
 	if (!agentos.workspacePath) return;
 	const thread = process.env.AGENT_OS_THREAD_ID ?? activeThreads.get(agentos.workspacePath);
-	const workpackage = process.env.AGENT_OS_WORKPACKAGE;
-	const mode = inferMode(thread, workpackage);
+	const task = process.env.AGENT_OS_TASK;
+	const mode = inferMode(thread, task);
 	const file = runtimeFilePath(agentos.workspacePath, "events", {
 		mode,
 		thread,
-		workpackage,
+		task,
 	});
 	await fs.mkdir(path.dirname(file), { recursive: true });
 	await fs.appendFile(
@@ -78,7 +78,7 @@ async function recordLifecycle(
 			type: kind,
 			at: new Date().toISOString(),
 			thread: thread ?? null,
-			workpackage: workpackage ?? null,
+			task: task ?? null,
 			project: process.env.AGENT_OS_PROJECT_ROOT ?? ctx.cwd,
 			profile: process.env.NAX_PROFILE ?? null,
 		})}\n`,
@@ -100,20 +100,20 @@ async function refreshStatus(
 	void pi;
 	const agentos = await resolveAgentOsContext(ctx);
 	const thread = activeThreadFor(agentos.workspacePath, activeThreads, process.env);
-	const workpackage = activeWorkpackageFor(process.env);
-	const mode = inferMode(thread, workpackage);
+	const task = activeTaskFor(process.env);
+	const mode = inferMode(thread, task);
 	const unread = agentos.workspacePath
-		? await pollMailbox(agentos, { thread, workpackage })
+		? await pollMailbox(agentos, { thread, task })
 		: 0;
 	const osLabel = osLabelFor(agentos.scope);
-	const workpackageName = workpackage
-		? path.basename(path.resolve(workpackage))
+	const taskName = task
+		? path.basename(path.resolve(task))
 		: undefined;
 	ctx.ui.setWidget?.("agent-os", (_tui, theme) => ({
 		render: (width) => [theme.fg("muted", statusWidgetLine(
 			mode,
 			thread,
-			workpackageName,
+			taskName,
 			unread,
 			osLabel,
 			width,
@@ -128,7 +128,7 @@ function splitCommand(args: string): { command: string; rest: string } {
 	const match = trimmed.match(/^(\S+)(?:\s+([\s\S]*))?$/);
 	const command = match?.[1] ?? "status";
 	return {
-		command: command === "wp" ? "workpackage" : command,
+		command,
 		rest: match?.[2] ?? "",
 	};
 }
@@ -142,10 +142,9 @@ const agentOsSubcommands = [
 	["outcome", "Add or transition outcomes"],
 	["focus", "Show the current focus"],
 	["render", "Render Agent OS markdown"],
-	["promote", "Confirm Factory output promotion to wiki"],
+	["promote", "Confirm Factory artifact promotion to wiki"],
 	["reconcile", "Reconcile Agent OS state"],
-	["workpackage", "List or bind workpackages; spar creates a draft"],
-	["wp", "List or bind workpackages (alias)"],
+	["task", "List or bind tasks; spar creates a draft"],
 	["inbox", "Show unread mailbox messages"],
 	["send", "Send a mailbox message"],
 	["ack", "Acknowledge mailbox messages"],
@@ -223,18 +222,18 @@ function help(): string {
 		"- `/agent-os outcome add <title> --goal <goal> | set <id> <state>`",
 		"- `/agent-os focus`",
 		"- `/agent-os render`",
-		"- `/agent-os promote <thread> <workpackage>` (confirm Factory output → wiki)",
+		"- `/agent-os promote <thread> <task>` (confirm Factory artifact → wiki)",
 		"- `/agent-os reconcile [<slug>]`",
-		"- `/agent-os workpackage [id|path|clear|delete-all|spar <title>|status <id> <state>]` (alias: `/agent-os wp`)",
+		"- `/agent-os task [id|path|clear|delete-all|spar <title>|status <id> <state>]`",
 		"- `/agent-os inbox`, `/agent-os send`, `/agent-os ack`",
 		"- `/agent-os todo add|done|list`",
 	].join("\n");
 }
 
-function activeBindingFor(workspacePath: string | null): { thread?: string; workpackage?: string } {
+function activeBindingFor(workspacePath: string | null): { thread?: string; task?: string } {
 	return {
 		thread: activeThreadFor(workspacePath, activeThreads, process.env),
-		workpackage: activeWorkpackageFor(process.env),
+		task: activeTaskFor(process.env),
 	};
 }
 
@@ -296,12 +295,12 @@ async function enforceToolPolicy(event: any, ctx: ExtensionContext): Promise<{ b
 function bindingData(
 	ctx: ExtensionContext,
 	agentos: Awaited<ReturnType<typeof resolveAgentOsContext>>,
-	binding: { thread?: string; workpackage?: string },
+	binding: { thread?: string; task?: string },
 ): AgentOsBinding {
 	return {
 		version: 1,
 		thread: binding.thread,
-		workpackage: binding.workpackage,
+		task: binding.task,
 		project: process.env.AGENT_OS_PROJECT_ROOT ?? ctx.cwd,
 		workspace: agentos.repoPath ?? undefined,
 		scope: agentos.scope ?? undefined,
@@ -314,7 +313,7 @@ function appendBinding(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	agentos: Awaited<ReturnType<typeof resolveAgentOsContext>>,
-	binding: { thread?: string; workpackage?: string },
+	binding: { thread?: string; task?: string },
 ): void {
 	pi.appendEntry("agent-os-binding", bindingData(ctx, agentos, binding));
 }
@@ -323,29 +322,29 @@ async function startFactorySession(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
 	agentos: Awaited<ReturnType<typeof resolveAgentOsContext>>,
-	workpackage: WorkpackageRecord,
+	task: TaskRecord,
 	_runReportPath: string,
 ): Promise<void> {
 	const project = process.env.AGENT_OS_PROJECT_ROOT ?? agentos.repoPath ?? ctx.cwd;
 	if (process.env.HERDR_ENV === "1" && process.env.HERDR_PANE_ID) {
-		const label = `factory:${workpackage.thread}:${workpackage.id}`;
+		const label = `factory:${task.thread}:${task.id}`;
 		const workspace = await pi.exec("herdr", herdrCreateArgs(project, label), { signal: ctx.signal });
 		if (workspace.code !== 0) throw new Error(workspace.stderr.trim() || "Herdr factory workspace creation failed");
 		const paneId = rootPaneId(workspace.stdout);
-		const launched = await pi.exec("herdr", herdrFactoryRunArgs(paneId, project, workpackage.thread, workpackage.id), { signal: ctx.signal });
+		const launched = await pi.exec("herdr", herdrFactoryRunArgs(paneId, project, task.thread, task.id), { signal: ctx.signal });
 		if (launched.code !== 0) throw new Error(launched.stderr.trim() || "Herdr factory launch failed");
-		ctx.ui.notify(`Opened Herdr factory for '${workpackage.id}'`, "success");
+		ctx.ui.notify(`Opened Herdr factory for '${task.id}'`, "success");
 		return;
 	}
 	if (!ctx.newSession) throw new Error("Agent OS factory runs require a newer Pi");
-	const binding = bindingData(ctx, agentos, { thread: workpackage.thread, workpackage: workpackage.path });
+	const binding = bindingData(ctx, agentos, { thread: task.thread, task: task.path });
 	const result = await ctx.newSession({
 		setup: async (sessionManager) => {
 			sessionManager.appendCustomEntry("agent-os-binding", binding);
-			sessionManager.appendSessionInfo(`agentOS factory: ${workpackage.id}`);
+			sessionManager.appendSessionInfo(`agentOS factory: ${task.id}`);
 		},
 		withSession: async (replacementCtx) => {
-			replacementCtx.ui.notify(`Started a new Pi factory session for '${workpackage.id}'`, "success");
+			replacementCtx.ui.notify(`Started a new Pi factory session for '${task.id}'`, "success");
 		},
 	});
 	if (result.cancelled) throw new Error("factory run launch was cancelled");
@@ -417,12 +416,12 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 			const getBinding = (workspacePath: string | null) => activeBindingFor(workspacePath);
 			const setActive = (workspacePath: string, slug: string) =>
 				activeThreads.set(workspacePath, slug);
-			const setBinding = (binding: { thread?: string; workpackage?: string }) => {
+			const setBinding = (binding: { thread?: string; task?: string }) => {
 				if (agentos.workspacePath && binding.thread) activeThreads.set(agentos.workspacePath, binding.thread);
 				if (binding.thread) process.env.AGENT_OS_THREAD_ID = binding.thread;
 				else delete process.env.AGENT_OS_THREAD_ID;
-				if (binding.workpackage) process.env.AGENT_OS_WORKPACKAGE = binding.workpackage;
-				else delete process.env.AGENT_OS_WORKPACKAGE;
+				if (binding.task) process.env.AGENT_OS_TASK = binding.task;
+				else delete process.env.AGENT_OS_TASK;
 			};
 
 			try {
@@ -454,7 +453,7 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 						} else {
 							output = await handleThread(slug, agentos, setActive);
 							process.env.AGENT_OS_THREAD_ID = slug;
-							delete process.env.AGENT_OS_WORKPACKAGE;
+							delete process.env.AGENT_OS_TASK;
 							appendBinding(pi, ctx, agentos, { thread: slug });
 						}
 						break;
@@ -486,16 +485,16 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 						if (agentos.mode !== "OS") throw new Error(`${agentos.policy?.role} cannot reconcile outside its scope`);
 						output = await handleReconcile(rest, agentos);
 						break;
-					case "workpackage": {
+					case "task": {
 						const activeBinding = getBinding(agentos.workspacePath);
-						let workpackageArgs = rest;
+						let taskArgs = rest;
 						if (!rest.trim() && ctx.ui.custom) {
-							const choice = await pickWorkpackage(ctx, agentos, activeBinding);
+							const choice = await pickTask(ctx, agentos, activeBinding);
 							if (!choice) return;
-							workpackageArgs = choice.kind === "create" ? `spar ${choice.value}` : choice.value;
+							taskArgs = choice.kind === "create" ? `spar ${choice.value}` : choice.value;
 						}
-						const result = await handleWorkpackage(workpackageArgs, agentos, activeBinding, setBinding, (workpackage, runReportPath) => startFactorySession(pi, ctx, agentos, workpackage, runReportPath));
-						if (result.binding) appendBinding(pi, ctx, agentos, { thread: result.binding.thread, workpackage: result.binding.workpackage });
+						const result = await handleTask(taskArgs, agentos, activeBinding, setBinding, (task, runReportPath) => startFactorySession(pi, ctx, agentos, task, runReportPath));
+						if (result.binding) appendBinding(pi, ctx, agentos, { thread: result.binding.thread, task: result.binding.task });
 						else appendBinding(pi, ctx, agentos, { thread: getActive(agentos.workspacePath) });
 						output = result.output;
 						break;
@@ -542,11 +541,11 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 				}
 			}
 			bindRestoredThread(restored, activeThreads, agentos.workspacePath);
-			if (restored?.workpackage && restored.thread && agentos.workspacePath) {
+			if (restored?.task && restored.thread && agentos.workspacePath) {
 				try {
-					process.env.AGENT_OS_WORKPACKAGE = (await resolveWorkpackage(agentos.workspacePath, restored.thread, restored.workpackage)).path;
+					process.env.AGENT_OS_TASK = (await resolveTask(agentos.workspacePath, restored.thread, restored.task)).path;
 				} catch {
-					delete process.env.AGENT_OS_WORKPACKAGE;
+					delete process.env.AGENT_OS_TASK;
 				}
 			}
 			await recordLifecycle("session_start", ctx);

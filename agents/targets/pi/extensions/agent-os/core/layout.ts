@@ -3,8 +3,8 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 export const WORKSPACE_DIRECTORIES = ["inbox", "threads", "wiki", "runtime", "outcomes"] as const;
-export const THREAD_DIRECTORIES = ["plans", "research", "artifacts", "decisions", "blockers", "candidates", "sessions", "workpackages"] as const;
-export const WORKPACKAGE_DIRECTORIES = ["input", "runs", "output"] as const;
+export const THREAD_DIRECTORIES = ["plans", "research", "artifacts", "decisions", "blockers", "candidates", "sessions", "tasks"] as const;
+export const TASK_DIRECTORIES = ["input", "runs", "artifacts"] as const;
 
 async function directoryNames(root: string): Promise<string[]> {
 	const entries = await fs.readdir(root, { withFileTypes: true }).catch(() => []);
@@ -35,10 +35,10 @@ export async function initializeThread(workspacePath: string, slug: string): Pro
 	return root;
 }
 
-export async function validateWorkpackageLayout(bundlePath: string): Promise<void> {
+export async function validateTaskLayout(bundlePath: string): Promise<void> {
 	const entries = await fs.readdir(bundlePath).catch(() => []);
-	const expected = ["package.md", ...WORKPACKAGE_DIRECTORIES];
+	const expected = ["package.md", ...TASK_DIRECTORIES];
 	const missing = expected.filter((name) => !entries.includes(name));
 	const unexpected = entries.filter((name) => !expected.includes(name));
-	if (missing.length || unexpected.length) throw new Error(`non-canonical workpackage bundle: ${bundlePath}`);
+	if (missing.length || unexpected.length) throw new Error(`non-canonical task bundle: ${bundlePath}`);
 }

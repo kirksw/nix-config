@@ -22,12 +22,12 @@ export function herdrRunArgs(paneId: string, project: string, thread: string): s
 	];
 }
 
-export function herdrFactoryRunArgs(paneId: string, project: string, thread: string, workpackage: string): string[] {
+export function herdrFactoryRunArgs(paneId: string, project: string, thread: string, task: string): string[] {
 	return [
 		"pane",
 		"run",
 		paneId,
-		`agent-os launch --thread ${shellQuote(thread)} --workpackage ${shellQuote(workpackage)} --project ${shellQuote(project)}`,
+		`agent-os launch --thread ${shellQuote(thread)} --task ${shellQuote(task)} --project ${shellQuote(project)}`,
 	];
 }
 

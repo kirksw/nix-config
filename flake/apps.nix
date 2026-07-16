@@ -130,6 +130,10 @@ let
               ''
                 sync_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}"
               ''
+            else if fileName == "env" then
+              ''
+                install_lines_once "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}"
+              ''
             else
               ''
                 seed_mutable_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}" 0644

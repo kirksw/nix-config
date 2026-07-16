@@ -33,19 +33,19 @@ function inside(root: string, candidate: string, includeRoot = false): boolean {
 		(relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
-/** Copy Factory output only after the caller has shown this proposal and obtained confirmation. */
-export async function promoteOutputToWiki(workspacePath: string, thread: string, workpackage: string, confirmed: boolean): Promise<PromotionProposal> {
-	if (!validSegment(thread) || !validSegment(workpackage)) throw new Error("promotion requires directory-safe thread and workpackage identifiers");
+/** Copy Factory artifact only after the caller has shown this proposal and obtained confirmation. */
+export async function promoteArtifactToWiki(workspacePath: string, thread: string, task: string, confirmed: boolean): Promise<PromotionProposal> {
+	if (!validSegment(thread) || !validSegment(task)) throw new Error("promotion requires directory-safe thread and task identifiers");
 	const workspaceRoot = path.resolve(workspacePath);
-	const outputRoot = path.resolve(workspaceRoot, "threads", thread, "workpackages", workpackage, "output");
+	const artifactRoot = path.resolve(workspaceRoot, "threads", thread, "tasks", task, "artifacts");
 	const wikiRoot = path.resolve(workspaceRoot, "wiki");
-	if (!inside(workspaceRoot, outputRoot) || !inside(workspaceRoot, wikiRoot)) throw new Error("invalid promotion path");
-	const files = (await filesUnder(outputRoot)).map((file) => path.relative(outputRoot, file)).sort();
+	if (!inside(workspaceRoot, artifactRoot) || !inside(workspaceRoot, wikiRoot)) throw new Error("invalid promotion path");
+	const files = (await filesUnder(artifactRoot)).map((file) => path.relative(artifactRoot, file)).sort();
 	if (!confirmed) return { files, promoted: false };
 	for (const relative of files) {
-		const source = path.resolve(outputRoot, relative);
+		const source = path.resolve(artifactRoot, relative);
 		const target = path.resolve(wikiRoot, relative);
-		if (!inside(outputRoot, source) || !inside(wikiRoot, target)) throw new Error("invalid promotion path");
+		if (!inside(artifactRoot, source) || !inside(wikiRoot, target)) throw new Error("invalid promotion path");
 		const targetStat = await fs.lstat(target).catch(() => undefined);
 		if (targetStat?.isSymbolicLink()) throw new Error(`promotion target cannot be a symlink: ${target}`);
 		await fs.mkdir(path.dirname(target), { recursive: true });

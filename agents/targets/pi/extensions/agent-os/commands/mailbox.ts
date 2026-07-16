@@ -11,7 +11,7 @@ import {
 
 export interface MailboxBinding {
 	thread?: string;
-	workpackage?: string;
+	task?: string;
 }
 
 function mode(value: string | undefined): AgentOsMode | undefined {
@@ -23,29 +23,29 @@ function mode(value: string | undefined): AgentOsMode | undefined {
 	throw new Error("mode must be OS, Thread, or Factory");
 }
 
-function options(args: string): { rest: string; to?: AgentOsMode; thread?: string; workpackage?: string; subject?: string } {
+function options(args: string): { rest: string; to?: AgentOsMode; thread?: string; task?: string; subject?: string } {
 	const tokens = args.trim().split(/\s+/).filter(Boolean);
 	const rest: string[] = [];
 	let to: AgentOsMode | undefined;
 	let thread: string | undefined;
-	let workpackage: string | undefined;
+	let task: string | undefined;
 	let subject: string | undefined;
 	for (let i = 0; i < tokens.length; i += 1) {
 		const token = tokens[i];
-		if (token === "--to" || token === "--thread" || token === "--workpackage" || token === "--subject") {
+		if (token === "--to" || token === "--thread" || token === "--task" || token === "--subject") {
 			const value = tokens[++i];
 			if (!value) throw new Error(`${token} requires a value`);
 			if (token === "--to") to = mode(value);
 			else if (token === "--thread") thread = value;
-			else if (token === "--workpackage") workpackage = value;
+			else if (token === "--task") task = value;
 			else subject = value;
 		} else rest.push(token);
 	}
-	return { rest: rest.join(" "), to, thread, workpackage, subject };
+	return { rest: rest.join(" "), to, thread, task, subject };
 }
 
 function currentMode(binding: MailboxBinding): AgentOsMode {
-	return inferMode(binding.thread, binding.workpackage);
+	return inferMode(binding.thread, binding.task);
 }
 
 export async function handleInbox(
@@ -57,7 +57,7 @@ export async function handleInbox(
 		agentos.workspacePath,
 		currentMode(binding),
 		binding.thread,
-		binding.workpackage,
+		binding.task,
 	);
 	return messages.length === 0
 		? "# Agent OS inbox\n\n- No unread messages"
@@ -66,7 +66,7 @@ export async function handleInbox(
 			"",
 			...messages.flatMap((message) => [
 				`## ${message.id}${message.subject ? ` — ${message.subject}` : ""}`,
-				`From: ${message.from.mode}${message.from.thread ? `/${message.from.thread}` : ""}${message.from.workpackage ? `/${message.from.workpackage}` : ""}`,
+				`From: ${message.from.mode}${message.from.thread ? `/${message.from.thread}` : ""}${message.from.task ? `/${message.from.task}` : ""}`,
 				"",
 				message.body,
 				"",
@@ -83,24 +83,24 @@ export async function handleSend(
 	const parsed = options(args);
 	const from = currentMode(binding);
 	const to = parsed.to ?? from;
-	if (to === "OS" && (parsed.thread || parsed.workpackage)) throw new Error("OS recipients cannot have thread/workpackage selectors");
+	if (to === "OS" && (parsed.thread || parsed.task)) throw new Error("OS recipients cannot have thread/task selectors");
 	if (to !== "OS" && !parsed.thread) throw new Error("--thread is required for Thread or Factory recipients");
-	if (to === "Thread" && parsed.workpackage) throw new Error("Thread recipients cannot have a workpackage selector");
-	if (to === "Factory" && !parsed.workpackage) throw new Error("--workpackage is required for Factory recipients");
-	if (parsed.workpackage && !parsed.thread) throw new Error("--workpackage requires --thread");
+	if (to === "Thread" && parsed.task) throw new Error("Thread recipients cannot have a task selector");
+	if (to === "Factory" && !parsed.task) throw new Error("--task is required for Factory recipients");
+	if (parsed.task && !parsed.thread) throw new Error("--task requires --thread");
 	const body = parsed.rest.trim();
-	if (!body) throw new Error("usage: /agent-os send --to <mode> [--thread slug] [--workpackage id] <message>");
+	if (!body) throw new Error("usage: /agent-os send --to <mode> [--thread slug] [--task id] <message>");
 	const message: AgentOsMessage = {
 		id: newMessageId(),
 		createdAt: new Date().toISOString(),
-		from: { mode: from, thread: binding.thread, workpackage: binding.workpackage },
-		to: { mode: to, thread: parsed.thread, workpackage: parsed.workpackage },
+		from: { mode: from, thread: binding.thread, task: binding.task },
+		to: { mode: to, thread: parsed.thread, task: parsed.task },
 		subject: parsed.subject,
 		body,
 		status: "unread",
 	};
 	await appendMessage(agentos.workspacePath, message);
-	return `Sent ${message.id} to ${to}${parsed.thread ? `/${parsed.thread}` : ""}${parsed.workpackage ? `/${parsed.workpackage}` : ""}`;
+	return `Sent ${message.id} to ${to}${parsed.thread ? `/${parsed.thread}` : ""}${parsed.task ? `/${parsed.task}` : ""}`;
 }
 
 export async function handleAck(
@@ -116,7 +116,7 @@ export async function handleAck(
 		value === "all" ? "all" : value.split(","),
 		currentMode(binding),
 		binding.thread,
-		binding.workpackage,
+		binding.task,
 	);
 	return `Acknowledged ${count} message${count === 1 ? "" : "s"}`;
 }
@@ -126,5 +126,5 @@ export async function pollMailbox(
 	binding: MailboxBinding,
 ): Promise<number> {
 	if (!agentos.workspacePath) return 0;
-	return (await unreadMessages(agentos.workspacePath, currentMode(binding), binding.thread, binding.workpackage)).length;
+	return (await unreadMessages(agentos.workspacePath, currentMode(binding), binding.thread, binding.task)).length;
 }

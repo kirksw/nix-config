@@ -6,16 +6,16 @@ import { inferMode } from "../core/mode.js";
 export async function handleTodo(
 	args: string,
 	agentos: AgentOsContext,
-	binding: { thread?: string; workpackage?: string },
+	binding: { thread?: string; task?: string },
 ): Promise<string> {
 	requireWritable(agentos);
 	const match = args.trim().match(/^(add|done|list)(?:\s+([\s\S]*))?$/);
 	if (!match) throw new Error("usage: /agent-os todo <add|done|list> [text|number]");
 	const context: TodoContext = {
 		workspacePath: agentos.workspacePath,
-		mode: inferMode(binding.thread, binding.workpackage),
+		mode: inferMode(binding.thread, binding.task),
 		thread: binding.thread,
-		workpackage: agentos.workpackagePath ?? binding.workpackage,
+		task: agentos.taskPath ?? binding.task,
 		policy: agentos.policy,
 	};
 	switch (match[1]) {

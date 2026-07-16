@@ -1,6 +1,6 @@
 ---
 name: spec-package
-description: Build, challenge, review, and document an executable spec with work packages
+description: Build, challenge, review, and document an executable spec with tasks
 ---
 
 ## the-architect
@@ -10,7 +10,7 @@ as: spec
 output: spec.md
 progress: true
 
-Create an executable spec for {task}. Include: problem statement, Definition of Done, scope boundaries, assumptions, risks, validation plan, and the proposed work-package breakdown needed to ship it.
+Create an executable spec for {task}. Include: problem statement, Definition of Done, scope boundaries, assumptions, risks, validation plan, and the proposed task breakdown needed to ship it.
 
 ## 10xBEAST
 phase: Challenge
@@ -20,7 +20,7 @@ as: challenge
 output: challenge.md
 progress: true
 
-Challenge {outputs.spec} hard. Call out missing work packages, weak assumptions, hidden dependencies, sequencing problems, and needless complexity. Return the minimum changes needed to make the spec executable.
+Challenge {outputs.spec} hard. Call out missing tasks, weak assumptions, hidden dependencies, sequencing problems, and needless complexity. Return the minimum changes needed to make the spec executable.
 
 ## bottleneck
 phase: Review
@@ -40,7 +40,7 @@ as: final_spec
 output: final-spec.md
 progress: true
 
-Revise the spec using {outputs.challenge} and {outputs.review}. Produce the final spec and work-package breakdown, or say clearly why the task should be re-scoped before execution.
+Revise the spec using {outputs.challenge} and {outputs.review}. Produce the final spec and task breakdown, or say clearly why the task should be re-scoped before execution.
 
 ## scribe
 phase: Documentation
@@ -48,4 +48,4 @@ label: Record the spec
 reads: final-spec.md
 progress: true
 
-Write or update the durable paper trail for {task}: the final spec, Definition of Done, work-package breakdown, validation plan, and open risks or follow-ups. If no durable documentation should change, say so explicitly and explain why.
+Write or update the durable paper trail for {task}: the final spec, Definition of Done, task breakdown, validation plan, and open risks or follow-ups. If no durable documentation should change, say so explicitly and explain why.

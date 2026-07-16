@@ -2,7 +2,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AgentOsMode } from "./mode.js";
-import { normalizeWorkpackageId, runtimeFilePath } from "./runtime.ts";
+import { normalizeTaskId, runtimeFilePath } from "./runtime.ts";
 
 export interface RuntimeMigrationReport {
 	success: boolean;
@@ -30,35 +30,35 @@ function mode(value: unknown): AgentOsMode | undefined {
 
 function scopeFor(
 	thread: unknown,
-	workpackage: unknown,
-): { mode: AgentOsMode; thread?: string; workpackage?: string } | undefined {
-	if (workpackage !== undefined && workpackage !== null && !thread) return undefined;
+	task: unknown,
+): { mode: AgentOsMode; thread?: string; task?: string } | undefined {
+	if (task !== undefined && task !== null && !thread) return undefined;
 	if (!thread) return { mode: "OS" };
 	if (typeof thread !== "string" || thread.includes("/") || thread.includes("\\")) return undefined;
-	const normalizedWorkpackage = typeof workpackage === "string"
-		? normalizeWorkpackageId(workpackage)
+	const normalizedTask = typeof task === "string"
+		? normalizeTaskId(task)
 		: undefined;
-	if (workpackage !== undefined && workpackage !== null && !normalizedWorkpackage) return undefined;
-	return normalizedWorkpackage
-		? { mode: "Factory", thread, workpackage: normalizedWorkpackage }
+	if (task !== undefined && task !== null && !normalizedTask) return undefined;
+	return normalizedTask
+		? { mode: "Factory", thread, task: normalizedTask }
 		: { mode: "Thread", thread };
 }
 
 function messageScope(record: Record<string, unknown>):
-	| { mode: AgentOsMode; thread?: string; workpackage?: string }
+	| { mode: AgentOsMode; thread?: string; task?: string }
 	| undefined {
 	const to = record.to;
 	if (!isRecord(to)) return undefined;
 	const recipientMode = mode(to.mode);
 	if (!recipientMode) return undefined;
 	if (recipientMode === "OS") {
-		return to.thread === undefined && to.workpackage === undefined ? { mode: "OS" } : undefined;
+		return to.thread === undefined && to.task === undefined ? { mode: "OS" } : undefined;
 	}
 	if (typeof to.thread !== "string" || to.thread.includes("/") || to.thread.includes("\\")) return undefined;
-	const workpackage = recipientMode === "Factory" ? normalizeWorkpackageId(typeof to.workpackage === "string" ? to.workpackage : undefined) : undefined;
-	if (recipientMode === "Factory" && !workpackage) return undefined;
-	if (recipientMode === "Thread" && to.workpackage !== undefined) return undefined;
-	return { mode: recipientMode, thread: to.thread, workpackage };
+	const task = recipientMode === "Factory" ? normalizeTaskId(typeof to.task === "string" ? to.task : undefined) : undefined;
+	if (recipientMode === "Factory" && !task) return undefined;
+	if (recipientMode === "Thread" && to.task !== undefined) return undefined;
+	return { mode: recipientMode, thread: to.thread, task };
 }
 
 async function appendUnique(file: string, records: MigrationRecord[]): Promise<number> {
@@ -121,7 +121,7 @@ export async function migrateLegacyRuntime(workspacePath: string): Promise<Runti
 			}
 			const scope = name === "agent-os-messages.jsonl"
 				? messageScope(parsed)
-				: scopeFor(parsed.thread, parsed.workpackage);
+				: scopeFor(parsed.thread, parsed.task);
 			if (!scope) {
 				unsupported.push(`${name}:${index + 1}: unsupported runtime scope`);
 				continue;

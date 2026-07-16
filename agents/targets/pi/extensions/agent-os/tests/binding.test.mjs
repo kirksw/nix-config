@@ -17,7 +17,7 @@ test("restores the newest persisted binding and normalizes workspace paths", asy
       updatedAt: "2026-01-01T00:00:00Z",
     } },
     { type: "custom", customType: "agent-os-binding", data: {
-      version: 1, thread: "new", workpackage: "threads/new/workpackages/build.md", project: "/project", workspace: "/lifeOS/workspace",
+      version: 1, thread: "new", task: "threads/new/tasks/build.md", project: "/project", workspace: "/lifeOS/workspace",
       scope: "personal", updatedAt: "2026-01-02T00:00:00Z",
     } },
   ], env);
@@ -25,7 +25,7 @@ test("restores the newest persisted binding and normalizes workspace paths", asy
   assert.equal(binding.thread, "new");
   assert.equal(env.AGENT_OS_THREAD_ID, "new");
   assert.equal(env.AGENT_OS_PROJECT_ROOT, "/project");
-  assert.equal(env.AGENT_OS_WORKPACKAGE, "threads/new/workpackages/build.md");
+  assert.equal(env.AGENT_OS_TASK, "threads/new/tasks/build.md");
   assert.equal(env.AGENT_OS_WORKSPACE_ROOT, "/lifeOS");
   assert.equal(env.AGENT_OS_SCOPE, "personal");
 

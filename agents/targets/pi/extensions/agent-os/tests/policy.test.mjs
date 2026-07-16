@@ -12,23 +12,23 @@ test("ThreadOS is confined to one thread and ThreadOS-owned package inputs", () 
   assert.equal(policy.canRead(path.join(thread, "README.md")), true);
   assert.equal(policy.canRead(path.join(workspace, "threads", "beta", "README.md")), false);
   assert.equal(policy.canWrite(path.join(thread, "package.md")), true);
-  assert.equal(policy.canWrite(path.join(thread, "workpackages", "build", "package.md")), true);
-  assert.equal(policy.canWrite(path.join(thread, "workpackages", "build", "input", "plan.md")), true);
-  assert.equal(policy.canWrite(path.join(thread, "workpackages", "build", "runs", "run.md")), false);
-  assert.equal(policy.canWrite(path.join(thread, "workpackages", "build", "output", "report.md")), false);
+  assert.equal(policy.canWrite(path.join(thread, "tasks", "build", "package.md")), true);
+  assert.equal(policy.canWrite(path.join(thread, "tasks", "build", "input", "plan.md")), true);
+  assert.equal(policy.canWrite(path.join(thread, "tasks", "build", "runs", "run.md")), false);
+  assert.equal(policy.canWrite(path.join(thread, "tasks", "build", "artifacts", "report.md")), false);
 });
 
 test("FactoryOS is confined to one package and FactoryOS-owned outputs", () => {
   const workspace = "/tmp/life/workspace";
-  const packageRoot = path.join(workspace, "threads", "alpha", "workpackages", "build");
+  const packageRoot = path.join(workspace, "threads", "alpha", "tasks", "build");
   const policy = policyFor(workspace, "Factory", "alpha", packageRoot);
 
   assert.equal(policy.role, "FactoryOS");
   assert.equal(policy.canRead(path.join(packageRoot, "package.md")), true);
   assert.equal(policy.canRead(path.join(packageRoot, "input", "plan.md")), true);
-  assert.equal(policy.canRead(path.join(workspace, "threads", "alpha", "workpackages", "other", "package.md")), false);
+  assert.equal(policy.canRead(path.join(workspace, "threads", "alpha", "tasks", "other", "package.md")), false);
   assert.equal(policy.canWrite(path.join(packageRoot, "runs", "2026-run.md")), true);
-  assert.equal(policy.canWrite(path.join(packageRoot, "output", "report.md")), true);
+  assert.equal(policy.canWrite(path.join(packageRoot, "artifacts", "report.md")), true);
   assert.equal(policy.canWrite(path.join(packageRoot, "package.md")), false);
   assert.equal(policy.canWrite(path.join(packageRoot, "input", "plan.md")), false);
 });

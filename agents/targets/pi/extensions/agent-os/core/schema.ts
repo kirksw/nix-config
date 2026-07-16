@@ -59,20 +59,20 @@ export interface OutcomeRecord extends LifeOsRecord {
 	type: "outcome";
 	title: string;
 	thread?: string;
-	workpackage?: string;
+	task?: string;
 	goal: string;
 	result?: string;
 	state: "planned" | "in_progress" | "done" | "blocked" | "archived";
 	closedAt?: string;
 }
 
-export type WorkpackageStatus = "draft" | "specced" | "running" | "review" | "done" | "failed";
+export type TaskStatus = "draft" | "specced" | "running" | "review" | "done" | "failed";
 
-export interface WorkpackageRecord extends LifeOsRecord {
-	type: "workpackage";
+export interface TaskRecord extends LifeOsRecord {
+	type: "task";
 	title: string;
 	thread: string;
-	status: WorkpackageStatus;
+	status: TaskStatus;
 	path: string;
 	packagePath: string;
 	goal?: string;
@@ -121,7 +121,7 @@ export interface DecisionRecord extends LifeOsRecord {
 
 export interface LifeOsData {
 	threads: ThreadRecord[];
-	workpackages: WorkpackageRecord[];
+	tasks: TaskRecord[];
 	outcomes: OutcomeRecord[];
 	metrics: MetricRecord[];
 	edges: EdgeRecord[];

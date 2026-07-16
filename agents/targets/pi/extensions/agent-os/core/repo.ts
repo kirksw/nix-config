@@ -7,7 +7,7 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { Scope } from "./schema.js";
 import { inferMode, type AgentOsMode } from "./mode.ts";
 import { policyFor, type AgentOsPolicy } from "./policy.ts";
-import { resolveWorkpackage } from "./workpackage.ts";
+import { resolveTask } from "./task.ts";
 import { resolveScope, type ScopeResolution } from "./scope.ts";
 import { initializeWorkspace, validateWorkspaceLayout } from "./layout.ts";
 
@@ -27,7 +27,7 @@ export interface AgentOsContext {
 	mode: AgentOsMode;
 	policy: AgentOsPolicy | null;
 	thread?: string;
-	workpackagePath?: string;
+	taskPath?: string;
 	writeEnabled: boolean;
 	writeDisabledReason?: string;
 }
@@ -116,21 +116,21 @@ export async function resolveAgentOsContext(
 		? path.join(workspacePath, "runtime")
 		: null;
 	const thread = process.env.AGENT_OS_THREAD_ID;
-	const rawWorkpackage = process.env.AGENT_OS_WORKPACKAGE;
-	let workpackagePath: string | undefined;
+	const rawTask = process.env.AGENT_OS_TASK;
+	let taskPath: string | undefined;
 	let policyError: string | undefined;
-	if (workspacePath && thread && rawWorkpackage) {
+	if (workspacePath && thread && rawTask) {
 		try {
-			workpackagePath = (await resolveWorkpackage(workspacePath, thread, rawWorkpackage)).path;
+			taskPath = (await resolveTask(workspacePath, thread, rawTask)).path;
 		} catch (err) {
 			policyError = (err as Error).message;
 		}
 	}
-	const mode = inferMode(thread, rawWorkpackage);
+	const mode = inferMode(thread, rawTask);
 	let policy: AgentOsPolicy | null = null;
 	if (workspacePath) {
 		try {
-			policy = policyFor(workspacePath, mode, thread, workpackagePath);
+			policy = policyFor(workspacePath, mode, thread, taskPath);
 		} catch (err) {
 			policyError ??= (err as Error).message;
 		}
@@ -161,7 +161,7 @@ export async function resolveAgentOsContext(
 		mode,
 		policy,
 		thread,
-		workpackagePath,
+		taskPath,
 		writeEnabled: writeDisabledReason === undefined,
 		writeDisabledReason,
 	};

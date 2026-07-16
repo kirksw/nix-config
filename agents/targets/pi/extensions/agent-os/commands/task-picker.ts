@@ -2,16 +2,16 @@
 import * as path from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentOsContext } from "../core/repo.js";
-import { listWorkpackages, type WorkpackageRecord } from "../core/workpackage.js";
-import type { ActiveBinding } from "./workpackage.js";
+import { listTasks, type TaskRecord } from "../core/task.js";
+import type { ActiveBinding } from "./task.js";
 import { fuzzyScore, loadPiTui, type PiTui, type Theme } from "./thread-picker.js";
 
-type WorkpackageChoice =
+type TaskChoice =
 	| { kind: "bind"; value: string }
 	| { kind: "create"; value: string };
 
-export class WorkpackagePicker {
-	public onSelect?: (choice: WorkpackageChoice) => void;
+export class TaskPicker {
+	public onSelect?: (choice: TaskChoice) => void;
 	public onCancel?: () => void;
 	public requestRender?: () => void;
 
@@ -19,31 +19,31 @@ export class WorkpackagePicker {
 	private searching = false;
 	private creating = false;
 	private selected = 0;
-	private filteredCache: WorkpackageRecord[] | null = null;
-	private readonly packages: WorkpackageRecord[];
-	private readonly activeWorkpackage: string | undefined;
+	private filteredCache: TaskRecord[] | null = null;
+	private readonly packages: TaskRecord[];
+	private readonly activeTask: string | undefined;
 	private readonly theme: Theme;
 	private readonly tk: PiTui;
 
 	constructor(
-		packages: WorkpackageRecord[],
-		activeWorkpackage: string | undefined,
+		packages: TaskRecord[],
+		activeTask: string | undefined,
 		theme: Theme,
 		tk: PiTui,
 	) {
 		this.packages = packages;
-		this.activeWorkpackage = activeWorkpackage;
+		this.activeTask = activeTask;
 		this.theme = theme;
 		this.tk = tk;
-		if (activeWorkpackage) {
+		if (activeTask) {
 			const idx = packages.findIndex(
-				(pkg) => path.resolve(pkg.path) === path.resolve(activeWorkpackage),
+				(pkg) => path.resolve(pkg.path) === path.resolve(activeTask),
 			);
 			if (idx >= 0) this.selected = idx;
 		}
 	}
 
-	private filtered(): WorkpackageRecord[] {
+	private filtered(): TaskRecord[] {
 		if (this.filteredCache) return this.filteredCache;
 		const query = this.query.trim().toLowerCase();
 		if (!query) {
@@ -174,7 +174,7 @@ export class WorkpackagePicker {
 			return pad(fg(color, text), size);
 		};
 		const lines: string[] = [];
-		lines.push(`${fg("accent", bold("# agentOS workpackages"))}${fg("muted", `  ${packages.length}/${this.packages.length}`)}`);
+		lines.push(`${fg("accent", bold("# agentOS tasks"))}${fg("muted", `  ${packages.length}/${this.packages.length}`)}`);
 		if (this.creating) {
 			lines.push(`${fg("accent", "Spar title: ")}${fg("text", this.query)}${fg("dim", "▏")}`);
 		} else {
@@ -183,7 +183,7 @@ export class WorkpackagePicker {
 			for (let index = 0; index < packages.length; index += 1) {
 				const pkg = packages[index]!;
 				const selected = index === this.selected;
-				const active = this.activeWorkpackage && path.resolve(pkg.path) === path.resolve(this.activeWorkpackage);
+				const active = this.activeTask && path.resolve(pkg.path) === path.resolve(this.activeTask);
 				const marker = selected ? fg("accent", "▸ ") : active ? fg("accent", "● ") : "  ";
 				lines.push(truncateToWidth(`${marker}${cell(pkg.id, W.id, selected ? "accent" : "text", selected)} ${cell(pkg.status, W.status, "muted")} ${cell(`${pkg.title}${active ? " ←" : ""}`, titleW, selected ? "accent" : "text", selected)}`, width));
 			}
@@ -195,27 +195,27 @@ export class WorkpackagePicker {
 	}
 }
 
-export async function pickWorkpackage(
+export async function pickTask(
 	ctx: ExtensionContext,
 	agentos: AgentOsContext,
 	active: ActiveBinding,
-): Promise<WorkpackageChoice | undefined> {
+): Promise<TaskChoice | undefined> {
 	if (!ctx.ui.custom) {
-		ctx.ui.notify("Workpackage picker requires TUI mode", "warning");
+		ctx.ui.notify("Task picker requires TUI mode", "warning");
 		return undefined;
 	}
 	if (!agentos.workspacePath || !active.thread) {
-		ctx.ui.notify("Select a thread before choosing a workpackage", "warning");
+		ctx.ui.notify("Select a thread before choosing a task", "warning");
 		return undefined;
 	}
 	const tk = await loadPiTui();
 	if (!tk) {
-		ctx.ui.notify("Workpackage picker unavailable (pi-tui not found)", "error");
+		ctx.ui.notify("Task picker unavailable (pi-tui not found)", "error");
 		return undefined;
 	}
-	const packages = await listWorkpackages(agentos.workspacePath, active.thread);
-	return ctx.ui.custom<WorkpackageChoice | undefined>((tui, theme, _keybindings, done) => {
-		const picker = new WorkpackagePicker(packages, active.workpackage, theme, tk);
+	const packages = await listTasks(agentos.workspacePath, active.thread);
+	return ctx.ui.custom<TaskChoice | undefined>((tui, theme, _keybindings, done) => {
+		const picker = new TaskPicker(packages, active.task, theme, tk);
 		picker.requestRender = () => tui.requestRender();
 		picker.onSelect = done;
 		picker.onCancel = () => done(undefined);

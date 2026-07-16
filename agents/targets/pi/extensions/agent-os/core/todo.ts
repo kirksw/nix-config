@@ -9,7 +9,7 @@ export interface TodoContext {
 	workspacePath: string;
 	mode: AgentOsMode;
 	thread?: string;
-	workpackage?: string;
+	task?: string;
 	policy?: AgentOsPolicy | null;
 }
 
@@ -23,10 +23,10 @@ export async function todoTarget(context: TodoContext): Promise<string> {
 	}
 	if (!context.thread) throw new Error("a thread is required for todos");
 	if (context.mode === "Factory") {
-		if (!context.workpackage) throw new Error("a workpackage is required for Factory todos");
-		return context.policy?.workpackagePath
-			? path.join(context.policy.workpackagePath, "output", "report.md")
-			: context.workpackage;
+		if (!context.task) throw new Error("a task is required for Factory todos");
+		return context.policy?.taskPath
+			? path.join(context.policy.taskPath, "artifacts", "report.md")
+			: context.task;
 	}
 	const threadDir = path.join(context.workspacePath, "threads", context.thread);
 	const todos = path.join(threadDir, "todos.md");

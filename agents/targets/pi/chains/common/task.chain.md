@@ -1,6 +1,6 @@
 ---
-name: work-package
-description: Execute one scoped work package against an approved spec, then review and document it
+name: task
+description: Execute one scoped task against an approved spec, then review and document it
 ---
 
 ## explore
@@ -9,7 +9,7 @@ label: Map the package
 as: context
 output: context.md
 
-Analyze the approved work package for {task}. Identify the exact files, interfaces, dependencies, constraints, and validation needed to complete only this package. Call out any spec ambiguity or external dependency that should block execution.
+Analyze the approved task for {task}. Identify the exact files, interfaces, dependencies, constraints, and validation needed to complete only this package. Call out any spec ambiguity or external dependency that should block execution.
 
 ## code-monkey
 phase: Implementation
@@ -19,7 +19,7 @@ as: implementation
 output: implementation.md
 progress: true
 
-Implement only the scoped work package for {task} using {outputs.context}. Keep boundaries tight. Run the smallest sensible validation before you finish. If you hit a real blocker, escalate to 10xBEAST instead of widening scope silently.
+Implement only the scoped task for {task} using {outputs.context}. Keep boundaries tight. Run the smallest sensible validation before you finish. If you hit a real blocker, escalate to 10xBEAST instead of widening scope silently.
 
 ## bottleneck
 phase: Review
@@ -49,7 +49,7 @@ as: final_review
 output: final-review.md
 progress: true
 
-Do a final acceptance pass for this work package. Confirm whether the package appears complete against its local Definition of Done and note any dependency or integration follow-ups.
+Do a final acceptance pass for this task. Confirm whether the package appears complete against its local Definition of Done and note any dependency or integration follow-ups.
 
 ## scribe
 phase: Documentation
@@ -57,4 +57,4 @@ label: Write the package log
 reads: final-review.md
 progress: true
 
-Write or update the durable paper trail for this work package: what changed, what was validated, and any open risks, integration notes, or follow-ups. If no durable documentation should change, say so explicitly and explain why.
+Write or update the durable paper trail for this task: what changed, what was validated, and any open risks, integration notes, or follow-ups. If no durable documentation should change, say so explicitly and explain why.

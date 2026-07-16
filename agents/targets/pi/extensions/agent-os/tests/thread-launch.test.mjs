@@ -13,7 +13,7 @@ test("builds a focused Herdr workspace launch", () => {
   );
   assert.deepEqual(
     herdrFactoryRunArgs("w1:p3", "/repo/lunarOS", "agentic-os", "build"),
-    ["pane", "run", "w1:p3", "agent-os launch --thread 'agentic-os' --workpackage 'build' --project '/repo/lunarOS'"],
+    ["pane", "run", "w1:p3", "agent-os launch --thread 'agentic-os' --task 'build' --project '/repo/lunarOS'"],
   );
 });
 

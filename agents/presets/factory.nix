@@ -1,4 +1,4 @@
-# Minimal Pi profiles used by lifeOS agenticOS factory wrappers.
+# Minimal Pi profiles used by Agent OS factory wrappers.
 _: {
   providers = {
     personal-zai-key = {

@@ -5,11 +5,11 @@ import type { AgentOsMode } from "./mode.js";
 export interface RuntimeScope {
 	mode: AgentOsMode;
 	thread?: string;
-	workpackage?: string;
+	task?: string;
 }
 
-/** Normalize a workpackage id, bundle path, or package.md path to its scope name. */
-export function normalizeWorkpackageId(value: string | undefined): string | undefined {
+/** Normalize a task id, bundle path, or package.md path to its scope name. */
+export function normalizeTaskId(value: string | undefined): string | undefined {
 	if (!value?.trim()) return undefined;
 	const parts = value.trim().replaceAll("\\", "/").split("/").filter(Boolean);
 	if (parts.length === 0) return undefined;
@@ -33,9 +33,9 @@ export function runtimeScopePath(workspacePath: string, scope: RuntimeScope): st
 	const thread = scopeSegment(scope.thread, "thread");
 	const threadPath = path.join(workspacePath, "runtime", "threads", thread);
 	if (scope.mode === "Thread") return threadPath;
-	const workpackage = normalizeWorkpackageId(scope.workpackage);
-	if (!workpackage) throw new Error("workpackage is required for Factory runtime scope");
-	return path.join(threadPath, "workpackages", scopeSegment(workpackage, "workpackage"));
+	const task = normalizeTaskId(scope.task);
+	if (!task) throw new Error("task is required for Factory runtime scope");
+	return path.join(threadPath, "tasks", scopeSegment(task, "task"));
 }
 
 export function runtimeFilePath(

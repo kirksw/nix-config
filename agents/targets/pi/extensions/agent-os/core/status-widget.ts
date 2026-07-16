@@ -9,14 +9,14 @@ const modeIcons: Record<AgentOsMode, string> = {
 export function statusWidgetLine(
 	mode: AgentOsMode,
 	thread: string | undefined,
-	workpackage: string | undefined,
+	task: string | undefined,
 	unread: number,
 	osLabel: string,
 	width: number,
 ): string {
 	const parts = [`${modeIcons[mode]} ${mode}`];
 	if (thread) parts.push(`@${thread}`);
-	if (workpackage) parts.push(` ${workpackage}`);
+	if (task) parts.push(` ${task}`);
 	if (unread > 0) parts.push(`󰍡 ${unread}`);
 	const right = osLabel;
 	const maxLeftWidth = Math.max(0, width - right.length - 1);
