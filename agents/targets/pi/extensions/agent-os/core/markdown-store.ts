@@ -76,6 +76,11 @@ function textValue(frontmatter: Record<string, unknown>, body: string): string {
 	return body.replace(/^\s*#.*\n+/, "").trim();
 }
 
+function firstH1(body: string): string | undefined {
+	const match = body.match(/^\s*#\s+(.+?)(?:\s+#+)?\s*$/m);
+	return match?.[1].trim() || undefined;
+}
+
 function createdAt(frontmatter: Record<string, unknown>): string {
 	const value = frontmatter.createdAt ?? frontmatter.created ?? frontmatter.timestamp;
 	return typeof value === "string" ? value : new Date(0).toISOString();
@@ -146,16 +151,23 @@ export async function readMarkdownThreads(workspacePath: string): Promise<Thread
 		const document = await readDocument(file).catch(() => undefined);
 		if (!document || String(document.frontmatter.type ?? "").toLowerCase() !== "thread") continue;
 		const fm = document.frontmatter;
-		if (typeof fm.id !== "string" || typeof fm.slug !== "string" || typeof fm.title !== "string" || typeof fm.kind !== "string" || typeof fm.status !== "string" || typeof fm.stage !== "string") {
-			throw new Error(`invalid Thread frontmatter: ${file}`);
-		}
-		if (fm.slug !== slug) throw new Error(`thread slug '${fm.slug}' does not match directory '${slug}'`);
-		requireCreatedAt(fm, file);
-		if (fm.updatedAt !== undefined && !isIsoTimestamp(fm.updatedAt)) throw new Error(`updatedAt is invalid for ${file}`);
+		const fileStat = await fs.stat(file).catch(() => undefined);
+		if (!fileStat) continue;
 		const actualSlug = slug;
-		const title = typeof fm.title === "string" ? fm.title : actualSlug;
+		if (typeof fm.slug === "string" && fm.slug !== actualSlug) {
+			console.warn(`thread slug '${fm.slug}' does not match directory '${actualSlug}'`);
+		}
+		const id = typeof fm.id === "string" && fm.id.trim() ? fm.id : threadId(actualSlug);
+		const existingCreatedAt = fm.createdAt ?? fm.created ?? fm.timestamp;
+		const createdAt = typeof existingCreatedAt === "string" && existingCreatedAt.trim()
+			? existingCreatedAt
+			: fileStat.mtime.toISOString();
+		const title = typeof fm.title === "string" && fm.title.trim()
+			? fm.title.trim()
+			: firstH1(document.body) ?? actualSlug;
+		if (fm.updatedAt !== undefined && !isIsoTimestamp(fm.updatedAt)) throw new Error(`updatedAt is invalid for ${file}`);
 		threads.push({
-			...recordBase(fm, typeof fm.id === "string" ? fm.id : threadId(actualSlug)),
+			...recordBase({ ...fm, createdAt }, id),
 			type: "thread",
 			slug: actualSlug,
 			title,

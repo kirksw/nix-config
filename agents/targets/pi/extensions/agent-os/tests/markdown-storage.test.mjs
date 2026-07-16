@@ -42,6 +42,40 @@ test("discovers canonical OKF Thread documents and preserves their bodies", asyn
   assert.deepEqual(roundTripped[0].repos, []);
 });
 
+test("derives missing Thread fields from the directory, README, and defaults", async () => {
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-markdown-"));
+  const file = path.join(workspace, "threads", "legacy-thread", "README.md");
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, "---\ntype: Thread\n---\n\n# Legacy Thread\n\nNotes\n", "utf8");
+
+  const threads = await readMarkdownThreads(workspace);
+  const thread = threads[0];
+  assert.equal(thread.id, "thread:legacy-thread");
+  assert.equal(thread.slug, "legacy-thread");
+  assert.equal(thread.title, "Legacy Thread");
+  assert.equal(thread.kind, "project");
+  assert.equal(thread.status, "active");
+  assert.equal(thread.stage, "unspecified");
+  assert.equal(thread.createdAt, (await fs.stat(file)).mtime.toISOString());
+});
+
+test("warns on a Thread slug mismatch while using the containing directory", async () => {
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-markdown-"));
+  const file = path.join(workspace, "threads", "directory-slug", "README.md");
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, "---\ntype: Thread\nslug: frontmatter-slug\n---\n\n# Directory Thread\n", "utf8");
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (...args) => warnings.push(args.join(" "));
+  try {
+    const [thread] = await readMarkdownThreads(workspace);
+    assert.equal(thread.slug, "directory-slug");
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.match(warnings[0], /frontmatter-slug.*directory-slug/);
+});
+
 test("new-thread and capture write Markdown records without threads JSONL", async () => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-markdown-"));
   const agentos = context(workspace);
