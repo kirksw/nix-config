@@ -1,6 +1,8 @@
 # Nix build outputs
 result
 result-*
+# ...but not real source/tests that happen to start with "result-"
+!**/result-*.ts
 
 # Direnv
 .direnv/
