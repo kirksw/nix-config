@@ -21,6 +21,7 @@ Mode is inferred from the active binding:
 - `/agent-os capture [text]`
 - `/agent-os focus`
 - `/agent-os render`
+- `/agent-os promote <thread> <workpackage>` (confirm Factory output → wiki)
 - `/agent-os inbox`
 - `/agent-os send --to <OS|Thread|Factory> [--thread slug] [--workpackage id-or-path] <message>`
 - `/agent-os ack <message-id|all>`

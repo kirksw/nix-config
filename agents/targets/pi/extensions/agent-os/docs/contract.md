@@ -205,7 +205,7 @@ Canonical location: `threads/<thread>/candidates/<id>.md` (or `inbox/candidates/
 
 ### 2.7 Metric
 
-Canonical location: a Markdown file under the owning thread (the current recursive reader accepts any workspace `.md` path with `type: metric`).
+Canonical location: `threads/<thread>/artifacts/metrics/<id>.md` (the current reader previously accepted any workspace `.md` path with `type: metric`).
 
 | Field | Required | Type / values |
 | --- | --- | --- |
@@ -322,7 +322,7 @@ and:
 <!-- lifeos:generated:end -->
 ```
 
-Current rendering preserves a detected legacy pair when updating a file.
+Current rendering leaves a detected legacy pair unchanged with a migration warning. `migrateGeneratedMarkers()` is the explicit conversion path; it rewrites a single legacy pair to the canonical pair.
 
 > Contract change: canonicalize all newly written sections to `agent-os:generated`; treat legacy pairs as read-only migration input and convert them explicitly rather than preserving them indefinitely.
 
