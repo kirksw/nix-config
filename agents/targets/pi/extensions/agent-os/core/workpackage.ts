@@ -13,6 +13,15 @@ export interface WorkpackageBinding {
 	packagePath: string;
 }
 
+export type FactoryRunLauncher = (workpackage: WorkpackageRecord, runReportPath: string) => Promise<void>;
+
+export interface FactoryRun {
+	workpackage: WorkpackageRecord;
+	runReportPath: string;
+}
+
+export type RunOutcome = "success" | "failure";
+
 export const WORKPACKAGE_STATUSES: readonly WorkpackageStatus[] = ["draft", "specced", "running", "review", "done", "failed"];
 export const WORKPACKAGE_TRANSITIONS: Readonly<Record<WorkpackageStatus, readonly WorkpackageStatus[]>> = {
 	draft: ["specced"],
@@ -193,6 +202,76 @@ export async function transitionWorkpackage(workspacePath: string, thread: strin
 	const now = new Date().toISOString();
 	await writeMarkdownDocument(current.packagePath, { ...document.frontmatter, type: "Workpackage", id: current.id, title: current.title, thread: current.thread, status: to, createdAt: current.createdAt, updatedAt: now }, document.body);
 	return { ...current, status: to, updatedAt: now };
+}
+
+function runReportName(id: string, now: string): string {
+	if (!validSegment(id)) throw new Error("workpackage id must be a directory-safe path segment");
+	return `${now.slice(0, 10)}-${id}.md`;
+}
+
+export async function createRunReport(workpackage: WorkpackageRecord, now = new Date().toISOString()): Promise<string> {
+	const reportPath = path.join(workpackage.path, "runs", runReportName(workpackage.id, now));
+	await writeMarkdownDocument(reportPath, {
+		type: "RunReport",
+		id: path.basename(reportPath, ".md"),
+		thread: workpackage.thread,
+		workpackage: workpackage.id,
+		status: "running",
+		startedAt: now,
+		createdAt: now,
+	}, "# Run Report\n\n## Execution\n\n- Status: running\n");
+	return reportPath;
+}
+
+export async function latestRunReport(workpackage: WorkpackageRecord): Promise<string> {
+	const suffix = `-${workpackage.id}.md`;
+	const names = (await fs.readdir(path.join(workpackage.path, "runs")).catch(() => []))
+		.filter((name) => name.endsWith(suffix))
+		.sort()
+		.reverse();
+	if (!names[0]) throw new Error(`run report not found for workpackage '${workpackage.id}'`);
+	return path.join(workpackage.path, "runs", names[0]);
+}
+
+export async function appendRunOutcome(reportPath: string, outcome: RunOutcome, note?: string, now = new Date().toISOString()): Promise<void> {
+	if (outcome !== "success" && outcome !== "failure") throw new Error(`invalid run outcome: ${outcome}`);
+	const document = parseMarkdownDocument(reportPath, await fs.readFile(reportPath, "utf8").catch(() => ""));
+	if (String(document.frontmatter.type ?? "").toLowerCase() !== "runreport") throw new Error(`invalid run report: ${reportPath}`);
+	const cleanNote = note?.trim();
+	await writeMarkdownDocument(reportPath, {
+		...document.frontmatter,
+		outcome,
+		completedAt: now,
+		updatedAt: now,
+	}, `${document.body.trimEnd()}\n\n## Outcome\n\n- Result: ${outcome}${cleanNote ? `\n- Note: ${cleanNote}` : ""}\n`);
+}
+
+export async function runWorkpackage(
+	workspacePath: string,
+	thread: string,
+	input: string,
+	launcher?: FactoryRunLauncher,
+): Promise<FactoryRun> {
+	let current = await resolveWorkpackage(workspacePath, thread, input);
+	if (current.status === "draft") current = await transitionWorkpackage(workspacePath, thread, input, "specced");
+	if (current.status !== "specced") throw new Error(`invalid workpackage transition: ${current.status} -> running`);
+	current = await transitionWorkpackage(workspacePath, thread, input, "running");
+	const runReportPath = await createRunReport(current);
+	if (launcher) await launcher(current, runReportPath);
+	return { workpackage: current, runReportPath };
+}
+
+export async function reportWorkpackageRun(
+	workspacePath: string,
+	thread: string,
+	input: string,
+	outcome: RunOutcome,
+	note?: string,
+): Promise<WorkpackageRecord> {
+	const current = await resolveWorkpackage(workspacePath, thread, input);
+	if (current.status !== "running") throw new Error(`invalid workpackage transition: ${current.status} -> review`);
+	await appendRunOutcome(await latestRunReport(current), outcome, note);
+	return transitionWorkpackage(workspacePath, thread, input, "review");
 }
 
 export function workpackageRelativePath(workspacePath: string, workpackagePath: string): string {

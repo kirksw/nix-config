@@ -6,10 +6,13 @@ import {
 	createWorkpackage,
 	deleteOpenWorkpackages,
 	listWorkpackages,
+	reportWorkpackageRun,
 	resolveWorkpackage,
+	runWorkpackage,
 	transitionWorkpackage,
 	workpackageRelativePath,
 } from "../core/workpackage.js";
+import type { FactoryRunLauncher } from "../core/workpackage.js";
 import type { AgentOsBinding } from "../core/binding.js";
 
 export type ActiveBinding = { thread?: string; workpackage?: string };
@@ -20,6 +23,7 @@ export async function handleWorkpackage(
 	agentos: AgentOsContext,
 	active: ActiveBinding,
 	setBinding: BindingSetter,
+	launchFactoryRun?: FactoryRunLauncher,
 ): Promise<{ output: string; binding: AgentOsBinding | undefined }> {
 	requireWritable(agentos);
 	const value = args.trim();
@@ -35,10 +39,55 @@ export async function handleWorkpackage(
 					lines.push(`- **${pkg.id}** — ${pkg.status} — ${pkg.title}${marker}`);
 				}
 			}
-			lines.push("", "Actions:", "- `/agent-os wp <id>` bind a workpackage", "- `/agent-os wp spar <title>` spar and create a draft", "- `/agent-os wp status <id> <state>` transition a workpackage");
+			lines.push("", "Actions:", "- `/agent-os wp <id>` bind a workpackage", "- `/agent-os wp spar <title>` spar and create a draft", "- `/agent-os wp status <id> <state>` transition a workpackage", "- `/agent-os wp run [id]` launch a factory run", "- `/agent-os wp run-report <id> <success|failure> [note]` report a run", "- `/agent-os wp accept|reject <id>` finish review");
 			return { output: lines.join("\\n"), binding: undefined };
 		}
-		return { output: "Usage: /agent-os wp [id|path|clear|delete-all|spar <title>|status <id> <state>]", binding: undefined };
+		return { output: "Usage: /agent-os wp [id|path|clear|delete-all|spar <title>|run [id]|run-report <id> <success|failure> [note]|accept <id>|reject <id>|status <id> <state>]", binding: undefined };
+	}
+	const runMatch = value.match(/^run(?:\s+(\S+))?$/);
+	if (runMatch) {
+		if (agentos.mode === "Factory") throw new Error("FactoryOS cannot start a workpackage run");
+		if (!active.thread) throw new Error("select a thread before running a workpackage");
+		const input = runMatch[1] ?? active.workpackage;
+		if (!input) throw new Error("usage: /agent-os wp run <id>");
+		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, input);
+		assertPolicyWrite(agentos.policy, current.packagePath);
+		const run = await runWorkpackage(agentos.workspacePath, active.thread, input, launchFactoryRun);
+		return { output: `Started workpackage ${run.workpackage.id}; run report ${workpackageRelativePath(agentos.workspacePath, run.runReportPath)}`, binding: undefined };
+	}
+	const reportMatch = value.match(/^run-report\s+(\S+)\s+(success|failure)(?:\s+([\s\S]*))?$/);
+	if (value === "run-report" || value.startsWith("run-report ") || reportMatch) {
+		if (!active.thread) throw new Error("select a thread before reporting a workpackage run");
+		if (!reportMatch) throw new Error("usage: /agent-os wp run-report <id> <success|failure> [note]");
+		const [, id, outcome, note] = reportMatch;
+		if (agentos.mode === "Factory" && agentos.workpackagePath) {
+			const selected = await resolveWorkpackage(agentos.workspacePath, active.thread, id);
+			if (path.resolve(selected.path) !== path.resolve(agentos.workpackagePath)) throw new Error("FactoryOS workpackage binding is fixed");
+		}
+		const updated = await reportWorkpackageRun(agentos.workspacePath, active.thread, id, outcome as "success" | "failure", note);
+		return { output: `Updated workpackage ${updated.id} to review`, binding: undefined };
+	}
+	const acceptMatch = value.match(/^accept\s+(\S+)$/);
+	if (value === "accept" || acceptMatch) {
+		if (agentos.mode === "Factory") throw new Error("FactoryOS cannot accept a workpackage");
+		if (!active.thread) throw new Error("select a thread before accepting a workpackage");
+		if (!acceptMatch) throw new Error("usage: /agent-os wp accept <id>");
+		const [, id] = acceptMatch;
+		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, id);
+		assertPolicyWrite(agentos.policy, current.packagePath);
+		const updated = await transitionWorkpackage(agentos.workspacePath, active.thread, id, "done");
+		return { output: `Accepted workpackage ${updated.id}; status is done`, binding: undefined };
+	}
+	const rejectMatch = value.match(/^reject\s+(\S+)$/);
+	if (value === "reject" || rejectMatch) {
+		if (agentos.mode === "Factory") throw new Error("FactoryOS cannot reject a workpackage");
+		if (!active.thread) throw new Error("select a thread before rejecting a workpackage");
+		if (!rejectMatch) throw new Error("usage: /agent-os wp reject <id>");
+		const [, id] = rejectMatch;
+		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, id);
+		assertPolicyWrite(agentos.policy, current.packagePath);
+		const updated = await transitionWorkpackage(agentos.workspacePath, active.thread, id, "failed");
+		return { output: `Rejected workpackage ${updated.id}; status is failed`, binding: undefined };
 	}
 	const statusMatch = value.match(/^status\s+(\S+)\s+(\S+)$/);
 	if (value === "status" || statusMatch) {

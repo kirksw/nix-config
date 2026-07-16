@@ -49,9 +49,9 @@ import {
 import { inferMode } from "./core/mode.js";
 import { runtimeFilePath } from "./core/runtime.ts";
 import { migrateLegacyRuntime } from "./core/runtime-migration.ts";
-import { resolveWorkpackage } from "./core/workpackage.js";
+import { resolveWorkpackage, type WorkpackageRecord } from "./core/workpackage.js";
 import { policyPrompt, shellMentionsProtectedWorkspace } from "./core/policy.js";
-import { herdrCreateArgs, herdrRunArgs, rootPaneId } from "./core/herdr-launch.ts";
+import { herdrCreateArgs, herdrFactoryRunArgs, herdrRunArgs, rootPaneId } from "./core/herdr-launch.ts";
 import { statusWidgetLine } from "./core/status-widget.ts";
 
 const activeThreads = new Map<string, string>();
@@ -319,6 +319,38 @@ function appendBinding(
 	pi.appendEntry("agent-os-binding", bindingData(ctx, agentos, binding));
 }
 
+async function startFactorySession(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	agentos: Awaited<ReturnType<typeof resolveAgentOsContext>>,
+	workpackage: WorkpackageRecord,
+	_runReportPath: string,
+): Promise<void> {
+	const project = process.env.AGENT_OS_PROJECT_ROOT ?? agentos.repoPath ?? ctx.cwd;
+	if (process.env.HERDR_ENV === "1" && process.env.HERDR_PANE_ID) {
+		const label = `factory:${workpackage.thread}:${workpackage.id}`;
+		const workspace = await pi.exec("herdr", herdrCreateArgs(project, label), { signal: ctx.signal });
+		if (workspace.code !== 0) throw new Error(workspace.stderr.trim() || "Herdr factory workspace creation failed");
+		const paneId = rootPaneId(workspace.stdout);
+		const launched = await pi.exec("herdr", herdrFactoryRunArgs(paneId, project, workpackage.thread, workpackage.id), { signal: ctx.signal });
+		if (launched.code !== 0) throw new Error(launched.stderr.trim() || "Herdr factory launch failed");
+		ctx.ui.notify(`Opened Herdr factory for '${workpackage.id}'`, "success");
+		return;
+	}
+	if (!ctx.newSession) throw new Error("Agent OS factory runs require a newer Pi");
+	const binding = bindingData(ctx, agentos, { thread: workpackage.thread, workpackage: workpackage.path });
+	const result = await ctx.newSession({
+		setup: async (sessionManager) => {
+			sessionManager.appendCustomEntry("agent-os-binding", binding);
+			sessionManager.appendSessionInfo(`agentOS factory: ${workpackage.id}`);
+		},
+		withSession: async (replacementCtx) => {
+			replacementCtx.ui.notify(`Started a new Pi factory session for '${workpackage.id}'`, "success");
+		},
+	});
+	if (result.cancelled) throw new Error("factory run launch was cancelled");
+}
+
 async function startThreadSession(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
@@ -462,7 +494,7 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 							if (!choice) return;
 							workpackageArgs = choice.kind === "create" ? `spar ${choice.value}` : choice.value;
 						}
-						const result = await handleWorkpackage(workpackageArgs, agentos, activeBinding, setBinding);
+						const result = await handleWorkpackage(workpackageArgs, agentos, activeBinding, setBinding, (workpackage, runReportPath) => startFactorySession(pi, ctx, agentos, workpackage, runReportPath));
 						if (result.binding) appendBinding(pi, ctx, agentos, { thread: result.binding.thread, workpackage: result.binding.workpackage });
 						else appendBinding(pi, ctx, agentos, { thread: getActive(agentos.workspacePath) });
 						output = result.output;
