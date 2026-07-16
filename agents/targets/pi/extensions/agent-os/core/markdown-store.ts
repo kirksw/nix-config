@@ -95,10 +95,12 @@ function isIsoTimestamp(value: unknown): value is string {
 	return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
 
-function requireCreatedAt(frontmatter: Record<string, unknown>, file: string): string {
+async function resolveCreatedAt(frontmatter: Record<string, unknown>, file: string): Promise<string> {
 	const value = frontmatter.createdAt ?? frontmatter.timestamp;
-	if (!isIsoTimestamp(value)) throw new Error(`createdAt is required for ${file}`);
-	return value;
+	if (isIsoTimestamp(value)) return value;
+	const stat = await fs.stat(file).catch(() => undefined);
+	if (stat) return stat.mtime.toISOString();
+	throw new Error(`createdAt cannot be derived for ${file}`);
 }
 
 function assertThreadOwner(frontmatter: Record<string, unknown>, owner: string, file: string): void {
@@ -205,12 +207,12 @@ async function readMarkdownRecords(workspacePath: string, kind: "decisions" | "b
 		if (type !== kind.slice(0, -1)) continue;
 		if (location.thread) assertThreadOwner(fm, location.thread, file);
 		if (typeof fm.id !== "string" || !fm.id) throw new Error(`record id is required: ${file}`);
-		requireCreatedAt(fm, file);
+		const resolvedCreatedAt = await resolveCreatedAt(fm, file);
 		if (fm.updatedAt !== undefined && !isIsoTimestamp(fm.updatedAt)) throw new Error(`updatedAt is invalid for ${file}`);
 		const thread = recordThread(fm, location.thread ?? "");
 		if (kind !== "blockers" && fm.source !== "pi") continue;
 		const id = typeof fm.id === "string" ? fm.id : `${kind.slice(0, -1)}:${path.basename(file, ".md")}`;
-		const base = recordBase(fm, id);
+		const base = recordBase({ ...fm, createdAt: resolvedCreatedAt }, id);
 		if (kind === "decisions") {
 			records.push({ ...base, type: "decision", text: textValue(fm, document.body), source: "pi", threadId: thread ? threadId(thread) : undefined });
 		} else if (kind === "blockers") {
@@ -234,12 +236,12 @@ async function readMarkdownMetrics(workspacePath: string): Promise<MetricRecord[
 		if (String(fm.type ?? "").toLowerCase() !== "metric") continue;
 		assertThreadOwner(fm, relative[1], file);
 		if (typeof fm.id !== "string" || !fm.id || typeof fm.name !== "string" || typeof fm.kind !== "string") throw new Error(`invalid Metric frontmatter: ${file}`);
-		requireCreatedAt(fm, file);
+		const resolvedCreatedAt = await resolveCreatedAt(fm, file);
 		if (fm.updatedAt !== undefined && !isIsoTimestamp(fm.updatedAt)) throw new Error(`updatedAt is invalid for ${file}`);
 		const id = fm.id;
 		if (!["quantitative", "qualitative", "milestone", "capability"].includes(fm.kind)) throw new Error(`invalid Metric kind: ${file}`);
 		const kind = fm.kind as MetricRecord["kind"];
-		metrics.push({ ...recordBase(fm, id), type: "metric", thread: recordThread(fm, relative[1]), name: typeof fm.name === "string" ? fm.name : textValue(fm, document.body), kind, target: typeof fm.target === "string" ? fm.target : undefined, current: typeof fm.current === "string" ? fm.current : undefined });
+		metrics.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, id), type: "metric", thread: recordThread(fm, relative[1]), name: typeof fm.name === "string" ? fm.name : textValue(fm, document.body), kind, target: typeof fm.target === "string" ? fm.target : undefined, current: typeof fm.current === "string" ? fm.current : undefined });
 	}
 	return metrics;
 }
@@ -253,9 +255,9 @@ export async function readMarkdownOutcomes(workspacePath: string): Promise<Outco
 		if (String(fm.type ?? "").toLowerCase() !== "outcome") continue;
 		const state = fm.state;
 		if (typeof fm.id !== "string" || typeof fm.title !== "string" || typeof fm.goal !== "string" || typeof state !== "string" || !["planned", "in_progress", "done", "blocked", "archived"].includes(state)) continue;
-		requireCreatedAt(fm, file);
+		const resolvedCreatedAt = await resolveCreatedAt(fm, file);
 		if (fm.updatedAt !== undefined && !isIsoTimestamp(fm.updatedAt)) throw new Error(`updatedAt is invalid for ${file}`);
-		outcomes.push({ ...recordBase(fm, fm.id), type: "outcome", title: fm.title, ...(typeof fm.thread === "string" ? { thread: fm.thread } : {}), ...(typeof fm.workpackage === "string" ? { workpackage: fm.workpackage } : {}), goal: fm.goal, ...(typeof fm.result === "string" ? { result: fm.result } : {}), state: state as OutcomeRecord["state"], ...(typeof fm.closedAt === "string" ? { closedAt: fm.closedAt } : {}) });
+		outcomes.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, fm.id), type: "outcome", title: fm.title, ...(typeof fm.thread === "string" ? { thread: fm.thread } : {}), ...(typeof fm.workpackage === "string" ? { workpackage: fm.workpackage } : {}), goal: fm.goal, ...(typeof fm.result === "string" ? { result: fm.result } : {}), state: state as OutcomeRecord["state"], ...(typeof fm.closedAt === "string" ? { closedAt: fm.closedAt } : {}) });
 	}
 	return outcomes;
 }
@@ -264,8 +266,8 @@ export async function readMarkdownWorkpackages(workspacePath: string): Promise<W
 	const result: WorkpackageRecord[] = [];
 	for (const thread of await fs.readdir(path.join(workspacePath, "threads")).catch(() => [])) {
 		const root = path.join(workspacePath, "threads", thread, "workpackages");
-		for (const id of await fs.readdir(root).catch(() => [])) {
-			const bundle = path.join(root, id);
+		for (const bundleId of await fs.readdir(root).catch(() => [])) {
+			const bundle = path.join(root, bundleId);
 			const stat = await fs.stat(bundle).catch(() => undefined);
 			if (!stat?.isDirectory()) continue;
 			const packagePath = path.join(bundle, "package.md");
@@ -278,12 +280,14 @@ export async function readMarkdownWorkpackages(workspacePath: string): Promise<W
 			}
 			const document = await readDocument(packagePath);
 			const fm = document.frontmatter;
-			const status = fm.status;
 			if (String(fm.type ?? "").toLowerCase() !== "workpackage") continue;
-			if (typeof fm.id !== "string" || typeof fm.title !== "string" || typeof fm.thread !== "string" || typeof status !== "string" || !["draft", "specced", "running", "review", "done", "failed"].includes(status)) throw new Error(`invalid Workpackage frontmatter: ${packagePath}`);
-			if (fm.thread !== thread) throw new Error(`workpackage ownership mismatch for ${packagePath}: ${fm.thread} != ${thread}`);
-			requireCreatedAt(fm, packagePath);
-			result.push({ ...recordBase(fm, fm.id), type: "workpackage", title: fm.title, thread: fm.thread, status: status as WorkpackageStatus, path: bundle, packagePath, goal: typeof fm.goal === "string" ? fm.goal : undefined, notes: typeof fm.notes === "string" ? fm.notes : undefined });
+			const id = typeof fm.id === "string" && fm.id.trim() ? fm.id.trim() : bundleId;
+			const title = typeof fm.title === "string" && fm.title.trim() ? fm.title.trim() : firstH1(document.body) ?? id;
+			const physicalThread = typeof fm.thread === "string" && fm.thread.trim() ? fm.thread.trim() : thread;
+			const status = typeof fm.status === "string" && ["draft", "specced", "running", "review", "done", "failed"].includes(fm.status) ? fm.status : "draft";
+			if (physicalThread !== thread) throw new Error(`workpackage ownership mismatch for ${packagePath}: ${physicalThread} != ${thread}`);
+			const resolvedCreatedAt = await resolveCreatedAt(fm, packagePath);
+			result.push({ ...recordBase({ ...fm, createdAt: resolvedCreatedAt }, id), type: "workpackage", title, thread: physicalThread, status: status as WorkpackageStatus, path: bundle, packagePath, goal: typeof fm.goal === "string" ? fm.goal : undefined, notes: typeof fm.notes === "string" ? fm.notes : undefined });
 		}
 	}
 	return result;

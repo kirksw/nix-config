@@ -124,3 +124,20 @@ test("focus reads Markdown threads and record documents", async () => {
   assert.match(output, /Focused/);
   assert.match(output, /Waiting on input/);
 });
+
+test("reads legacy Workpackages with mtime timestamps and tolerant defaults", async () => {
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "agent-os-markdown-"));
+  const bundle = path.join(workspace, "threads", "legacy-thread", "workpackages", "legacy-package");
+  const packagePath = path.join(bundle, "package.md");
+  await Promise.all(["input", "runs", "output"].map((directory) => fs.mkdir(path.join(bundle, directory), { recursive: true })));
+  await fs.writeFile(packagePath, "---\ntype: Workpackage\nstatus: ready\n---\n\n# Legacy Workpackage\n", "utf8");
+  const mtime = new Date("2025-05-06T07:08:09.000Z");
+  await fs.utimes(packagePath, mtime, mtime);
+
+  const [workpackage] = (await readMarkdownData(workspace)).workpackages;
+  assert.equal(workpackage.id, "legacy-package");
+  assert.equal(workpackage.title, "Legacy Workpackage");
+  assert.equal(workpackage.thread, "legacy-thread");
+  assert.equal(workpackage.status, "draft");
+  assert.equal(workpackage.createdAt, mtime.toISOString());
+});
