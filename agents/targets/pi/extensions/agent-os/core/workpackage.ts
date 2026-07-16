@@ -22,6 +22,11 @@ export interface FactoryRun {
 
 export type RunOutcome = "success" | "failure";
 
+export interface WorkpackageRunOutcome {
+	outcome: RunOutcome;
+	completedAt?: string;
+}
+
 export const WORKPACKAGE_STATUSES: readonly WorkpackageStatus[] = ["draft", "specced", "running", "review", "done", "failed"];
 export const WORKPACKAGE_TRANSITIONS: Readonly<Record<WorkpackageStatus, readonly WorkpackageStatus[]>> = {
 	draft: ["specced"],
@@ -231,6 +236,18 @@ export async function latestRunReport(workpackage: WorkpackageRecord): Promise<s
 		.reverse();
 	if (!names[0]) throw new Error(`run report not found for workpackage '${workpackage.id}'`);
 	return path.join(workpackage.path, "runs", names[0]);
+}
+
+export async function latestRunOutcome(workpackage: WorkpackageRecord): Promise<WorkpackageRunOutcome | undefined> {
+	const reportPath = await latestRunReport(workpackage).catch(() => undefined);
+	if (!reportPath) return undefined;
+	const document = parseMarkdownDocument(reportPath, await fs.readFile(reportPath, "utf8"));
+	const outcome = document.frontmatter.outcome;
+	if (outcome !== "success" && outcome !== "failure") return undefined;
+	return {
+		outcome,
+		completedAt: typeof document.frontmatter.completedAt === "string" ? document.frontmatter.completedAt : undefined,
+	};
 }
 
 export async function appendRunOutcome(reportPath: string, outcome: RunOutcome, note?: string, now = new Date().toISOString()): Promise<void> {

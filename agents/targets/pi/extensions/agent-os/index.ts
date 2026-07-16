@@ -477,7 +477,7 @@ export default function agentOsExtension(pi: ExtensionAPI): void {
 						break;
 					case "render":
 						if (agentos.mode !== "OS") throw new Error(`${agentos.policy?.role} cannot render workspace-wide views`);
-						output = await handleRender(rest, agentos);
+						output = await handleRender(rest, agentos, getBinding(agentos.workspacePath));
 						break;
 					case "promote":
 						output = await handlePromote(rest, agentos, (title, body) => ctx.ui.confirm(title, body));

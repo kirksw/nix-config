@@ -2,6 +2,7 @@ import * as path from "node:path";
 import type { AgentOsContext } from "../core/repo.js";
 import { requireWritable } from "../core/repo.js";
 import { assertPolicyWrite } from "../core/policy.ts";
+import { readMarkdownData } from "../core/markdown-store.ts";
 import {
 	createWorkpackage,
 	deleteOpenWorkpackages,
@@ -14,9 +15,30 @@ import {
 } from "../core/workpackage.js";
 import type { FactoryRunLauncher } from "../core/workpackage.js";
 import type { AgentOsBinding } from "../core/binding.js";
+import { latestWorkpackageOutcomes, renderThreadReadme } from "../render/thread-readme.js";
 
 export type ActiveBinding = { thread?: string; workpackage?: string };
 export type BindingSetter = (binding: ActiveBinding) => void;
+
+async function refreshThreadReadme(
+	agentos: AgentOsContext,
+	threadSlug: string,
+	activeWorkpackagePath?: string,
+): Promise<void> {
+	const data = await readMarkdownData(agentos.workspacePath);
+	const thread = data.threads.find((item) => item.slug === threadSlug);
+	if (!thread) return;
+	const workpackages = data.workpackages.filter((workpackage) => workpackage.thread === threadSlug);
+	await renderThreadReadme(
+		agentos.workspacePath,
+		thread,
+		data.blockers,
+		data.decisions,
+		workpackages,
+		activeWorkpackagePath,
+		await latestWorkpackageOutcomes(workpackages),
+	);
+}
 
 export async function handleWorkpackage(
 	args: string,
@@ -53,6 +75,7 @@ export async function handleWorkpackage(
 		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, input);
 		assertPolicyWrite(agentos.policy, current.packagePath);
 		const run = await runWorkpackage(agentos.workspacePath, active.thread, input, launchFactoryRun);
+		await refreshThreadReadme(agentos, active.thread, active.workpackage);
 		return { output: `Started workpackage ${run.workpackage.id}; run report ${workpackageRelativePath(agentos.workspacePath, run.runReportPath)}`, binding: undefined };
 	}
 	const reportMatch = value.match(/^run-report\s+(\S+)\s+(success|failure)(?:\s+([\s\S]*))?$/);
@@ -65,6 +88,7 @@ export async function handleWorkpackage(
 			if (path.resolve(selected.path) !== path.resolve(agentos.workpackagePath)) throw new Error("FactoryOS workpackage binding is fixed");
 		}
 		const updated = await reportWorkpackageRun(agentos.workspacePath, active.thread, id, outcome as "success" | "failure", note);
+		await refreshThreadReadme(agentos, active.thread, active.workpackage);
 		return { output: `Updated workpackage ${updated.id} to review`, binding: undefined };
 	}
 	const acceptMatch = value.match(/^accept\s+(\S+)$/);
@@ -76,6 +100,7 @@ export async function handleWorkpackage(
 		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, id);
 		assertPolicyWrite(agentos.policy, current.packagePath);
 		const updated = await transitionWorkpackage(agentos.workspacePath, active.thread, id, "done");
+		await refreshThreadReadme(agentos, active.thread, active.workpackage);
 		return { output: `Accepted workpackage ${updated.id}; status is done`, binding: undefined };
 	}
 	const rejectMatch = value.match(/^reject\s+(\S+)$/);
@@ -87,6 +112,7 @@ export async function handleWorkpackage(
 		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, id);
 		assertPolicyWrite(agentos.policy, current.packagePath);
 		const updated = await transitionWorkpackage(agentos.workspacePath, active.thread, id, "failed");
+		await refreshThreadReadme(agentos, active.thread, active.workpackage);
 		return { output: `Rejected workpackage ${updated.id}; status is failed`, binding: undefined };
 	}
 	const statusMatch = value.match(/^status\s+(\S+)\s+(\S+)$/);
@@ -97,6 +123,7 @@ export async function handleWorkpackage(
 		const current = await resolveWorkpackage(agentos.workspacePath, active.thread, id);
 		assertPolicyWrite(agentos.policy, current.packagePath);
 		const updated = await transitionWorkpackage(agentos.workspacePath, active.thread, id, status as Parameters<typeof transitionWorkpackage>[3]);
+		await refreshThreadReadme(agentos, active.thread, active.workpackage);
 		return { output: `Updated workpackage ${updated.id} to ${updated.status}`, binding: undefined };
 	}
 	if (value === "delete-all") {
