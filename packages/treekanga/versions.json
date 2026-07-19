@@ -1,18 +1,18 @@
 {
   "formatVersion": 1,
   "treekangaVersions": {
-    "version": "2.3.0",
+    "version": "2.3.1",
     "urls": {
       "macos": {
         "aarch64": {
-          "url": "https://github.com/garrettkrohn/treekanga/releases/download/v2.3.0/treekanga_Darwin_arm64.tar.gz",
-          "hash": "sha256-+RGpdg5RzClgqQFizFCAneinkVKmupq4SccYkYqoEUI="
+          "url": "https://github.com/garrettkrohn/treekanga/releases/download/v2.3.1/treekanga_Darwin_arm64.tar.gz",
+          "hash": "sha256-oslIoiThqJXF9rhXBXrtYsUOmSp/m6aTl2Un6SFU22g="
         }
       },
       "linux": {
         "aarch64": {
-          "url": "https://github.com/garrettkrohn/treekanga/releases/download/v2.3.0/treekanga_Linux_arm64.tar.gz",
-          "hash": "sha256-LEZDzSIkDmRtq0176G0QPdbZr5BfTlULiV44oPhdztg="
+          "url": "https://github.com/garrettkrohn/treekanga/releases/download/v2.3.1/treekanga_Linux_arm64.tar.gz",
+          "hash": "sha256-aArpQDiy2NhOlcwT33HPxeb0RTfyQZU6vaEa/w3xDY0="
         }
       }
     }

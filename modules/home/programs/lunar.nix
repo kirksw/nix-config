@@ -38,5 +38,14 @@ in
       LW_KUBESEAL_PUBLIC_CERT = kubesealPublicCert;
       CMUX_BUNDLED_CLI_PATH = "${cmuxPackage}/Applications/cmux.app/Contents/Resources/bin/cmux";
     };
+
+    home.activation.openWisprApp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      app="$HOME/Applications/OpenWispr.app"
+      target="/opt/homebrew/opt/open-wispr/OpenWispr.app"
+      if [ -d "$target" ]; then
+        mkdir -p "$HOME/Applications"
+        /bin/ln -shfn "$target" "$app"
+      fi
+    '';
   };
 }

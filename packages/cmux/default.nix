@@ -9,14 +9,14 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "cmux";
-  version = "0.64.17";
+  version = "0.64.19";
 
   __structuredAttrs = true;
   strictDeps = true;
 
   src = fetchurl {
     url = "https://github.com/manaflow-ai/cmux/releases/download/v${finalAttrs.version}/cmux-macos.dmg";
-    hash = "sha256-LVdt+sjSY/vDOiRX3JIAhSDffM5KMIC7SZsRwbvKliQ=";
+    hash = "sha256-npYbupFZ8tgg+OHX9YpTLRmth1i7dTZaV/183Jp8/PQ=";
   };
 
   # -snld prevents "ERROR: Dangerous symbolic link path was ignored".

@@ -14,6 +14,12 @@ let
     substituteInPlace "$out/Library/Homebrew/api/cask/cask_struct_generator.rb" \
       --replace-fail 'dep_type = value.keys.first' $'dep_type = value.keys.first\n            next [key, nil] if dep_type.nil?'
   '';
+  openWisprTap = pkgs.runCommandLocal "homebrew-open-wispr" { } ''
+    cp -R "${inputs.open-wispr-tap}" "$out"
+    chmod -R u+w "$out"
+    # The upstream hook writes outside Homebrew's sandbox and makes brew bundle fail.
+    sed -i '/^  def post_install$/,/^  end$/d' "$out/open-wispr.rb"
+  '';
 in
 {
   homebrew = {
@@ -25,6 +31,7 @@ in
     };
 
     prefix = "/opt/homebrew"; # needed for arm64
+    taps = [ "human37/open-wispr" ];
     casks = pkgs.callPackage ../casks.nix { };
 
     onActivation = {
@@ -52,6 +59,9 @@ in
     package = homebrewPackage;
     enableZshIntegration = false;
     autoMigrate = true;
-    mutableTaps = true;
+    mutableTaps = false;
+    taps = {
+      "human37/homebrew-open-wispr" = openWisprTap;
+    };
   };
 }
