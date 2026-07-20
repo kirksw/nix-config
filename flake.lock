@@ -908,6 +908,23 @@
         "type": "github"
       }
     },
+    "minimax-cli-skill": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784398724,
+        "narHash": "sha256-/MyY9qzihwDp1ME3m8N7w0uMTRJvHtTq+XHqFggSRac=",
+        "owner": "MiniMax-AI",
+        "repo": "cli",
+        "rev": "3615170a2e26ec6003c4550cd1324b55ec8ad677",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MiniMax-AI",
+        "repo": "cli",
+        "rev": "3615170a2e26ec6003c4550cd1324b55ec8ad677",
+        "type": "github"
+      }
+    },
     "neovim-nightly-overlay": {
       "inputs": {
         "flake-parts": "flake-parts_2",
@@ -1393,6 +1410,7 @@
         "last30days-skill": "last30days-skill",
         "lunar-tools": "lunar-tools",
         "microvm": "microvm",
+        "minimax-cli-skill": "minimax-cli-skill",
         "neovim-nightly-overlay": "neovim-nightly-overlay",
         "nix-agents": "nix-agents",
         "nix-homebrew": "nix-homebrew",

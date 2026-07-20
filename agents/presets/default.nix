@@ -20,6 +20,7 @@
     ../defs/skills/grill-me
     ../defs/skills/homelab
     ../defs/skills/last30days
+    ../defs/skills/mmx-cli
     ../defs/skills/what-if
     ../defs/skills/plan-x
     ../defs/skills/writing-great-skills

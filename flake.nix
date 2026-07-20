@@ -74,6 +74,11 @@
       url = "github:mvanhorn/last30days-skill";
       flake = false;
     };
+
+    minimax-cli-skill = {
+      url = "github:MiniMax-AI/cli?rev=3615170a2e26ec6003c4550cd1324b55ec8ad677";
+      flake = false;
+    };
   };
 
   outputs =
