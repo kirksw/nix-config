@@ -11,6 +11,13 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ---
 
+## Process
+
+- Add only unfinished follow-up work; do not create placeholder items for completed work.
+- Use `P0`–`P3` priority, `XS`–`XL` effort, a concise actionable description, and the originating source.
+- Add new items to the top of `Open`; move completed items to `Done` with the completion date.
+- Feature plans record follow-up items here when work is complete; reviews and ad-hoc discoveries may add items directly.
+
 ## Open
 
 - P2 M Diagnose and repair the 14 currently failing `pi-subagents` unit-test subcases for builtin-agent disabling, frontmatter assembly, agent-directory discovery, profiles, and skills fallback (feat-fix-pi-extension-compatibility)

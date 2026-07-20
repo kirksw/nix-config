@@ -70,6 +70,34 @@ packages.my-config = nix-agents.lib.${system}.mkAgentSystem {
 nix flake init -t github:kirksw/nix-agents
 ```
 
+## Other Repository Commands
+
+- `nix flake update [input]` updates flake inputs.
+- `nix run .#update-packages` updates entries under `packages/`.
+- `nix build .#<package-name>` builds a touched package.
+- `nix run .#install-hooks` installs the repository pre-commit hooks.
+
+## Change Hygiene
+
+- Use concise, imperative, lowercase commit subjects; conventional prefixes are also acceptable.
+- PRs should state what changed, affected hosts/modules, and validation commands. Include screenshots only for UI-facing changes.
+
+## Linux Deployment From macOS
+
+`apps/x86_64-linux/switch <host>` is a local Linux switch wrapper, not the remote deployment path. macOS's case-insensitive `/nix` can produce invalid Linux initrds during local cross-builds.
+
+For remote Linux deployment from macOS, use the repository's deploy-rs output, which sets `remoteBuild = true` in `flake/deploy.nix`:
+
+```bash
+deploy .#nixos-ry4a
+deploy .#nixos-ry6a
+# Tailnet targets when required:
+deploy .#nixos-ry4a-ts
+deploy .#nixos-ry6a-ts
+```
+
+Deploy only affected hosts, then verify the impacted service over SSH or with the smallest relevant cluster check. See [`homelab/references/deploy-and-verify.md`](../../homelab/references/deploy-and-verify.md) for host-specific examples.
+
 ## Guardrails
 
 - Run `nix flake check --no-build` before committing

@@ -1,84 +1,32 @@
-# Repository Guidelines
+# Repository Guide
 
-## Project Structure & Module Organization
-This is a Nix flake-based mono-repo for macOS (`nix-darwin`) and Linux (`NixOS`) systems.
+This is a Nix flake mono-repo for macOS (`nix-darwin`) and Linux (`NixOS`).
 
-- `flake.nix`: composition root (wires outputs from `flake/*.nix`).
-- `flake/hosts/`: host inventory data (system/user/module pointers).
-- `hosts/`: host implementation modules (`hosts/darwin/work`, `hosts/nixos/*`).
-- `modules/`: reusable modules (`darwin/`, `home/`, `nixos/`, `shared/`).
-- `config/`: dotfiles and program configs linked by modules.
-- `packages/`: custom packages (`packages/*/default.nix` auto-discovered).
-- `overlays/`: package overlays.
-- `apps/<system>/`: operational wrappers (`build`, `switch`, `rollback`).
-- `scripts/check-structure.sh`: enforces module-manifest and namespace conventions.
-- `secrets/`: SOPS-encrypted YAML secrets.
-- `agents/`: repo-owned agent definitions, skills, MCP servers, presets, profiles, and Pi target assets.
-- `nix-agents` flake input: reusable generator/wrapper library used to build local agent configs into `~/.config/nix-agents/<tool>/bases/<base>/profiles/<profile>/`.
-- `docs/agents/`: feature plans (`feat-*.md`) and completed summaries (`completed/`).
-- `docs/README.md`: knowledge-store index; start here for architecture, decisions, plans, and references.
+## Map
 
-## Build, Test, and Development Commands
-- `apps/aarch64-darwin/build`: build macOS generation without switching.
-- `apps/aarch64-darwin/switch`: build and apply macOS config.
-- `apps/aarch64-darwin/rollback`: rollback to a previous macOS generation.
-- `apps/x86_64-linux/switch <host>`: apply Linux host config (example: `apps/x86_64-linux/switch nixos-ry6a`).
-- `nix flake check`: run flake checks (including deploy checks).
-- `nix flake update [input]`: update lockfile inputs.
-- `nix run .#update-packages`: run package update scripts for entries in `packages/`.
+- `flake.nix`, `flake/`: composition and host inventory.
+- `hosts/`: host implementations.
+- `modules/`: reusable Darwin, Home Manager, NixOS, and shared modules.
+- `config/`, `packages/`, `overlays/`: managed configuration, packages, and overlays.
+- `apps/<system>/`: build, switch, and rollback wrappers.
+- `agents/`: source-of-truth agent definitions, skills, MCPs, presets, profiles, and Pi assets.
+- `secrets/`: SOPS-encrypted secrets only.
+- `docs/README.md`: architecture, decisions, plans, references, and backlog index.
+- `scripts/check-structure.sh`: module manifest and namespace guard.
 
-## Coding Style & Naming Conventions
-- Nix files use 2-space indentation and trailing commas in attribute sets/lists.
-- Prefer small, composable modules; follow templates in `modules/*/template.nix`.
-- Name modules and files by feature (`modules/home/programs/<tool>.nix`).
-- Module options must use prefixed namespaces:
-  - `homeModules.<name>.enable`
-  - `darwinModules.<name>.enable`
-  - `nixosModules.<name>.enable`
-- Multi-word option names use `camelCase` (example: `homeModules.aiDev.enable`).
-- Keep host names and system keys explicit (`lunar`, `nixos-ry6a`).
-- Use format/lint tools available in the environment (`nixfmt`, `statix`) before opening PRs.
+## Guidance
 
-## Testing Guidelines
-- No global unit test suite is enforced; validation is build-oriented.
-- Minimum check for config changes: `nix flake check` and target system build (`apps/aarch64-darwin/build` or Linux switch/build path).
-- Fast validation path: `./scripts/check-structure.sh` and `nix flake check --no-build`.
-- For package changes, also run: `nix build .#<package-name>`.
-- Pre-commit hooks: run `nix run .#install-hooks` after cloning to enable automatic `nix flake check --no-build` on commit.
+- [Nix flake operations, validation, and deployment](docs/agents/nix-flake-ops.md)
+- [Nix coding style](docs/agents/nix-coding-style.md)
+- [Nix module workflow](docs/agents/nix-module-workflow.md)
+- [Agent feature workflow](docs/agents/README.md#agent-feature-workflow)
+- [Backlog process](docs/BACKLOG.md#process)
 
-## Commit & Pull Request Guidelines
-- Commit style in history is concise, imperative, and lowercase (for example: `add opencode`, `fixes around k3 nodes`).
-- Conventional-style prefixes are acceptable when useful (for example: `chore(flake): update flake.lock`).
-- PRs should include:
-  - What changed and why.
-  - Target host(s)/module(s) affected.
-  - Commands run to validate (for example: `nix flake check`, `apps/aarch64-darwin/build`).
-  - Screenshots only for UI-facing config changes.
+## Critical Guardrails
 
-## Agent Feature Workflow
-Every agent-related change follows a plan-implement-test-complete cycle:
-
-1. **Plan**: create `docs/agents/feat-<name>.md` from the template (`docs/agents/TEMPLATE.md`). Fill in context, scope, approach, and risks.
-2. **Implement**: build the feature (agents, skills, flake apps, modules).
-3. **Test**: validate with `nix flake check --no-build`, `nix run .#sync-agents`, and any relevant build commands. Record commands and results in the plan doc.
-4. **Complete**: fill in the summary section of the plan doc and move it to `docs/agents/completed/feat-<name>.md`.
-5. **Backlog**: any remaining follow-up items or new ideas discovered during the work must be added to `docs/BACKLOG.md` with an effort estimate and priority.
-
-Wrapped tools sync generated agent assets to local profile roots at runtime. Work-only backend engineering practices are exposed through the `lunar-skills` MCP server and loaded on demand; `sync-work-skills` is retained only as a legacy/manual overlay helper.
-
-## Backlog Management
-All todo items are tracked in `docs/BACKLOG.md`. Each item must include:
-- **Priority**: `P0` (critical), `P1` (high), `P2` (medium), `P3` (low).
-- **Effort**: `XS` (<1h), `S` (1-4h), `M` (half day), `L` (1-2 days), `XL` (3+ days).
-- **Description**: concise, actionable task description.
-- **Source**: where the item originated (feature plan, review, ad-hoc).
-
-Items are added when:
-- A feature plan has follow-up work remaining after completion.
-- A new improvement idea surfaces during any session.
-- A review or audit identifies work to be done.
-
-## Security & Configuration Tips
-- Never commit plaintext secrets; keep secrets under `secrets/` and edit with `sops`.
-- Validate `.sops.yaml` rules when adding new secret files.
-- `deploy` is intentionally kept as a custom flake output for `deploy-rs`; warning `unknown flake output 'deploy'` is expected during `nix flake check`.
+- Never commit plaintext secrets; use `sops` and validate `.sops.yaml` rules.
+- Keep module options under `homeModules.*`, `darwinModules.*`, or `nixosModules.*`; use camelCase for multi-word options.
+- Treat `agents/` and repository configuration as source of truth; do not edit generated files under `~/.config/nix-agents`.
+- **macOS → Linux:** do not use `apps/x86_64-linux/switch` for remote Linux deployment. Use the repository's deploy-rs output with remote builds (`flake/deploy.nix`, `remoteBuild = true`), e.g. `deploy .#nixos-ry6a`; see the operations guide for details.
+- If an agent workflow or process fails, tell or prompt the user to add, change, or fix repository documentation or guardrails so the failure is less likely to recur. Before recommending that documentation or guardrail change, ask a read-only subagent to validate that it would have prevented or resolved the issue, and report the validation result. Documentation does not replace code fixes where enforcement is appropriate; make both changes when needed.
+- The custom `deploy` flake output may produce an `unknown flake output 'deploy'` warning during checks; this is expected.
