@@ -172,7 +172,7 @@ in
           ${pkgs.coreutils}/bin/install -d -o root -g users -m 0750 /run/mmx-cli
           mmx_config_tmp="$(${pkgs.coreutils}/bin/mktemp /run/mmx-cli/config.json.XXXXXX)"
           ${pkgs.jq}/bin/jq -n --rawfile api_key ${cfg.sopsDir}/minimax_api_key \
-            '{api_key: ($api_key | rtrimstr("\n"))}' > "$mmx_config_tmp"
+            '{api_key: ($api_key | rtrimstr("\n")), region: "global"}' > "$mmx_config_tmp"
           ${pkgs.coreutils}/bin/chown root:users "$mmx_config_tmp"
           ${pkgs.coreutils}/bin/chmod 0440 "$mmx_config_tmp"
           ${pkgs.coreutils}/bin/mv -f "$mmx_config_tmp" /run/mmx-cli/config.json
