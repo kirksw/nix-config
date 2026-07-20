@@ -48,6 +48,7 @@
   homeModules.aiDev.enable = true;
   homeModules.treekanga.enable = false;
   homeModules.opencode.enable = true;
+  homeModules.minimaxCli.enable = true;
   homeModules.piCodingAgent.enable = true;
   homeModules.omnigent.enable = true;
   homeModules.codex.enable = true;

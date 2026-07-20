@@ -153,6 +153,74 @@ let
   piAgentsModules = localAgents.piModules;
   piFactoryAgentsModules = localAgents.piFactoryModules;
 
+  minimaxCliPackage = self.packages.${system}.minimax-cli;
+  minimaxCli = pkgs.writeShellApplication {
+    name = "mmx";
+    runtimeInputs = [
+      minimaxCliPackage
+      pkgs.coreutils
+      pkgs.jq
+    ];
+    text = ''
+      set -euo pipefail
+
+      case "''${1-}:''${2-}" in
+        :|--help:|-h:|help:|--version:|-V:|version:|update:|config:export-schema)
+          exec ${lib.getExe minimaxCliPackage} "$@"
+          ;;
+        auth:login|auth:logout|auth:refresh)
+          echo "MiniMax authentication is managed by Home Manager and SOPS." >&2
+          exit 2
+          ;;
+      esac
+      for arg in "$@"; do
+        case "$arg" in
+          --api-key|--api-key=*|--key=api_key)
+            echo "MiniMax authentication is managed by Home Manager and SOPS." >&2
+            exit 2
+            ;;
+        esac
+      done
+      if [ "''${1-}:''${2-}" = config:set ]; then
+        for arg in "$@"; do
+          if [ "$arg" = api_key ]; then
+            echo "MiniMax authentication is managed by Home Manager and SOPS." >&2
+            exit 2
+          fi
+        done
+      fi
+
+      # Keep the API key in a dedicated runtime config, never in the Nix store.
+      MMX_CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/mmx-cli"
+      MMX_CONFIG_FILE="$MMX_CONFIG_DIR/config.json"
+      MINIMAX_SECRET_PATH="${config.sops.secrets."minimax".path}"
+      mkdir -p "$MMX_CONFIG_DIR"
+      chmod 700 "$MMX_CONFIG_DIR"
+      if [ ! -r "$MINIMAX_SECRET_PATH" ]; then
+        echo "MiniMax API key secret is unavailable: $MINIMAX_SECRET_PATH" >&2
+        exit 1
+      fi
+
+      _mmx_tmp="$(mktemp "$MMX_CONFIG_FILE.XXXXXX")"
+      trap 'rm -f "$_mmx_tmp"' EXIT
+      if [ -f "$MMX_CONFIG_FILE" ] && ! jq --rawfile api_key "$MINIMAX_SECRET_PATH" \
+        '.api_key = ($api_key | rtrimstr("\n")) | del(.oauth)' \
+        "$MMX_CONFIG_FILE" > "$_mmx_tmp" 2>/dev/null; then
+        echo "Replacing invalid MiniMax config: $MMX_CONFIG_FILE" >&2
+        jq -n --rawfile api_key "$MINIMAX_SECRET_PATH" \
+          '{api_key: ($api_key | rtrimstr("\n"))}' > "$_mmx_tmp"
+      elif [ ! -f "$MMX_CONFIG_FILE" ]; then
+        jq -n --rawfile api_key "$MINIMAX_SECRET_PATH" \
+          '{api_key: ($api_key | rtrimstr("\n"))}' > "$_mmx_tmp"
+      fi
+      chmod 600 "$_mmx_tmp"
+      mv -f "$_mmx_tmp" "$MMX_CONFIG_FILE"
+      trap - EXIT
+
+      export MMX_CONFIG_DIR
+      exec ${lib.getExe minimaxCliPackage} "$@"
+    '';
+  };
   # Thin wrapper that reads sops-decrypted secrets into env vars,
   # then execs the nix-agents wrapper which handles profile detection
   # and credential resolution.
@@ -615,6 +683,7 @@ in
     homeModules.omnigent.enable = lib.mkEnableOption "enables omnigent";
     homeModules.openshell.enable = lib.mkEnableOption "enables openshell";
     homeModules.multica.enable = lib.mkEnableOption "enables multica";
+    homeModules.minimaxCli.enable = lib.mkEnableOption "enables the MiniMax CLI";
   };
 
   config = {
@@ -638,6 +707,16 @@ in
             key = "zai";
             mode = "0400";
           };
+        }
+      )
+      (lib.mkIf
+        (
+          config.homeModules.opencode.enable
+          || config.homeModules.piCodingAgent.enable
+          || config.homeModules.omnigent.enable
+          || config.homeModules.minimaxCli.enable
+        )
+        {
           "minimax" = {
             sopsFile = "${self}/secrets/api/default.yaml";
             key = "minimax";
@@ -720,6 +799,7 @@ in
 
     # --- install packages ---
     home.packages = lib.mkMerge [
+      (lib.mkIf config.homeModules.minimaxCli.enable [ minimaxCli ])
       (lib.mkIf config.homeModules.opencode.enable [
         (mkCredWrapper "opencode" opencodePkg ''
           if is_lunar_project; then
