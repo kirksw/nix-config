@@ -77,6 +77,7 @@ let
       authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:02";
+      autostart = false;
       openclaw = {
         router = "home-llm-router";
         secretsFile = "household";
@@ -98,6 +99,7 @@ let
       authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:04";
+      memoryMB = 8192;
       openclaw = {
         router = "home-llm-router";
         providerMode = "direct";
@@ -130,6 +132,7 @@ let
       authSecret = "tailscale/microvms/authKey";
       authKey = "assistantAuthKey";
       mac = "02:00:00:10:00:05";
+      memoryMB = 8192;
       openclaw = {
         router = "home-llm-router";
         providerMode = "direct";
@@ -267,7 +270,7 @@ let
     {
       name = assistant.name;
       value = {
-        autostart = true;
+        autostart = assistant.autostart or true;
         # ponytail: avoid deploy-rs rollback on transient parallel MicroVM boot failures; restart target VMs manually when needed.
         restartIfChanged = false;
 
@@ -410,7 +413,7 @@ let
           microvm = {
             hypervisor = "qemu";
             # OpenClaw + Docker sandbox needs more RAM
-            mem = if assistant ? openclaw then 6144 else 4096;
+            mem = assistant.memoryMB or (if assistant ? openclaw then 6144 else 4096);
             vcpu = 2;
             interfaces = [
               {
@@ -468,7 +471,7 @@ let
   mkRouterVm = router: {
     name = router.name;
     value = {
-      autostart = true;
+      autostart = false;
       # ponytail: avoid deploy-rs rollback on transient parallel MicroVM boot failures; restart target VMs manually when needed.
       restartIfChanged = false;
       config = {
