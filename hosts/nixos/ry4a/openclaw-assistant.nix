@@ -78,10 +78,7 @@ in
 
     modelFallbacks = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [
-        "router-openai/cx/gpt-5.4"
-        "router-anthropic/glm/glm-5.2"
-      ];
+      default = [ "router-anthropic/glm/glm-5.2" ];
       description = "Fallback models for the assistant default agent model.";
     };
   };
@@ -293,6 +290,12 @@ in
         models.providers =
           if cfg.providerMode == "direct" then
             {
+              openai = {
+                baseUrl = "https://chatgpt.com/backend-api/codex";
+                api = "openai-chatgpt-responses";
+                models = [ ];
+              };
+
               minimax = {
                 baseUrl = "https://api.minimax.io/v1";
                 api = "openai-completions";
@@ -324,7 +327,7 @@ in
               };
 
               zai = {
-                baseUrl = "https://api.z.ai/api/paas/v4/";
+                baseUrl = "https://api.z.ai/api/coding/paas/v4/";
                 api = "openai-completions";
                 apiKey = {
                   source = "env";
@@ -403,33 +406,6 @@ in
                       "text"
                       "image"
                     ];
-                  }
-                ];
-              };
-              router-openai = {
-                baseUrl = "http://${cfg.router}:80/v1";
-                api = "openai-completions";
-                apiKey = {
-                  source = "env";
-                  provider = "default";
-                  id = "LLM_ROUTER_API_KEY";
-                };
-                models = [
-                  {
-                    id = "cx/gpt-5.3-codex";
-                    name = "GPT 5.3 Codex";
-                    api = "openai-completions";
-                  }
-                  {
-                    id = "cx/gpt-5.4";
-                    name = "GPT 5.4";
-                    api = "openai-completions";
-                  }
-                  {
-                    id = "cx/gpt-5.5";
-                    name = "GPT 5.5";
-                    api = "openai-completions";
-                    reasoning = true;
                   }
                 ];
               };

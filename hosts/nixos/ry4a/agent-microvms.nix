@@ -133,7 +133,11 @@ let
       openclaw = {
         router = "home-llm-router";
         providerMode = "direct";
-        # ponytail: no model allowlist here; Kirk and its future subagents may use the full provider catalog.
+        modelAllowlist = [
+          "openai/*"
+          "minimax/*"
+          "zai/*"
+        ];
         modelPrimary = "openai/gpt-5.6-luna";
         modelFallbacks = [
           "minimax/MiniMax-M3"
@@ -290,10 +294,7 @@ let
                 assistant.openclaw.sopsDir = "/run/host-secrets/openclaw";
                 assistant.openclaw.telegramAllowFrom = assistant.openclaw.telegramAllowFrom or [ ];
                 assistant.openclaw.modelFallbacks =
-                  assistant.openclaw.modelFallbacks or [
-                    "router-openai/cx/gpt-5.4"
-                    "router-anthropic/glm/glm-5.2"
-                  ];
+                  assistant.openclaw.modelFallbacks or [ "router-anthropic/glm/glm-5.2" ];
                 nixpkgs.overlays = [
                   inputs.nix-openclaw.overlays.default
                   openclawAcpxOverlay
