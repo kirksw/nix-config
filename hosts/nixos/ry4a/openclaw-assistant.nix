@@ -240,15 +240,43 @@ in
         plugins.entries.memory-wiki = {
           enabled = true;
         };
-        skills.entries = {
-          gifgrep.enabled = true;
-          github.enabled = true;
-          openai-whisper.enabled = true;
-          sherpa-onnx-tts = {
-            enabled = true;
-            env = {
-              SHERPA_ONNX_RUNTIME_DIR = "${cfg.sherpaRuntimeDir}";
-              SHERPA_ONNX_MODEL_DIR = "${cfg.sherpaModelDir}";
+        skills = {
+          allowBundled = [
+            "camsnap"
+            "clawhub"
+            "diagram-maker"
+            "gh-issues"
+            "gifgrep"
+            "github"
+            "gog"
+            "healthcheck"
+            "meme-maker"
+            "node-connect"
+            "node-inspect-debugger"
+            "notion"
+            "openai-whisper"
+            "python-debugpy"
+            "session-logs"
+            "sherpa-onnx-tts"
+            "skill-creator"
+            "sonoscli"
+            "spike"
+            "summarize"
+            "taskflow"
+            "taskflow-inbox-triage"
+            "video-frames"
+            "weather"
+          ];
+          entries = {
+            gifgrep.enabled = true;
+            github.enabled = true;
+            openai-whisper.enabled = true;
+            sherpa-onnx-tts = {
+              enabled = true;
+              env = {
+                SHERPA_ONNX_RUNTIME_DIR = "${cfg.sherpaRuntimeDir}";
+                SHERPA_ONNX_MODEL_DIR = "${cfg.sherpaModelDir}";
+              };
             };
           };
         };
