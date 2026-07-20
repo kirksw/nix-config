@@ -2,6 +2,8 @@
 # Imported into a VM config when the assistant definition has `openclaw.router` set.
 {
   self,
+  enableMmxCli ? false,
+  mmxCliSkill ? null,
   config,
   lib,
   pkgs,
@@ -10,6 +12,31 @@
 
 let
   cfg = config.assistant.openclaw;
+  mmxCli = pkgs.writeShellApplication {
+    name = "mmx";
+    runtimeInputs = [ self.packages.${pkgs.system}.minimax-cli ];
+    text = ''
+      set -euo pipefail
+
+      case "''${1-}:''${2-}" in
+        auth:status|config:show|config:export-schema) ;;
+        auth:*|config:*|update:*)
+          echo "MiniMax authentication and configuration are managed by Nix/SOPS." >&2
+          exit 2
+          ;;
+      esac
+      for arg in "$@"; do
+        case "$arg" in
+          --api-key|--api-key=*|--base-url|--base-url=*|--verbose)
+            echo "MiniMax authentication and endpoints are managed by Nix/SOPS." >&2
+            exit 2
+            ;;
+        esac
+      done
+      unset MINIMAX_API_KEY MINIMAX_BASE_URL MINIMAX_VERBOSE
+      exec ${lib.getExe self.packages.${pkgs.system}.minimax-cli} "$@"
+    '';
+  };
 in
 {
   options.assistant.openclaw = {
@@ -141,6 +168,15 @@ in
       script = ''
         umask 077
         ${pkgs.coreutils}/bin/install -d -m 0700 /run/openclaw-secrets
+        ${lib.optionalString enableMmxCli ''
+          ${pkgs.coreutils}/bin/install -d -o root -g users -m 0750 /run/mmx-cli
+          mmx_config_tmp="$(${pkgs.coreutils}/bin/mktemp /run/mmx-cli/config.json.XXXXXX)"
+          ${pkgs.jq}/bin/jq -n --rawfile api_key ${cfg.sopsDir}/minimax_api_key \
+            '{api_key: ($api_key | rtrimstr("\n"))}' > "$mmx_config_tmp"
+          ${pkgs.coreutils}/bin/chown root:users "$mmx_config_tmp"
+          ${pkgs.coreutils}/bin/chmod 0440 "$mmx_config_tmp"
+          ${pkgs.coreutils}/bin/mv -f "$mmx_config_tmp" /run/mmx-cli/config.json
+        ''}
         {
           echo "TELEGRAM_BOT_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/telegram_bot_token)"
           echo "GATEWAY_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/gateway_token)"
@@ -153,6 +189,9 @@ in
           if [ -f ${cfg.sopsDir}/zai_api_key ]; then
             echo "ZAI_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/zai_api_key)"
           fi
+          ${lib.optionalString enableMmxCli ''
+            echo "MMX_CONFIG_DIR=/run/mmx-cli"
+          ''}
         } > /run/openclaw-secrets/env
         ${pkgs.coreutils}/bin/chown agent:users /run/openclaw-secrets/env
       '';
@@ -177,7 +216,7 @@ in
         pkgs.sudo
         pkgs.tailscale
         pkgs.tesseract
-      ];
+      ] ++ lib.optional enableMmxCli mmxCli;
       config = {
         gateway = {
           mode = "local";
@@ -241,6 +280,7 @@ in
           enabled = true;
         };
         skills = {
+          load.extraDirs = lib.optional enableMmxCli mmxCliSkill;
           allowBundled = [
             "camsnap"
             "clawhub"
