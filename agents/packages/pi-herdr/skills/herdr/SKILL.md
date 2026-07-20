@@ -18,7 +18,15 @@ If the user names a workspace/project/thread (`dwh-4261`, repo name, ticket, etc
    - `{ "action": "tab_create", "workspace": "wW", "label": "pi", "pane": "dwh4261-pi" }`
 3. If it does not exist and a cwd is known, create it:
    - `{ "action": "workspace_create", "label": "dwh-4261", "cwd": "/path", "pane": "dwh4261-pi" }`
-4. Run in that alias: `{ "action": "run", "pane": "dwh4261-pi", "command": "pi --no-session" }`
+   `workspace_create` already creates the default tab and root pane; do not create a second tab. Reuse the returned root pane.
+4. When descriptive tab/pane labels are wanted, get the qualified tab id with `{ "action": "tab_list", "workspace": "wW" }`, then use the CLI because the native tool has no rename action:
+   - `herdr tab rename <tab-id> <label>`
+   - `herdr pane rename <root-pane-id> <label>`
+5. Native pane actions are scoped to the Pi agent's own workspace. `workspace_focus`/`tab_focus` change UI focus only; they do not change that scope. For a root pane in another workspace, use the CLI instead:
+   - Run: `herdr pane run <root-pane-id> "pi --no-session"`
+   - Read: `herdr pane read <root-pane-id> --source recent-unwrapped --lines 80`
+   - Wait: `herdr wait agent-status <root-pane-id> --status idle --timeout 30000`
+   Do not retry native `list`, pane `focus`, `run`, `read`, `watch`, `wait_agent`, `send`, `stop`, or `pane_split` for that pane after changing focus.
 
 Only split the current pane when the user asks for a split/right/below pane, or when no target workspace is named:
 
@@ -26,8 +34,8 @@ Only split the current pane when the user asks for a split/right/below pane, or 
    - Split current pane: `{ "action": "pane_split", "newPane": "server" }`
    - New tab root pane in current workspace: `{ "action": "tab_create", "label": "server", "pane": "server" }`
    - New workspace root pane: `{ "action": "workspace_create", "label": "api", "pane": "api", "cwd": "/path" }`
-2. Run in that pane: `{ "action": "run", "pane": "server", "command": "npm run dev" }`
-3. Wait/read by pane alias:
+2. Run in that pane: `{ "action": "run", "pane": "server", "command": "npm run dev" }` (for a pane in another workspace, use the CLI workflow above for all pane actions).
+3. Wait/read by pane alias in the agent's own workspace:
    - Normal process: `{ "action": "watch", "pane": "server", "match": "ready|listening", "regex": true }`
    - Logs: `{ "action": "read", "pane": "server", "source": "recent-unwrapped", "lines": 80 }`
    - Agent pane only: `{ "action": "wait_agent", "pane": "reviewer", "statuses": ["idle", "done"] }`
@@ -40,7 +48,7 @@ Only split the current pane when the user asks for a split/right/below pane, or 
 - Prefer friendly aliases (`server`, `tests`, `reviewer`) and reuse them.
 - Use `run` for text plus Enter. Use `send` only for raw text/keys without implicit Enter.
 - Use `watch` for servers, tests, builds, and logs. Use `wait_agent` only for recognized coding agents.
-- Preserve focus unless the user explicitly asks to switch: omit `focus` or set `focus: false`.
+- Preserve focus unless the user explicitly asks to switch: omit `focus` or set `focus: false`. Focus changes do not change the workspace scope of native pane actions.
 - Use `source: "recent-unwrapped"` when matching or reading logs that may soft-wrap.
 - If an alias is stale, call `list`, pick a live pane id, or create a fresh pane. Do not guess ids.
 
