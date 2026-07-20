@@ -1,6 +1,9 @@
 {
+  alsa-lib,
+  autoPatchelfHook,
   fetchurl,
   lib,
+  stdenv,
   stdenvNoCC,
 }:
 
@@ -12,6 +15,12 @@ stdenvNoCC.mkDerivation {
     url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.2/sherpa-onnx-v1.13.2-linux-x64-shared.tar.bz2";
     hash = "sha256-HvZ0FTX3r01p45T9RAqAcQgDbSbtT1QmYBkQGdpcDao=";
   };
+
+  nativeBuildInputs = [ autoPatchelfHook ];
+  buildInputs = [
+    alsa-lib
+    stdenv.cc.cc.lib
+  ];
 
   dontConfigure = true;
   dontBuild = true;

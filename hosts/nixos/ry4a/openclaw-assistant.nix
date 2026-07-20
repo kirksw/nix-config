@@ -252,6 +252,30 @@ in
             };
           };
         };
+        messages.tts = {
+          auto = "off";
+          provider = "minimax";
+          providers = {
+            minimax = {
+              model = "speech-2.8-hd";
+              speakerVoiceId = "English_expressive_narrator";
+              speed = 1.0;
+              vol = 1.0;
+            };
+            "tts-local-cli" = {
+              command = "${cfg.sherpaRuntimeDir}/bin/sherpa-onnx-offline-tts";
+              args = [
+                "--vits-model=${cfg.sherpaModelDir}/en_US-lessac-high.onnx"
+                "--vits-tokens=${cfg.sherpaModelDir}/tokens.txt"
+                "--vits-data-dir=${cfg.sherpaModelDir}/espeak-ng-data"
+                "--output-filename={{OutputPath}}"
+                "{{Text}}"
+              ];
+              outputFormat = "wav";
+              timeoutMs = 120000;
+            };
+          };
+        };
         plugins.entries.file-transfer = {
           enabled = true;
           config.nodes."*" = {
