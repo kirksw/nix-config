@@ -165,30 +165,23 @@ let
       set -euo pipefail
 
       case "''${1-}:''${2-}" in
-        :|--help:|-h:|help:|--version:|-V:|version:|update:|config:export-schema)
+        :|--help:|-h:|help:|--version:|-V:|version:|config:export-schema)
           exec ${lib.getExe minimaxCliPackage} "$@"
           ;;
-        auth:login|auth:logout|auth:refresh)
-          echo "MiniMax authentication is managed by Home Manager and SOPS." >&2
+        auth:status|config:show) ;;
+        auth:*|config:*|update:*)
+          echo "MiniMax authentication and configuration are managed by Home Manager and SOPS." >&2
           exit 2
           ;;
       esac
       for arg in "$@"; do
         case "$arg" in
-          --api-key|--api-key=*|--key=api_key)
-            echo "MiniMax authentication is managed by Home Manager and SOPS." >&2
+          --api-key|--api-key=*|--base-url|--base-url=*|--verbose)
+            echo "MiniMax authentication and endpoints are managed by Home Manager and SOPS." >&2
             exit 2
             ;;
         esac
       done
-      if [ "''${1-}:''${2-}" = config:set ]; then
-        for arg in "$@"; do
-          if [ "$arg" = api_key ]; then
-            echo "MiniMax authentication is managed by Home Manager and SOPS." >&2
-            exit 2
-          fi
-        done
-      fi
 
       # Keep the API key in a dedicated runtime config, never in the Nix store.
       MMX_CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/mmx-cli"
@@ -204,7 +197,7 @@ let
       _mmx_tmp="$(mktemp "$MMX_CONFIG_FILE.XXXXXX")"
       trap 'rm -f "$_mmx_tmp"' EXIT
       if [ -f "$MMX_CONFIG_FILE" ] && ! jq --rawfile api_key "$MINIMAX_SECRET_PATH" \
-        '.api_key = ($api_key | rtrimstr("\n")) | del(.oauth)' \
+        '.api_key = ($api_key | rtrimstr("\n")) | del(.oauth, .base_url)' \
         "$MMX_CONFIG_FILE" > "$_mmx_tmp" 2>/dev/null; then
         echo "Replacing invalid MiniMax config: $MMX_CONFIG_FILE" >&2
         jq -n --rawfile api_key "$MINIMAX_SECRET_PATH" \
@@ -218,6 +211,7 @@ let
       trap - EXIT
 
       export MMX_CONFIG_DIR
+      unset MINIMAX_API_KEY MINIMAX_BASE_URL MINIMAX_VERBOSE
       exec ${lib.getExe minimaxCliPackage} "$@"
     '';
   };
