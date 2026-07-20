@@ -217,7 +217,10 @@
             hooks = {
               nix-flake-check = {
                 enable = true;
-                entry = "nix flake check --no-build";
+                entry = "${pkgs.writeShellScript "nix-flake-check" ''
+                  export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
+                  exec ${pkgs.nix}/bin/nix flake check --no-build --impure
+                ''}";
                 files = "\\.nix$";
                 pass_filenames = false;
               };
