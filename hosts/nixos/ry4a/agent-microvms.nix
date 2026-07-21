@@ -13,11 +13,6 @@ let
   routerServicePort = 20128;
   routerPackage = self.packages.${pkgs.system}."9router";
   omniRoutePackage = self.packages.${pkgs.system}.omniroute;
-  mmxCliAssistants = [
-    "kirk-assistant"
-    "sanja-assistant"
-  ];
-  mmxCliSkill = (import ../../../agents/defs/skills/mmx-cli { inherit inputs pkgs; }).skills.mmx-cli.src;
   tailscaleAuthKeyFile = config.sops.secrets."tailscale/microvms/authKey".path;
   tailscaleAuthKeyDir = builtins.dirOf tailscaleAuthKeyFile;
   routerRuntimePackages = [
@@ -285,10 +280,7 @@ let
             [
               inputs.nix-openclaw.nixosModules.openclaw-gateway
               ({ ... }: {
-                _module.args = {
-                  inherit mmxCliSkill self;
-                  enableMmxCli = builtins.elem assistant.name mmxCliAssistants;
-                };
+                _module.args.self = self;
               })
               ./openclaw-assistant.nix
               ({ ... }: {
