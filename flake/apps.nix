@@ -32,6 +32,10 @@ let
     set -euo pipefail
     export repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel 2>/dev/null || ${pkgs.coreutils}/bin/pwd)"
     cd "$repo_root"
+    # Keep nested nix-update tools isolated from stale system-only settings.
+    export NIX_CONF_DIR="''${TMPDIR:-/tmp}/nix-update-conf"
+    ${pkgs.coreutils}/bin/mkdir -p "$NIX_CONF_DIR"
+    printf '%s\n' 'experimental-features = nix-command flakes' > "$NIX_CONF_DIR/nix.conf"
     echo "Updating all packages..."
     ${builtins.concatStringsSep "\n" (
       map (name: ''

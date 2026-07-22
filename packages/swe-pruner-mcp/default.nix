@@ -19,7 +19,7 @@ upstream.overrideAttrs (old: {
         set -euo pipefail
 
         cd "$repo_root"
-        ${lib.getExe nix} flake lock --update-input swe-pruner-mcp
+        ${lib.getExe nix} flake update swe-pruner-mcp
       '';
     };
   postPatch =
