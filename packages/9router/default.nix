@@ -143,7 +143,7 @@ buildNpmPackage (finalAttrs: {
         echo "Updated 9router to version $version (npmDepsHash unchanged)"
         exit 0
       fi
-      npm_deps_hash="$(printf '%s\\n' "$output" | sed -n 's/.*got:[[:space:]]*//p' | tail -1)"
+      npm_deps_hash="$(printf '%s\\n' "$output" | sed -n 's/.*got:[[:space:]]*\\(sha256-[A-Za-z0-9+/=]*\\).*/\\1/p' | tail -1)"
       if [ -z "$npm_deps_hash" ]; then
         printf '%s\\n' "$output" >&2
         echo "Could not determine npmDepsHash from nix build output" >&2
