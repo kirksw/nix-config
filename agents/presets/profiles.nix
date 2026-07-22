@@ -68,7 +68,6 @@ _: {
       agents = [ ]; # empty = all
       skills = [ ]; # empty = all
       mcpServers = [
-        "agent-observe"
         "swe-pruner"
       ];
       tierMapping = {
@@ -125,7 +124,6 @@ _: {
       ];
       mcpServers = [
         "1password"
-        "agent-observe"
         "lunar-skills"
         "swe-pruner"
         "granola"

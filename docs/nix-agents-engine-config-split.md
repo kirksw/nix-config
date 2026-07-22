@@ -30,6 +30,4 @@ nix flake check --no-build
 Build relevant package outputs when touching local agent packages:
 
 ```sh
-nix build .#multica
-nix build .#agent-observe
 ```

@@ -61,7 +61,7 @@
       webfetch = "allow";
     };
     skills = [ ];
-    mcpServers = [ "agent-observe" ];
+    mcpServers = [ ];
     orchestration.patterns = { };
     orchestration.antiPatterns = [ ];
     overrides = { };

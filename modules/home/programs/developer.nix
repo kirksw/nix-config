@@ -277,8 +277,6 @@ in
       duckdb
       # used to notify of theme changes
       dark-mode-notify
-      # gitbutler cli
-      gitbutler-cli
     ];
 
     home.shellAliases = {

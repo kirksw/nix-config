@@ -39,8 +39,6 @@ Commands run to validate:
 ```sh
 ./scripts/check-structure.sh
 nix flake check --no-build
-nix build .#multica
-nix build .#agent-observe
 ```
 
 ## Summary
@@ -49,7 +47,7 @@ nix build .#agent-observe
 
 - Added local `agents/` definitions, presets, profile policy, Pi target assets, and workflow guidance.
 - Rewired AI tool wrappers to use local agent modules/assets with `inputs.nix-agents.lib`.
-- Moved `multica`, `multica-selfhost`, and `agent-observe` package definitions into this repo.
+- Moved local package definitions into this repo.
 - Updated `sync-work-skills` to target `work-default` profile directories.
 - Documented the engine/config split and tracked upstream cleanup in the backlog.
 - Kept sandbox policy out of the local preset until the published `nix-agents` engine exposes the `sandboxes` option.
@@ -58,8 +56,6 @@ nix build .#agent-observe
 
 - `./scripts/check-structure.sh`
 - `nix flake check --no-build`
-- `nix build .#multica`
-- `nix build .#agent-observe`
 - `nix run .#sync-work-skills`
 
 ### Follow-up

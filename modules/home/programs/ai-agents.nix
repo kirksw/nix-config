@@ -676,7 +676,6 @@ in
     homeModules.piCodingAgent.enable = lib.mkEnableOption "enables pi-coding-agent";
     homeModules.omnigent.enable = lib.mkEnableOption "enables omnigent";
     homeModules.openshell.enable = lib.mkEnableOption "enables openshell";
-    homeModules.multica.enable = lib.mkEnableOption "enables multica";
     homeModules.minimaxCli.enable = lib.mkEnableOption "enables the MiniMax CLI";
   };
 
@@ -1080,9 +1079,6 @@ in
         (pkgs.writeShellScriptBin "omni" ''
           exec "${config.home.profileDirectory}/bin/omnigent" "$@"
         '')
-      ])
-      (lib.mkIf config.homeModules.multica.enable [
-        self.packages.${system}.multica
       ])
       (lib.mkIf config.homeModules.openshell.enable [
         inputs.nix-agents.packages.${system}.openshell

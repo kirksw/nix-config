@@ -42,7 +42,7 @@ After modifying `agents/`, `modules/home/programs/ai-agents.nix`, or local agent
 1. `./scripts/check-structure.sh`
 2. `nix flake check --no-build`
 3. `nix run .#sync-agents`
-4. Build any touched package, for example `nix build .#agent-observe`
+4. Build any touched package, for example `nix build .#<package-name>`
 
 For Darwin/Home Manager changes, prefer build-oriented validation from the agent:
 

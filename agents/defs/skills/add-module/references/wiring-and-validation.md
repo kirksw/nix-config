@@ -43,6 +43,6 @@ If a build fails with missing references such as undefined skills or delegate ta
 
 - Agents: `code-monkey`, `explore`, `10xBEAST`, `the-architect`, `bottleneck`, `chaos-demon`, `code-red`, `scribe`
 - Skills: `nix-agents`, `system-context`, `secrets-management`, `skill-creator`, `session-resume`, `swe-pruner-mcp`, `add-module`, `parallel-reviews`
-- MCP servers: `agent-observe`, `swe-pruner`
+- MCP servers: `swe-pruner`
 - Hooks: `session-write`
 - Presets: `default`, `minimal`, `security`, `profiles`
