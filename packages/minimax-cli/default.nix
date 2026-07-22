@@ -3,7 +3,12 @@
   buildNpmPackage,
   fetchurl,
   makeWrapper,
+  writeShellScript,
+  curl,
+  jq,
+  nix,
   nodejs,
+  nodejs_22,
   stdenv,
   testers,
 }:
@@ -56,9 +61,48 @@ buildNpmPackage (finalAttrs: {
   '';
   doInstallCheck = stdenv.buildPlatform.canExecute stdenv.hostPlatform;
 
-  passthru.tests.version = testers.testVersion {
-    package = finalAttrs.finalPackage;
-    command = "mmx --version";
+  passthru = {
+    updateScript = writeShellScript "update-minimax-cli" ''
+      set -euo pipefail
+      version_json="$repo_root/packages/minimax-cli/versions.json"
+      lock_file="$repo_root/packages/minimax-cli/package-lock.json"
+      version="$(${nodejs_22}/bin/npm view mmx-cli version --json | ${lib.getExe jq} -r .)"
+      tarball="https://registry.npmjs.org/mmx-cli/-/mmx-cli-$version.tgz"
+      source_hash="$(${lib.getExe nix} hash convert --hash-algo sha256 --to sri \
+        $(${nix}/bin/nix-prefetch-url --type sha256 "$tarball" 2>&1 | tail -1))"
+      tmp_dir="$(mktemp -d)"
+      trap 'rm -rf "$tmp_dir"' EXIT
+      ${lib.getExe curl} -fsSL "$tarball" -o "$tmp_dir/source.tgz"
+      tar -xzf "$tmp_dir/source.tgz" -C "$tmp_dir" --strip-components=1
+      rm -f "$tmp_dir/package-lock.json" "$tmp_dir/npm-shrinkwrap.json"
+      (cd "$tmp_dir" && ${nodejs_22}/bin/npm install --package-lock-only --ignore-scripts)
+      cp "$tmp_dir/package-lock.json" "$lock_file"
+      old_npm_deps_hash="$(${lib.getExe jq} -r '.mmxCli.npmDepsHash' "$version_json")"
+      ${lib.getExe jq} -n --arg version "$version" --arg hash "$source_hash" --arg npmDepsHash "$old_npm_deps_hash" \
+        '{formatVersion: 1, mmxCli: {version: $version, hash: $hash, npmDepsHash: $npmDepsHash}}' > "$version_json"
+      set +e
+      output="$(${nix}/bin/nix build ".#minimax-cli" --no-link --print-build-logs 2>&1)"
+      status="$?"
+      set -e
+      if [ "$status" -eq 0 ]; then
+        echo "Updated minimax-cli to version $version (npmDepsHash unchanged)"
+        exit 0
+      fi
+      npm_deps_hash="$(printf '%s\\n' "$output" | sed -n 's/.*got:[[:space:]]*//p' | tail -1)"
+      if [ -z "$npm_deps_hash" ]; then
+        printf '%s\\n' "$output" >&2
+        echo "Could not determine npmDepsHash from nix build output" >&2
+        exit "$status"
+      fi
+      tmp_json="$(mktemp)"
+      ${lib.getExe jq} --arg npmDepsHash "$npm_deps_hash" '.mmxCli.npmDepsHash = $npmDepsHash' "$version_json" > "$tmp_json"
+      mv "$tmp_json" "$version_json"
+      echo "Updated minimax-cli to version $version"
+    '';
+    tests.version = testers.testVersion {
+      package = finalAttrs.finalPackage;
+      command = "mmx --version";
+    };
   };
 
   meta = {

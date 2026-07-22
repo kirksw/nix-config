@@ -1,10 +1,14 @@
 {
   alsa-lib,
   autoPatchelfHook,
+  curl,
   fetchurl,
+  jq,
   lib,
   stdenv,
   stdenvNoCC,
+  nix-update,
+  writeShellScript,
 }:
 
 stdenvNoCC.mkDerivation {
@@ -24,6 +28,19 @@ stdenvNoCC.mkDerivation {
 
   dontConfigure = true;
   dontBuild = true;
+
+  passthru.updateScript = writeShellScript "update-sherpa-onnx-runtime" ''
+    set -euo pipefail
+    version="$(${lib.getExe curl} -fsSL 'https://api.github.com/repos/k2-fsa/sherpa-onnx/releases?per_page=100' |
+      ${lib.getExe jq} -r '[.[] | select((.draft | not) and (.prerelease | not)) | .tag_name as $tag |
+        select($tag | test("^v?[0-9]+\\.[0-9]+\\.[0-9]+$")) |
+        select(any(.assets[]; .name == ("sherpa-onnx-v" + ($tag | ltrimstr("v")) + "-linux-x64-shared.tar.bz2"))) |
+        ($tag | ltrimstr("v"))][0]')"
+    test -n "$version"
+    ${lib.getExe nix-update} --flake --version="$version" sherpa-onnx-runtime
+    echo "Updated sherpa-onnx-runtime to v$version"
+  '';
+
   installPhase = ''
     mkdir -p "$out"
     cp -R bin lib "$out/"

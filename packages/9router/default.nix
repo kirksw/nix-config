@@ -3,7 +3,12 @@
   buildNpmPackage,
   fetchurl,
   makeWrapper,
+  writeShellScript,
+  curl,
+  jq,
+  nix,
   nodejs,
+  nodejs_22,
   stdenv,
   tailscale,
   testers,
@@ -112,6 +117,43 @@ buildNpmPackage (finalAttrs: {
   doInstallCheck = stdenv.hostPlatform.canExecute stdenv.hostPlatform;
 
   passthru = {
+    updateScript = writeShellScript "update-9router" ''
+      set -euo pipefail
+      version_json="$repo_root/packages/9router/versions.json"
+      lock_file="$repo_root/packages/9router/package-lock.json"
+      version="$(${nodejs_22}/bin/npm view 9router version --json | ${lib.getExe jq} -r .)"
+      tarball="https://registry.npmjs.org/9router/-/9router-$version.tgz"
+      source_hash="$(${lib.getExe nix} hash convert --hash-algo sha256 --to sri \
+        $(${nix}/bin/nix-prefetch-url --type sha256 "$tarball" 2>&1 | tail -1))"
+      tmp_dir="$(mktemp -d)"
+      trap 'rm -rf "$tmp_dir"' EXIT
+      ${lib.getExe curl} -fsSL "$tarball" -o "$tmp_dir/source.tgz"
+      tar -xzf "$tmp_dir/source.tgz" -C "$tmp_dir" --strip-components=1
+      rm -f "$tmp_dir/package-lock.json" "$tmp_dir/npm-shrinkwrap.json"
+      (cd "$tmp_dir" && ${nodejs_22}/bin/npm install --package-lock-only --ignore-scripts)
+      cp "$tmp_dir/package-lock.json" "$lock_file"
+      old_npm_deps_hash="$(${lib.getExe jq} -r '."9routerVersions".npmDepsHash' "$version_json")"
+      ${lib.getExe jq} -n --arg version "$version" --arg hash "$source_hash" --arg npmDepsHash "$old_npm_deps_hash" \
+        '{formatVersion: 1, "9routerVersions": {version: $version, hash: $hash, npmDepsHash: $npmDepsHash}}' > "$version_json"
+      set +e
+      output="$(${nix}/bin/nix build ".#9router" --no-link --print-build-logs 2>&1)"
+      status="$?"
+      set -e
+      if [ "$status" -eq 0 ]; then
+        echo "Updated 9router to version $version (npmDepsHash unchanged)"
+        exit 0
+      fi
+      npm_deps_hash="$(printf '%s\\n' "$output" | sed -n 's/.*got:[[:space:]]*//p' | tail -1)"
+      if [ -z "$npm_deps_hash" ]; then
+        printf '%s\\n' "$output" >&2
+        echo "Could not determine npmDepsHash from nix build output" >&2
+        exit "$status"
+      fi
+      tmp_json="$(mktemp)"
+      ${lib.getExe jq} --arg npmDepsHash "$npm_deps_hash" '."9routerVersions".npmDepsHash = $npmDepsHash' "$version_json" > "$tmp_json"
+      mv "$tmp_json" "$version_json"
+      echo "Updated 9router to version $version"
+    '';
     tests.version = testers.testVersion {
       package = finalAttrs.finalPackage;
       command = "9router --version";
