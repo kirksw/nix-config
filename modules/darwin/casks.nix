@@ -7,4 +7,5 @@ _:
   "typora"
   "ghostty"
   "cyberduck"
+  "fluidvoice"
 ]

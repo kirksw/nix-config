@@ -12,6 +12,7 @@
       fastfetch
       nerd-fonts.fira-code
       nerd-fonts.fira-mono
+      self.packages.${pkgs.system}.pindrop
       whatsapp-for-mac
     ];
     sessionVariables = {
@@ -53,7 +54,6 @@
   homeModules.omnigent.enable = true;
   homeModules.codex.enable = true;
   homeModules.openshell.enable = true;
-  homeModules.multica.enable = true;
   homeModules.swePrunerMcp.enable = true;
   homeModules.cursor.enable = true;
   # misc
