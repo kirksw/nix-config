@@ -18,7 +18,7 @@ let
     owner = "omnigent-ai";
     repo = "omnigent";
     inherit rev;
-    hash = "sha256-Q5mLSRQWHDnO4GyDO8YeQlxCRyWY5uH+xtc4UW+aMtw=";
+    hash = "sha256-NjSVwykJXvEcLwkrDofPI3yI2Gb55kKE+XcicHkxH3M=";
   };
   patchedSrc = runCommand "omnigent-${version}-patched-source" { } ''
     cp -R ${src} $out
@@ -66,22 +66,36 @@ writeShellApplication {
             set -euo pipefail
 
             version_json="$repo_root/packages/omnigent/versions.json"
-            read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git HEAD)
+            version="$(${lib.getExe python312} - <<'PY'
+      import json
+      import urllib.request
 
-            ${lib.getExe python312} - "$version_json" "$rev" <<'PY'
+      request = urllib.request.Request(
+          "https://api.github.com/repos/omnigent-ai/omnigent/releases/latest",
+          headers={"User-Agent": "nix-update-omnigent"},
+      )
+      with urllib.request.urlopen(request) as response:
+          tag = json.load(response)["tag_name"]
+      print(tag.removeprefix("v"))
+      PY
+            )"
+            tag="v$version"
+            read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag^{}")
+
+            ${lib.getExe python312} - "$version_json" "$version" "$rev" <<'PY'
       import json
       import sys
       from pathlib import Path
 
       path = Path(sys.argv[1])
-      rev = sys.argv[2]
+      version, rev = sys.argv[2:]
       data = json.loads(path.read_text())
       data.setdefault("formatVersion", 1)
-      data.setdefault("omnigent", {})["rev"] = rev
+      data.setdefault("omnigent", {}).update(version=version, rev=rev)
       path.write_text(json.dumps(data, indent=2) + "\n")
       PY
 
-            echo "Updated omnigent rev to $rev"
+            echo "Updated omnigent to version $version (rev $rev)"
     '';
   };
 
