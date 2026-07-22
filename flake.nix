@@ -24,10 +24,6 @@
       url = "github:zhaofengli/nix-homebrew";
       inputs.brew-src.follows = "homebrew-brew";
     };
-    open-wispr-tap = {
-      url = "github:human37/homebrew-open-wispr";
-      flake = false;
-    };
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
     flake-utils.url = "github:numtide/flake-utils";
 
