@@ -18,11 +18,11 @@ let
       args;
   localAgents = import ../../../agents { inherit pkgs; };
   localAgentsSrc = ../../../agents;
-  # Herdr v0.7.3's official Pi integration reports lifecycle state and the native
+  # Herdr v0.7.5's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.7.3/src/integration/assets/pi/herdr-agent-state.ts";
-    hash = "sha256-9V5YmMiqvdt79H+jkKNd41KA4SGS1t8rU0DDXT836W8=";
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.7.5/src/integration/assets/pi/herdr-agent-state.ts";
+    hash = "sha256-Eu/SdZL78YU0PwNe5P0rGZnpNW4yPksBIl99a8ibFt4=";
   };
   herdrPiIntegrationTargets = [
     "nix-agents/pi/bases/personal/profiles/personal-default/extensions/herdr-agent-state.ts"
