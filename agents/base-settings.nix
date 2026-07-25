@@ -27,6 +27,7 @@ let
     "npm:@juicesharp/rpiv-todo@1.20.0"
   ];
   piFactoryPackageRefs = [
+    piHerdrPackage
     piSubagentsPackage
     "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-permission-system@0.8.0"

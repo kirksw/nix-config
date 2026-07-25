@@ -1,64 +1,195 @@
 ---
 name: herdr
-description: Use herdr reliably from pi when HERDR_ENV/HERDR_PANE_ID indicate this agent is running inside herdr. Organize panes, tabs, workspaces, long-running commands, dev servers, test panes, or sibling pi/agent panes with the native herdr tool.
+description: "Control Herdr, a terminal multiplexer for coding agents. Use only when the user explicitly mentions Herdr or asks to use Herdr to inspect or control panes, tabs, workspaces, commands, or another agent. Do not use merely because a task could benefit from a background terminal, delegation, or parallel work. Requires HERDR_ENV=1."
 ---
 
-# herdr
+# Herdr
 
-Before doing herdr work, check whether the native `herdr` tool is available. If it is missing, only use CLI fallback when `HERDR_ENV=1` and `HERDR_PANE_ID` is set.
+Herdr organizes terminals into workspaces, tabs, and panes, recognizes coding agents running inside panes, and exposes the current session through the `herdr` CLI.
 
-## Native pi tool pattern
-
-Prefer the pi `herdr` tool over `bash herdr ...`.
-
-If the user names a workspace/project/thread (`dwh-4261`, repo name, ticket, etc.), target that workspace first:
-
-1. Call `{ "action": "workspace_list" }` and match labels case-insensitively.
-2. If the workspace exists, create a tab/root pane inside it:
-   - `{ "action": "tab_create", "workspace": "wW", "label": "pi", "pane": "dwh4261-pi" }`
-3. If it does not exist and a cwd is known, create it:
-   - `{ "action": "workspace_create", "label": "dwh-4261", "cwd": "/path", "pane": "dwh4261-pi" }`
-   `workspace_create` already creates the default tab and root pane; do not create a second tab. Reuse the returned root pane.
-4. When descriptive tab/pane labels are wanted, get the qualified tab id with `{ "action": "tab_list", "workspace": "wW" }`, then use the CLI because the native tool has no rename action:
-   - `herdr tab rename <tab-id> <label>`
-   - `herdr pane rename <root-pane-id> <label>`
-5. Native pane actions are scoped to the Pi agent's own workspace. `workspace_focus`/`tab_focus` change UI focus only; they do not change that scope. For a root pane in another workspace, use the CLI instead:
-   - Run: `herdr pane run <root-pane-id> "pi --no-session"`
-   - Read: `herdr pane read <root-pane-id> --source recent-unwrapped --lines 80`
-   - Wait: `herdr wait agent-status <root-pane-id> --status idle --timeout 30000`
-   Do not retry native `list`, pane `focus`, `run`, `read`, `watch`, `wait_agent`, `send`, `stop`, or `pane_split` for that pane after changing focus.
-
-Only split the current pane when the user asks for a split/right/below pane, or when no target workspace is named:
-
-1. Create or select a pane.
-   - Split current pane: `{ "action": "pane_split", "newPane": "server" }`
-   - New tab root pane in current workspace: `{ "action": "tab_create", "label": "server", "pane": "server" }`
-   - New workspace root pane: `{ "action": "workspace_create", "label": "api", "pane": "api", "cwd": "/path" }`
-2. Run in that pane: `{ "action": "run", "pane": "server", "command": "npm run dev" }` (for a pane in another workspace, use the CLI workflow above for all pane actions).
-3. Wait/read by pane alias in the agent's own workspace:
-   - Normal process: `{ "action": "watch", "pane": "server", "match": "ready|listening", "regex": true }`
-   - Logs: `{ "action": "read", "pane": "server", "source": "recent-unwrapped", "lines": 80 }`
-   - Agent pane only: `{ "action": "wait_agent", "pane": "reviewer", "statuses": ["idle", "done"] }`
-
-## Rules
-
-- Pane actions (`run`, `read`, `watch`, `wait_agent`, `send`, `stop`) require a pane alias or real pane id, not a workspace id or tab id.
-- `run` never creates a pane. Create/split first, then run.
-- Do not use `pane_split` to target another workspace. Use `tab_create` with `workspace`, or `workspace_create`.
-- Prefer friendly aliases (`server`, `tests`, `reviewer`) and reuse them.
-- Use `run` for text plus Enter. Use `send` only for raw text/keys without implicit Enter.
-- Use `watch` for servers, tests, builds, and logs. Use `wait_agent` only for recognized coding agents.
-- Preserve focus unless the user explicitly asks to switch: omit `focus` or set `focus: false`. Focus changes do not change the workspace scope of native pane actions.
-- Use `source: "recent-unwrapped"` when matching or reading logs that may soft-wrap.
-- If an alias is stale, call `list`, pick a live pane id, or create a fresh pane. Do not guess ids.
-
-## CLI fallback
+Before issuing any control command, verify that this agent is running inside a Herdr-managed pane:
 
 ```bash
-[ "$HERDR_ENV" = 1 ] && [ -n "$HERDR_PANE_ID" ] || exit 1
-NEW_PANE=$(herdr pane split "$HERDR_PANE_ID" --direction right --no-focus \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
-herdr pane run "$NEW_PANE" "npm run dev"
-herdr wait output "$NEW_PANE" --match "ready" --timeout 30000
-herdr pane read "$NEW_PANE" --source recent-unwrapped --lines 80
+test "${HERDR_ENV:-}" = 1
 ```
+
+If the check fails, say that you are not running inside Herdr and stop. Do not inspect or control the focused Herdr session from outside Herdr.
+
+When the check passes, the `herdr` binary in `PATH` talks to the current session. Use it to inspect neighboring work, create terminal layout, start agents and commands, read output, and wait for state changes.
+
+## Learn the current CLI
+
+The installed binary is the authority for command syntax. Start with:
+
+```bash
+herdr --help
+```
+
+Then print the relevant command group by running the group without a subcommand:
+
+```bash
+herdr agent
+herdr pane
+herdr workspace
+herdr tab
+herdr worktree
+herdr terminal
+herdr notification
+herdr integration
+herdr session
+```
+
+Do not run bare `herdr` for discovery; it launches or attaches the TUI. Do not probe a mutating nested command by omitting arguments. Commands such as `herdr workspace create` are valid with defaults and will execute.
+
+Most control commands return JSON. Read identifiers and state from those responses instead of predicting them.
+
+## Understand layout, panes, and agents
+
+Choose the primitive that matches the job:
+
+- Workspace, tab, and pane topology organize terminal locations.
+- Pane commands control raw terminals, shells, tests, servers, input, and output.
+- Agent commands control the recognized coding agent currently occupying a pane.
+
+A pane exists whether or not it contains an agent. `agent start` requires an existing available shell pane and never creates, splits, or moves layout. Use pane commands for ordinary processes. Use agent commands when Herdr must validate agent identity or interpret `idle`, `working`, `blocked`, `done`, and `unknown` lifecycle states.
+
+Agent commands accept either a unique live agent name or the pane ID currently hosting that agent. They do not accept terminal IDs or bare agent-kind labels. Names must match `[a-z][a-z0-9_-]{0,31}` and be unique among live agents. A name follows the current pane occupant and is cleared when that agent exits, is released, or is replaced.
+
+`idle` means the agent is ready for input and its tab has been seen in the focused Herdr UI. `done` is the same underlying idle state after unseen background work finishes. Focusing the tab or targeting the pane or agent with a focus command marks it seen. CLI reads do not mark it seen. `blocked` means Herdr recognized an approval or question UI. `unknown` means an agent is present but Herdr cannot classify it confidently; it does not prove completion.
+
+## Use IDs and caller context
+
+Public IDs are opaque stable handles:
+
+- workspace: `w1`
+- tab: `w1:t1`
+- pane: `w1:p1`
+
+Closed tab and pane IDs are not reused. A pane moved into another workspace receives a new workspace-qualified pane ID. After `pane move`, continue with `.result.move_result.pane.pane_id` or the live agent name. The old value is reported as `.result.move_result.previous_pane_id`; only the moved process's inherited caller context keeps resolving that old ID, so do not use it as a general agent target.
+
+Herdr injects the caller's context into each managed pane:
+
+```bash
+printf '%s\n' "$HERDR_WORKSPACE_ID" "$HERDR_TAB_ID" "$HERDR_PANE_ID"
+```
+
+Prefer `--current` when a pane command should target the calling pane. Omitting a target may use the UI-focused pane, which can belong to the user or another client.
+
+Discover live state with:
+
+```bash
+herdr workspace list
+herdr tab list --workspace "$HERDR_WORKSPACE_ID"
+herdr pane current --current
+herdr pane list --workspace "$HERDR_WORKSPACE_ID"
+herdr agent list
+```
+
+Creation responses expose the IDs to use next. `workspace create` returns `.result.workspace`, `.result.tab`, and `.result.root_pane`. `tab create` returns `.result.tab` and `.result.root_pane`. `pane split` returns the new pane as `.result.pane`.
+
+## Start and coordinate an agent
+
+Default to a sibling pane in the current tab and the current working directory. Do not create a workspace, tab, worktree, or different cwd unless the user explicitly requests that topology or location.
+
+Honor a direction requested by the user. Otherwise inspect the caller pane:
+
+```bash
+herdr pane layout --pane "$HERDR_PANE_ID"
+```
+
+Split a wide pane to the right and a narrow or tall pane down. Avoid repeated same-direction splits that create unusably narrow columns or short rows. Keep the user's focus in the calling pane and explicitly preserve the caller's working directory:
+
+```bash
+herdr pane split --current --direction right --cwd "$PWD" --no-focus
+```
+
+Replace `right` with `down` when appropriate. Read the new pane ID from `.result.pane.pane_id`.
+
+An available shell pane must be at its interactive prompt, with the shell itself in the foreground and no foreground command, editor, or agent running. Start a supported agent in that pane with a useful unique name:
+
+```bash
+herdr agent start reviewer --kind codex --pane <returned-pane-id>
+```
+
+Use the kind requested by the user. Run `herdr agent` to inspect the installed kind list and options. Pass native agent arguments only after `--`:
+
+```bash
+herdr agent start reviewer --kind codex --pane <returned-pane-id> -- <agent-args...>
+```
+
+`agent start` returns only after Herdr detects the expected agent in the same pane and considers it ready for interactive input. It defaults to a 30-second startup timeout.
+
+Submit work through the agent surface:
+
+```bash
+herdr agent prompt reviewer "Review the current diff and report only actionable findings." --wait --timeout 120000
+```
+
+`agent prompt` atomically submits text and encoded Enter while honoring the pane's live bracketed-paste mode. For normal agent work, `--wait` is enough: it waits for the first settled `idle`, `done`, or `blocked` state. Do not repeat those defaults with `--until`.
+
+A prompt sent from a non-working state must produce an observed lifecycle change within five seconds. Otherwise Herdr returns `agent_prompt_stalled` instead of waiting indefinitely. This wait tracks lifecycle state, not an individual turn; if the agent is already working, completion of the active turn may satisfy it.
+
+Use `--until` only for a state-specific workflow, such as waiting for an already-running agent to request input:
+
+```bash
+herdr agent wait reviewer --until blocked --timeout 120000
+```
+
+Without `--until`, standalone `agent wait` uses the same settled-state defaults as `agent prompt --wait`.
+
+Use logical keys for interactive agent UI controls:
+
+```bash
+herdr agent send-keys reviewer esc
+herdr agent send-keys reviewer ctrl+c
+```
+
+Herdr validates all keys before writing any bytes. Read the result through the resolved agent:
+
+```bash
+herdr agent get reviewer
+herdr agent read reviewer --source recent-unwrapped --lines 120
+```
+
+If a wait fails or returns `blocked`, inspect `agent get` and `agent read` before deciding what input to send. Use the pane surface only when raw terminal control is intentional.
+
+## Run an ordinary command in another pane
+
+Create a sibling pane with the same geometry rule, preserve the caller's working directory, and keep user focus unchanged:
+
+```bash
+herdr pane split --current --direction right --cwd "$PWD" --no-focus
+```
+
+Read the new pane ID from `.result.pane.pane_id`, then run and inspect the command:
+
+```bash
+herdr pane run <returned-pane-id> "just test"
+herdr pane wait-output <returned-pane-id> --match "test result" --timeout 120000
+herdr pane read <returned-pane-id> --source recent-unwrapped --lines 120
+```
+
+`pane run` atomically sends command text and Enter. `pane wait-output` searches the selected snapshot immediately, so output that already exists can match. Use `--match <text>` for a literal substring or `--regex <pattern>` for a Rust regular expression. Omitting `--timeout` allows an indefinite wait.
+
+Use the read source that matches the task:
+
+- `visible`: the currently rendered viewport.
+- `recent`: recent rendered output, including soft wraps.
+- `recent-unwrapped`: recent output with soft wraps joined; prefer it for logs and transcripts.
+- `detection`: the plain-text bottom-buffer snapshot used for agent detection.
+
+Use `--format ansi` when colors and terminal styling are evidence. Otherwise use text.
+
+`--lines` asks Herdr for more rows from the pane's available screen and host scrollback. If increasing it does not reveal more of a completed response, the pane is probably running the agent on the terminal's alternate screen. Rows that leave the alternate screen do not enter Herdr's host scrollback, so a larger line count cannot recover them.
+
+After that failed read, ask the agent to write its complete response as Markdown in a temporary directory and reply only with the file path, then read the file directly. Use this only as a fallback; do not request file output in the initial prompt.
+
+## Safety and coordination rules
+
+- Use `--no-focus` for background work unless the user asked to switch context.
+- Use `--current`, an explicit pane ID, or a unique agent name. Do not rely on another client's focused pane.
+- Parse IDs from JSON responses. Do not derive them from sidebar order or examples.
+- Do not close workspaces, tabs, panes, or sessions you did not create unless the user explicitly asked.
+- Never run `herdr server stop` from an active session unless the user explicitly intends to stop the server and its pane processes.
+- Never kill the main Herdr process. Use named test sessions for experiments that need an isolated server.
+- CLI server errors are JSON on stderr with exit status 1. CLI syntax errors exit with status 2.
