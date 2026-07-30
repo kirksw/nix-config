@@ -12,7 +12,7 @@ This directory is the versioned system of record for project knowledge.
 | Decisions | [`adrs/`](./adrs/) | Durable architectural decisions and their rationale |
 | Execution plans | [`plans/`](./plans/) | General active and completed multi-step work |
 | Agent engineering | [`agents/`](./agents/) | Agent guides and the existing agent feature workflow |
-| References | [`reference/`](./reference/) | Repository-local external or generated reference material |
+| References | [`reference/`](./reference/) | Repository-local external or generated reference material, including [`model-tiers.md`](./reference/model-tiers.md) |
 | Technical debt | [`BACKLOG.md`](./BACKLOG.md) | Prioritized follow-up work |
 | Secrets | [`SECRETS.md`](./SECRETS.md) | Secret-management guidance |
 
