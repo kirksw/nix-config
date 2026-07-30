@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   user,
   pkgs,
   ...
@@ -45,6 +46,11 @@ in
       # "xcode" = 497799835;
     };
   };
+
+  # ponytail: FluidVoice's in-app updater can leave a broken app bundle.
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    /usr/bin/sudo -u ${user} /usr/bin/defaults write com.FluidApp.app AutoUpdateCheckEnabled -bool false
+  '';
 
   nix-homebrew = {
     inherit user;
