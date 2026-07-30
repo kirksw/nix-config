@@ -85,7 +85,14 @@ let
   '';
 
   localAgents = import ../agents { inherit pkgs; };
-  localAgentsSrc = ../agents;
+  localAgentsSrc =
+    pkgs.runCommandLocal "nix-config-agents-src" { } ''
+      mkdir -p "$out"
+      cp -r ${../agents}/. "$out/"
+      chmod -R u+w "$out"
+      mkdir -p "$out/targets/pi/extensions"
+      cp -r ${inputs.agenticos}/harnesses/pi/extensions/agent-os "$out/targets/pi/extensions/agent-os"
+    '';
   piCommonChainsSrc = ../agents/targets/pi/chains/common;
   agentInputs = inputs // {
     inherit self;

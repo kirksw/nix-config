@@ -17,7 +17,14 @@ let
     else
       args;
   localAgents = import ../../../agents { inherit pkgs; };
-  localAgentsSrc = ../../../agents;
+  localAgentsSrc =
+    pkgs.runCommandLocal "nix-config-agents-src" { } ''
+      mkdir -p "$out"
+      cp -r ${../../../agents}/. "$out/"
+      chmod -R u+w "$out"
+      mkdir -p "$out/targets/pi/extensions"
+      cp -r ${inputs.agenticos}/harnesses/pi/extensions/agent-os "$out/targets/pi/extensions/agent-os"
+    '';
   # Herdr v0.7.5's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
@@ -384,153 +391,6 @@ let
   piHomeFactoryPkg = mkPiFactoryPkg "home-factory";
   piWorkFactoryPkg = mkPiFactoryPkg "work-factory";
 
-  agentOsPkg = pkgs.writeShellScriptBin "agent-os" ''
-    set -euo pipefail
-
-    usage() {
-      cat >&2 <<'EOF'
-    usage: agent-os launch --thread <slug> [--workpackage <id-or-path>] [--project <git-dir>] [-- pi-args...]
-           agent-os status
-    EOF
-      exit 2
-    }
-
-    profile_for() {
-      local dir="$1"
-      local profile=""
-      while [ "$dir" != "/" ] && [ -n "$dir" ]; do
-        if [ -f "$dir/.nix-agents-profile" ]; then
-          profile="$(cat "$dir/.nix-agents-profile")"
-          break
-        fi
-        dir="''${dir%/*}"
-      done
-      if [ -z "$profile" ]; then
-        case "$1" in
-          "$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunarOS/*)
-            profile="work-default"
-            ;;
-          *) profile="personal-default" ;;
-        esac
-      fi
-      printf '%s' "$profile"
-    }
-
-    case "''${1:-}" in
-      status)
-        _agent_os_mode="OS"
-        [ -n "''${AGENT_OS_THREAD_ID:-}" ] && _agent_os_mode="Thread"
-        [ -n "''${AGENT_OS_THREAD_ID:-}" ] && [ -n "''${AGENT_OS_WORKPACKAGE:-}" ] && _agent_os_mode="Factory"
-        printf 'mode=%s\nthread=%s\nworkpackage=%s\nproject=%s\nworkspace=%s\nscope=%s\n' \
-          "$_agent_os_mode" \
-          "''${AGENT_OS_THREAD_ID:-none}" \
-          "''${AGENT_OS_WORKPACKAGE:-none}" \
-          "''${AGENT_OS_PROJECT_ROOT:-$PWD}" \
-          "''${AGENT_OS_WORKSPACE_ROOT:-unresolved}" \
-          "''${AGENT_OS_SCOPE:-unknown}"
-        exit 0
-        ;;
-      launch) shift ;;
-      *) usage ;;
-    esac
-
-    thread=""
-    workpackage=""
-    project="$PWD"
-    pi_args=()
-    while [ "$#" -gt 0 ]; do
-      case "$1" in
-        --thread) [ "$#" -ge 2 ] || usage; thread="$2"; shift 2 ;;
-        --workpackage) [ "$#" -ge 2 ] || usage; workpackage="$2"; shift 2 ;;
-        --project) [ "$#" -ge 2 ] || usage; project="$2"; shift 2 ;;
-        --) shift; pi_args=("$@"); break ;;
-        *) pi_args+=("$1"); shift ;;
-      esac
-    done
-
-    case "$thread" in
-      ""|*/*|*..*) echo "agent-os: invalid thread slug: $thread" >&2; exit 2 ;;
-    esac
-    project="$(git -C "$project" rev-parse --show-toplevel 2>/dev/null)" || {
-      echo "agent-os: project is not a Git repository: $project" >&2
-      exit 1
-    }
-    profile="$(profile_for "$project")"
-    case "$profile" in
-      work-default|work-factory)
-        scope="lunar"
-        default_workspace="${homeDir}/git/github.com/kirksw/lunarOS"
-        ;;
-      personal-default|home-factory)
-        scope="personal"
-        default_workspace="${homeDir}/git/github.com/kirksw/lifeOS"
-        ;;
-      *)
-        echo "agent-os: refusing unknown profile: $profile" >&2
-        exit 1
-        ;;
-    esac
-    workspace="$default_workspace"
-    thread_dir="$workspace/workspace/threads/$thread"
-    [ -d "$thread_dir" ] || {
-      echo "agent-os: thread not found: $thread_dir" >&2
-      exit 1
-    }
-    if [ -n "$workpackage" ]; then
-      case "$workpackage" in
-        *..*) echo "agent-os: invalid workpackage path: $workpackage" >&2; exit 2 ;;
-      esac
-      workpackage_root="$thread_dir/workpackages"
-      case "$workpackage" in
-        "$workspace/workspace/threads/$thread/workpackages/"*) workpackage_path="$workpackage" ;;
-        "threads/$thread/workpackages/"*) workpackage_path="$workspace/workspace/$workpackage" ;;
-        /*) workpackage_path="$workpackage" ;;
-        *) workpackage_path="$workpackage_root/$workpackage" ;;
-      esac
-      if [ -d "$workpackage_path" ] && [ -f "$workpackage_path/package.md" ]; then
-        :
-      elif [ -f "$workpackage_path/package.md" ]; then
-        workpackage_path="$(cd "$workpackage_path" && pwd)"
-      elif [ -f "$workpackage_path" ] && [ "$(basename "$workpackage_path")" = "package.md" ]; then
-        workpackage_path="$(dirname "$workpackage_path")"
-      else
-        workpackage_path=""
-        while IFS= read -r -d "" candidate; do
-          bundle="$(dirname "$candidate")"
-          if [ "$(basename "$bundle")" = "$workpackage" ] || grep -qE "^(id|workpackage|slug):[[:space:]]*[\"']?$workpackage[\"']?$" "$candidate" 2>/dev/null; then
-            workpackage_path="$bundle"
-            break
-          fi
-        done < <(find "$workpackage_root" -mindepth 2 -maxdepth 2 -type f -name package.md -print0 2>/dev/null)
-      fi
-      case "$workpackage_path" in
-        "$workpackage_root"/*) ;;
-        *) echo "agent-os: workpackage does not belong to thread $thread: $workpackage" >&2; exit 1 ;;
-      esac
-      [ -f "$workpackage_path/package.md" ] || {
-        echo "agent-os: workpackage bundle not found for thread $thread: $workpackage" >&2
-        exit 1
-      }
-    fi
-
-    export AGENT_OS_SCOPE="$scope"
-    export AGENT_OS_THREAD_ID="$thread"
-    if [ -n "$workpackage" ]; then
-      export AGENT_OS_MODE="FactoryOS"
-      export AGENT_OS_WORKPACKAGE="$workpackage_path"
-    else
-      export AGENT_OS_MODE="ThreadOS"
-      unset AGENT_OS_WORKPACKAGE
-    fi
-    export AGENT_OS_PROJECT_ROOT="$project"
-    export AGENT_OS_WORKSPACE_ROOT="$workspace"
-    export AGENT_OS_PERSONAL_REPO="${homeDir}/git/github.com/kirksw/lifeOS"
-    export AGENT_OS_WORK_REPO="${homeDir}/git/github.com/kirksw/lunarOS"
-    export AGENT_OS_SESSION_ID="$(date -u +%Y%m%dT%H%M%SZ)-$$"
-    cd "$project"
-    exec "${config.home.profileDirectory}/bin/pi" "''${pi_args[@]}"
-  '';
-
   mkOmnigentServerScript =
     profile: port: envBlock:
     pkgs.writeShellScript "omnigent-${profile}-server" ''
@@ -887,7 +747,6 @@ in
             fi
           fi
         '')
-        agentOsPkg
         (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"
           mkdir -p "$PI_CODING_AGENT_SESSION_DIR"

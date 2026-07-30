@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "agenticos": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785407356,
+        "narHash": "sha256-FSI9PPbnj8KLj39F2Rv511rpWU+Ij8WJwFkx5hk/2e0=",
+        "ref": "centralize-agenticos",
+        "rev": "0a23778f78ca176302376f5884aa34227b000f8d",
+        "revCount": 18,
+        "type": "git",
+        "url": "ssh://git@github.com-kirksw/kirksw/agenticOS"
+      },
+      "original": {
+        "ref": "centralize-agenticos",
+        "type": "git",
+        "url": "ssh://git@github.com-kirksw/kirksw/agenticOS"
+      }
+    },
     "backend-engineering-practices": {
       "flake": false,
       "locked": {
@@ -1399,6 +1416,7 @@
     },
     "root": {
       "inputs": {
+        "agenticos": "agenticos",
         "backend-engineering-practices": "backend-engineering-practices",
         "darwin": "darwin",
         "deploy-rs": "deploy-rs",
