@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "opencode": {
-    "version": "1.18.4",
+    "version": "1.18.7",
     "hashes": {
-      "x86_64-linux": "sha256-urRjw/syJNOIu3z61j84cD35zwviz9LOjLSdiGtToXQ=",
-      "aarch64-linux": "sha256-66h++6OXbVM6JMygMW+O83W1+OeXwKlcJe6RlwC3ujU=",
-      "x86_64-darwin": "sha256-4XfFMmVFcgeZgdsdzkZKeK267ZZUoUKEiy6BvrjJ9cY=",
-      "aarch64-darwin": "sha256-BPuIG2MrMjxxLf2m3LvG/Oc2OU8HunYXblLWZlkl1OY="
+      "x86_64-linux": "sha256-y12dbS+PvvCpyXXtRJT3Oypi9OT/1Qi8wyEtpPp2w9o=",
+      "aarch64-linux": "sha256-bHkeRTwsoD7j3qCevRa/36xIN+RdNEoUh80Za4AJD8c=",
+      "x86_64-darwin": "sha256-/u4R2naXqA4vz5Q/+co5LU6WDF3avZGL3W5N55Anm34=",
+      "aarch64-darwin": "sha256-R+/tIzZncT/T4GA92uqV0O4gds4A3J+qfbySCK6xNQU="
     }
   }
 }

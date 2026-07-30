@@ -13,7 +13,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "sherpa-onnx-runtime";
-  version = "1.13.2";
+  version = "1.13.4";
 
   src = fetchurl {
     url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.2/sherpa-onnx-v1.13.2-linux-x64-shared.tar.bz2";

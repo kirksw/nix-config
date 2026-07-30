@@ -9,7 +9,7 @@
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "cmux";
-  version = "0.64.20";
+  version = "browser-apple-review-20260722.1";
 
   __structuredAttrs = true;
   strictDeps = true;

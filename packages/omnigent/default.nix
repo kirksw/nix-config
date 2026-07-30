@@ -80,7 +80,11 @@ writeShellApplication {
       PY
             )"
             tag="v$version"
-            read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag^{}")
+            rev=""
+            read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag^{}" || true) || true
+            if [ -z "$rev" ]; then
+              read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag") || true
+            fi
 
             ${lib.getExe python312} - "$version_json" "$version" "$rev" <<'PY'
       import json
