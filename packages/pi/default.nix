@@ -8,6 +8,7 @@
   jq,
   nix,
   nodejs_22,
+  gnugrep,
   fd,
   ripgrep,
 }:
@@ -65,7 +66,7 @@ buildNpmPackage {
     rm -f "$tmp_dir/npm-shrinkwrap.json"
     (cd "$tmp_dir" && ${nodejs_22}/bin/npm install --package-lock-only --ignore-scripts --omit=dev)
     cp "$tmp_dir/package-lock.json" "$lock_file"
-    ${lib.getExe jq} -n --arg version "$version" --arg sourceHash "$source_hash" --arg npmDepsHash "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" \
+    ${lib.getExe jq} -n --arg version "$version" --arg sourceHash "$source_hash" --arg npmDepsHash "${lib.fakeHash}" \
       '{formatVersion: 1, pi: {version: $version, sourceHash: $sourceHash, npmDepsHash: $npmDepsHash}}' > "$version_json"
     set +e
     output="$(${nix}/bin/nix build ".#pi" --no-link --print-build-logs 2>&1)"
@@ -75,7 +76,7 @@ buildNpmPackage {
       echo "pi npmDepsHash did not need updating"
       exit 0
     fi
-    npm_deps_hash="$(printf '%s\n' "$output" | sed -n 's/.*got:[[:space:]]*//p' | tail -1)"
+    npm_deps_hash="$(printf '%s\n' "$output" | ${lib.getExe gnugrep} -Eo 'got:[[:space:]]+sha256-[A-Za-z0-9+/=]+' | ${lib.getExe gnugrep} -Eo 'sha256-[A-Za-z0-9+/=]+' | tail -1)"
     if [ -z "$npm_deps_hash" ]; then
       printf '%s\n' "$output" >&2
       echo "Could not determine npmDepsHash from nix build output" >&2

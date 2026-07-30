@@ -7,6 +7,7 @@
   curl,
   jq,
   nix,
+  gnugrep,
   nodejs,
   nodejs_22,
   stdenv,
@@ -132,8 +133,7 @@ buildNpmPackage (finalAttrs: {
       rm -f "$tmp_dir/package-lock.json" "$tmp_dir/npm-shrinkwrap.json"
       (cd "$tmp_dir" && ${nodejs_22}/bin/npm install --package-lock-only --ignore-scripts)
       cp "$tmp_dir/package-lock.json" "$lock_file"
-      old_npm_deps_hash="$(${lib.getExe jq} -r '."9routerVersions".npmDepsHash' "$version_json")"
-      ${lib.getExe jq} -n --arg version "$version" --arg hash "$source_hash" --arg npmDepsHash "$old_npm_deps_hash" \
+      ${lib.getExe jq} -n --arg version "$version" --arg hash "$source_hash" --arg npmDepsHash "${lib.fakeHash}" \
         '{formatVersion: 1, "9routerVersions": {version: $version, hash: $hash, npmDepsHash: $npmDepsHash}}' > "$version_json"
       set +e
       output="$(${nix}/bin/nix build ".#9router" --no-link --print-build-logs 2>&1)"
@@ -143,9 +143,9 @@ buildNpmPackage (finalAttrs: {
         echo "Updated 9router to version $version (npmDepsHash unchanged)"
         exit 0
       fi
-      npm_deps_hash="$(printf '%s\\n' "$output" | sed -n 's/.*got:[[:space:]]*\\(sha256-[A-Za-z0-9+/=]*\\).*/\\1/p' | tail -1)"
+      npm_deps_hash="$(printf '%s\n' "$output" | ${lib.getExe gnugrep} -Eo 'got:[[:space:]]+sha256-[A-Za-z0-9+/=]+' | ${lib.getExe gnugrep} -Eo 'sha256-[A-Za-z0-9+/=]+' | tail -1)"
       if [ -z "$npm_deps_hash" ]; then
-        printf '%s\\n' "$output" >&2
+        printf '%s\n' "$output" >&2
         echo "Could not determine npmDepsHash from nix build output" >&2
         exit "$status"
       fi

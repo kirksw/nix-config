@@ -21,6 +21,7 @@
     ../defs/skills/homelab
     ../defs/skills/last30days
     ../defs/skills/mmx-cli
+    ../defs/skills/lavish
     ../defs/skills/what-if
     ../defs/skills/plan-x
     ../defs/skills/writing-great-skills

@@ -75,6 +75,11 @@
       url = "github:MiniMax-AI/cli?rev=3615170a2e26ec6003c4550cd1324b55ec8ad677";
       flake = false;
     };
+
+    lavish-axi = {
+      url = "github:kunchenguid/lavish-axi?rev=50b0facb61b5fc36cb1737e33b20d2894a64323b";
+      flake = false;
+    };
   };
 
   outputs =

@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "pi": {
-    "version": "0.81.1",
-    "sourceHash": "sha256-QgETwCghYOYYFlb9Fs8YdC92v5BA7j37nLZ+PmrVZBw=",
-    "npmDepsHash": "sha256-m9S29ATUvFE4NKTzszNWNtJ1A13d65PjKAo72+tU97c="
+    "version": "0.82.1",
+    "sourceHash": "sha256-g0OrlcurV2by9dSIRN+NsT53Lq0uKXYWbLuCCinay30=",
+    "npmDepsHash": "sha256-gU/6kcHat08RoFk7g+yZAhU/WrkPzYfnPFzY55pFcM0="
   }
 }
