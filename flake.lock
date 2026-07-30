@@ -3,11 +3,11 @@
     "agenticos": {
       "flake": false,
       "locked": {
-        "lastModified": 1785407356,
-        "narHash": "sha256-FSI9PPbnj8KLj39F2Rv511rpWU+Ij8WJwFkx5hk/2e0=",
+        "lastModified": 1785416474,
+        "narHash": "sha256-IAg5l/NoNec4zG/coD0vvtCiPxKef5GwnsY6DkiEOe4=",
         "ref": "centralize-agenticos",
-        "rev": "0a23778f78ca176302376f5884aa34227b000f8d",
-        "revCount": 18,
+        "rev": "45ee8894ecc4cf07b5458c96eaa49bbb7cdd9d6a",
+        "revCount": 21,
         "type": "git",
         "url": "ssh://git@github.com-kirksw/kirksw/agenticOS"
       },
