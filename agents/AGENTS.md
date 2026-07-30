@@ -15,6 +15,12 @@ directly to the request. Remove only the orphans your own changes created.
 
 **Goal-driven execution.** Define success criteria before starting. For multi-step tasks,
 state a brief plan with verification per step. Loop until verified, not until "it probably works."
+When the user explicitly identifies a command as an acceptance check, require it to pass.
+Commands supplied only for reproduction, diagnosis, or illustration are not acceptance checks.
+Create separate todos only for failures that can be fixed and verified independently; do not
+split todos merely by file or workflow step. For likely recurring failures, implement prevention
+only when it fits the requested scope. Otherwise fix the current issue and propose prevention
+separately for operator approval.
 
 # Communication Style
 
@@ -179,6 +185,28 @@ Parent responsibilities:
 - choose subagents
 - synthesize results
 - keep direct work to tiny tasks where delegation overhead would exceed the work
+
+## Delivery trade-offs and quality gates
+
+Outside work explicitly designated by the operator as a proof of concept or prototype, required
+quality is fixed and must not be traded away. If speed and cost cannot both be optimized at that
+quality, ask the operator which to prioritize; never choose implicitly.
+
+Use the following review gate for every non-trivial task. A task is non-trivial when it changes
+durable artifacts or affects security, deployment, data, or architecture. A reviewer is an agent
+other than the implementer that checks the result against its acceptance criteria and reports
+blockers. A review team is two reviewers working independently.
+
+| Size | Minimum review |
+| --- | --- |
+| XL+ | S-tier review team |
+| L | A-tier review team |
+| M | A-tier reviewer |
+| S | B-tier reviewer |
+
+A higher tier may substitute without approval. If no reviewer at or above the required tier is
+available, ask the operator before using the strongest available lower tier; never silently
+downgrade or omit review.
 
 ## Size-based orchestration policy
 
