@@ -833,9 +833,9 @@ in
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         (mkCredWrapper "pi" piPkg ''
-          _pi_session_profile=""
+          _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
           _d="$PWD"
-          while [ "$_d" != "/" ] && [ -n "$_d" ]; do
+          while [ -z "$_pi_session_profile" ] && [ "$_d" != "/" ] && [ -n "$_d" ]; do
             if [ -f "$_d/.nix-agents-profile" ]; then
               _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
               break
@@ -912,6 +912,120 @@ in
             export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
           fi
         '')
+        (pkgs.writeShellApplication {
+          name = "pix";
+          runtimeInputs = [ pkgs.fzf ];
+          text = ''
+            set -euo pipefail
+
+            usage() {
+              printf '%s\n' "usage: pix [--profile default|factory] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted" >&2
+            }
+
+            die() {
+              printf 'pix: %s\n' "$1" >&2
+              usage
+              exit 2
+            }
+
+            profile=""
+            scope=""
+            pi_args=()
+            while [ "$#" -gt 0 ]; do
+              case "$1" in
+                --profile)
+                  [ "$#" -ge 2 ] || die "--profile requires a value"
+                  profile="$2"
+                  shift 2
+                  ;;
+                --profile=*)
+                  profile="''${1#*=}"
+                  shift
+                  ;;
+                --scope)
+                  [ "$#" -ge 2 ] || die "--scope requires a value"
+                  scope="$2"
+                  shift 2
+                  ;;
+                --scope=*)
+                  scope="''${1#*=}"
+                  shift
+                  ;;
+                -h|--help)
+                  usage
+                  exit 0
+                  ;;
+                --)
+                  shift
+                  pi_args=("$@")
+                  break
+                  ;;
+                *)
+                  pi_args=("$@")
+                  break
+                  ;;
+              esac
+            done
+
+            case "$profile" in
+              ""|default|factory) ;;
+              *) die "invalid profile: $profile (expected default or factory)" ;;
+            esac
+            case "$scope" in
+              ""|home|work) ;;
+              *) die "invalid scope: $scope (expected home or work)" ;;
+            esac
+
+            if [ -z "$profile" ]; then
+              profile="$(printf '%s\n' default factory | fzf --prompt='Pi profile> ' --height=5 --reverse)" || exit 130
+            fi
+
+            if [ "$profile" = "factory" ] && [ -z "$scope" ]; then
+              _pi_scope_profile="''${NIX_AGENTS_PROFILE:-}"
+              _d="$PWD"
+              while [ -z "$_pi_scope_profile" ] && [ "$_d" != "/" ] && [ -n "$_d" ]; do
+                if [ -f "$_d/.nix-agents-profile" ]; then
+                  _pi_scope_profile="$(cat "$_d/.nix-agents-profile")"
+                fi
+                _d="''${_d%/*}"
+              done
+              case "$_pi_scope_profile" in
+                work-default) scope=work ;;
+                personal-default) scope=home ;;
+              esac
+              if [ -z "$scope" ]; then
+                case "$PWD" in
+                  "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunarOS|"$HOME"/git/github.com/kirksw/lunarOS/*)
+                    scope=work
+                    ;;
+                  *)
+                    scope=home
+                    ;;
+                esac
+              fi
+            fi
+
+            case "$profile:$scope" in
+              default:)
+                exec pi "''${pi_args[@]}"
+                ;;
+              default:home)
+                export NIX_AGENTS_PROFILE=personal-default
+                exec pi "''${pi_args[@]}"
+                ;;
+              default:work)
+                export NIX_AGENTS_PROFILE=work-default
+                exec pi "''${pi_args[@]}"
+                ;;
+              factory:home)
+                exec pi-home-factory "''${pi_args[@]}"
+                ;;
+              factory:work)
+                exec pi-work-factory "''${pi_args[@]}"
+                ;;
+            esac
+          '';
+        })
       ])
       (lib.mkIf config.homeModules.omnigent.enable [
         (pkgs.writeShellScriptBin "omnigent" ''

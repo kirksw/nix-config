@@ -6,7 +6,6 @@
 
 let
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
-  piSubagentsPackage = "${self}/agents/packages/pi-subagents";
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -15,11 +14,11 @@ let
     "npm:pi-dynamic-workflows@1.0.1"
     "npm:pi-goal-x@0.19.0"
     piHerdrPackage
+    "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-observational-memory@3.0.3"
     "npm:pi-permission-system@0.8.0"
     "npm:pi-simplify@0.2.2"
-    piSubagentsPackage
     "npm:pi-web-access@0.13.0"
     "npm:pi-ponytail@0.1.2"
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
@@ -28,7 +27,7 @@ let
   ];
   piFactoryPackageRefs = [
     piHerdrPackage
-    piSubagentsPackage
+    "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-permission-system@0.8.0"
     "npm:pi-web-access@0.13.0"
@@ -37,6 +36,17 @@ let
   piPersonalSettings = builtins.toJSON {
     defaultProvider = "openai-codex";
     defaultModel = "gpt-5.6-luna";
+    enabledModels = [
+      "gpt-5.6-sol"
+      "gpt-5.6-terra"
+      "gpt-5.6-luna"
+      "minimax-m3"
+      "glm-5.2"
+      "grok-4.5"
+      "kimi-k3"
+      "qwen-3.7-max"
+      "deepseek-v4-pro"
+    ];
     packages = piPackageRefs;
     subagents.disableBuiltins = true;
   };
@@ -60,7 +70,10 @@ let
       "gpt-5.3-codex-spark"
       "claude-opus-4-8"
       "claude-sonnet-4-6"
+      "claude-opus-5"
+      "claude-sonnet-5"
       "amazon-bedrock/eu.anthropic.claude-sonnet-5"
+      "amazon-bedrock/eu.anthropic.claude-opus-5"
       "amazon-bedrock/eu.anthropic.claude-opus-4-8"
       "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
     ];

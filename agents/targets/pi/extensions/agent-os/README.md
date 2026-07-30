@@ -53,7 +53,7 @@ Mailbox writes target the recipient scope. Inbox reads and acknowledgements use 
 Run the full Agent OS suite from the repository root:
 
 ```sh
-node --experimental-transform-types --import ./agents/packages/pi-subagents/test/support/register-loader.mjs --test agents/targets/pi/extensions/agent-os/tests/*.test.mjs
+node --experimental-strip-types --test agents/targets/pi/extensions/agent-os/tests/*.test.mjs
 ```
 
 `migrateLegacyRuntime(workspacePath)` is an idempotent exported utility for moving supported records out of legacy `.lifeos/db` files. It reports unsupported non-empty records and removes the legacy directory only after a complete successful migration; it never creates Markdown records.
