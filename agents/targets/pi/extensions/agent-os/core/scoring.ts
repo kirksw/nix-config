@@ -3,7 +3,7 @@ import type {
 	EdgeRecord,
 	MetricRecord,
 	ThreadRecord,
-} from "./schema.js";
+} from "./schema.ts";
 
 export interface ScoredThread {
 	thread: ThreadRecord;

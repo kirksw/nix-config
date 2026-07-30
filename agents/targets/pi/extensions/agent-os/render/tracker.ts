@@ -1,8 +1,8 @@
 /// <reference path="../types.d.ts" />
 import * as path from "node:path";
-import type { LifeOsData, ThreadRecord } from "../core/schema.js";
-import type { RenderResult } from "./markdown.js";
-import { writeGeneratedSection } from "./markdown.js";
+import type { LifeOsData, ThreadRecord } from "../core/schema.ts";
+import type { RenderResult } from "./markdown.ts";
+import { writeGeneratedSection } from "./markdown.ts";
 
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
 	const grouped = new Map<string, T[]>();

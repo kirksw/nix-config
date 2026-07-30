@@ -5,10 +5,10 @@ import type {
 	DecisionRecord,
 	ThreadRecord,
 	TaskRecord,
-} from "../core/schema.js";
-import { latestRunOutcome, type TaskRunOutcome } from "../core/task.js";
-import type { RenderResult } from "./markdown.js";
-import { writeGeneratedSection, yamlString } from "./markdown.js";
+} from "../core/schema.ts";
+import { latestRunOutcome, type TaskRunOutcome } from "../core/task.ts";
+import type { RenderResult } from "./markdown.ts";
+import { writeGeneratedSection, yamlString } from "./markdown.ts";
 
 export async function latestTaskOutcomes(
 	tasks: TaskRecord[],

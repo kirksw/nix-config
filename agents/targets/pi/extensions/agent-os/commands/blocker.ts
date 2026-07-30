@@ -1,10 +1,10 @@
 import * as path from "node:path";
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
 import { assertPolicyWrite } from "../core/policy.ts";
 import { readMarkdownData, readMarkdownThreads, writeBlockerDocument } from "../core/markdown-store.ts";
-import type { BlockerRecord } from "../core/schema.js";
-import { newId, nowIso } from "../core/store.js";
+import type { BlockerRecord } from "../core/schema.ts";
+import { newId, nowIso } from "../core/store.ts";
 
 export type ActiveThreadGetter = (workspacePath: string | null) => string | undefined;
 

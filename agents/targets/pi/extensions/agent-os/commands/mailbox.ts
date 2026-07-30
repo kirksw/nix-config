@@ -1,13 +1,13 @@
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
-import { inferMode, type AgentOsMode } from "../core/mode.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
+import { inferMode, type AgentOsMode } from "../core/mode.ts";
 import {
 	ackMessages,
 	appendMessage,
 	newMessageId,
 	unreadMessages,
 	type AgentOsMessage,
-} from "../core/mailbox.js";
+} from "../core/mailbox.ts";
 
 export interface MailboxBinding {
 	thread?: string;

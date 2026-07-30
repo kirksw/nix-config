@@ -1,18 +1,18 @@
 /// <reference path="../types.d.ts" />
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
-import type { ThreadKind, ThreadRecord } from "../core/schema.js";
-import { slugify } from "../core/slug.js";
-import { newId, nowIso } from "../core/store.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
+import type { ThreadKind, ThreadRecord } from "../core/schema.ts";
+import { slugify } from "../core/slug.ts";
+import { newId, nowIso } from "../core/store.ts";
 import {
 	parseMarkdownDocument,
 	readMarkdownThreads,
 	updateMarkdownThread,
 	writeThreadDocument,
 } from "../core/markdown-store.ts";
-import { renderThreadReadme } from "../render/thread-readme.js";
+import { renderThreadReadme } from "../render/thread-readme.ts";
 import { initializeWorkspace, initializeThread } from "../core/layout.ts";
 
 export type ActiveThreadSetter = (workspacePath: string, slug: string) => void;

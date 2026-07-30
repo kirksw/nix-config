@@ -1,4 +1,4 @@
-import type { AgentOsMode } from "./mode.js";
+import type { AgentOsMode } from "./mode.ts";
 
 const modeIcons: Record<AgentOsMode, string> = {
 	OS: "",

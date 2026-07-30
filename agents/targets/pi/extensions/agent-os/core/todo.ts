@@ -1,8 +1,8 @@
 /// <reference path="../types.d.ts" />
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentOsMode } from "./mode.js";
-import type { AgentOsPolicy } from "./policy.js";
+import type { AgentOsMode } from "./mode.ts";
+import type { AgentOsPolicy } from "./policy.ts";
 import { assertPolicyRead, assertPolicyWrite } from "./policy.ts";
 
 export interface TodoContext {

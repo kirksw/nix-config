@@ -1,6 +1,6 @@
 /// <reference path="../types.d.ts" />
 import * as path from "node:path";
-import type { AgentOsMode } from "./mode.js";
+import type { AgentOsMode } from "./mode.ts";
 
 export type AgentOsRole = "OS" | "ThreadOS" | "FactoryOS";
 

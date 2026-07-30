@@ -2,10 +2,10 @@ import type {
 	CandidateRecord,
 	DecisionRecord,
 	ThreadRecord,
-} from "../core/schema.js";
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
-import { newId, nowIso } from "../core/store.js";
+} from "../core/schema.ts";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
+import { newId, nowIso } from "../core/store.ts";
 import { readMarkdownThreads, writeMarkdownRecord } from "../core/markdown-store.ts";
 
 export type ActiveThreadGetter = (

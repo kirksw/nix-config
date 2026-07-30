@@ -1,6 +1,6 @@
 import * as path from "node:path";
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
 import { assertPolicyWrite } from "../core/policy.ts";
 import { readMarkdownData } from "../core/markdown-store.ts";
 import {
@@ -12,10 +12,10 @@ import {
 	runTask,
 	transitionTask,
 	taskRelativePath,
-} from "../core/task.js";
-import type { FactoryRunLauncher } from "../core/task.js";
-import type { AgentOsBinding } from "../core/binding.js";
-import { latestTaskOutcomes, renderThreadReadme } from "../render/thread-readme.js";
+} from "../core/task.ts";
+import type { FactoryRunLauncher } from "../core/task.ts";
+import type { AgentOsBinding } from "../core/binding.ts";
+import { latestTaskOutcomes, renderThreadReadme } from "../render/thread-readme.ts";
 
 export type ActiveBinding = { thread?: string; task?: string };
 export type BindingSetter = (binding: ActiveBinding) => void;

@@ -20,24 +20,24 @@ import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Markdown } from "@earendil-works/pi-tui";
 import { handleBlocker } from "./commands/blocker.ts";
-import { handleCapture } from "./commands/capture.js";
-import { handleFocus } from "./commands/focus.js";
-import { emit } from "./commands/artifacts.js";
-import { handleRender } from "./commands/render.js";
-import { handleStatus } from "./commands/status.js";
-import { handleTask } from "./commands/task.js";
+import { handleCapture } from "./commands/capture.ts";
+import { handleFocus } from "./commands/focus.ts";
+import { emit } from "./commands/output.ts";
+import { handleRender } from "./commands/render.ts";
+import { handleStatus } from "./commands/status.ts";
+import { handleTask } from "./commands/task.ts";
 import { handlePromote } from "./commands/promote.ts";
 import { handleOutcome } from "./commands/outcome.ts";
-import { handleInbox, handleSend, handleAck, pollMailbox } from "./commands/mailbox.js";
-import { handleTodo } from "./commands/todo.js";
+import { handleInbox, handleSend, handleAck, pollMailbox } from "./commands/mailbox.ts";
+import { handleTodo } from "./commands/todo.ts";
 import {
 	handleNewThread,
 	handleThread,
 	handleReconcile,
-} from "./commands/thread.js";
-import { pickThread } from "./commands/thread-picker.js";
-import { pickTask } from "./commands/task-picker.js";
-import { resolveAgentOsContext } from "./core/repo.js";
+} from "./commands/thread.ts";
+import { pickThread } from "./commands/thread-picker.ts";
+import { pickTask } from "./commands/task-picker.ts";
+import { resolveAgentOsContext } from "./core/repo.ts";
 import {
 	activeThreadFor,
 	activeTaskFor,
@@ -45,12 +45,12 @@ import {
 	shouldStartThreadSession,
 	restoreBinding,
 	type AgentOsBinding,
-} from "./core/binding.js";
-import { inferMode } from "./core/mode.js";
+} from "./core/binding.ts";
+import { inferMode } from "./core/mode.ts";
 import { runtimeFilePath } from "./core/runtime.ts";
 import { migrateLegacyRuntime } from "./core/runtime-migration.ts";
-import { resolveTask, type TaskRecord } from "./core/task.js";
-import { policyPrompt, shellMentionsProtectedWorkspace } from "./core/policy.js";
+import { resolveTask, type TaskRecord } from "./core/task.ts";
+import { policyPrompt, shellMentionsProtectedWorkspace } from "./core/policy.ts";
 import { herdrCreateArgs, herdrFactoryRunArgs, herdrRunArgs, rootPaneId } from "./core/herdr-launch.ts";
 import { statusWidgetLine } from "./core/status-widget.ts";
 

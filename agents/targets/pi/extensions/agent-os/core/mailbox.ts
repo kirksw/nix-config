@@ -1,7 +1,7 @@
 /// <reference path="../types.d.ts" />
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentOsMode } from "./mode.js";
+import type { AgentOsMode } from "./mode.ts";
 import { normalizeTaskId, runtimeFilePath } from "./runtime.ts";
 
 export interface AgentOsMessage {

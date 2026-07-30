@@ -1,9 +1,9 @@
 /// <reference path="../types.d.ts" />
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { AgentOsContext } from "../core/repo.js";
-import { gitDirty } from "../core/repo.js";
-import { inferMode } from "../core/mode.js";
-import { unreadMessages } from "../core/mailbox.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { gitDirty } from "../core/repo.ts";
+import { inferMode } from "../core/mode.ts";
+import { unreadMessages } from "../core/mailbox.ts";
 
 export type ActiveBindingLookup = (
 	workspacePath: string | null,

@@ -1,10 +1,10 @@
 import * as path from "node:path";
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
 import { assertPolicyRead, assertPolicyWrite } from "../core/policy.ts";
 import { readMarkdownOutcomes, writeOutcomeDocument } from "../core/markdown-store.ts";
-import type { OutcomeRecord } from "../core/schema.js";
-import { newId, nowIso } from "../core/store.js";
+import type { OutcomeRecord } from "../core/schema.ts";
+import { newId, nowIso } from "../core/store.ts";
 
 const OUTCOME_STATES: readonly OutcomeRecord["state"][] = ["planned", "in_progress", "done", "blocked", "archived"];
 const OUTCOME_TRANSITIONS: Readonly<Record<OutcomeRecord["state"], readonly OutcomeRecord["state"][]>> = {

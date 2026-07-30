@@ -1,10 +1,10 @@
 /// <reference path="../types.d.ts" />
 import * as path from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { AgentOsContext } from "../core/repo.js";
-import { listTasks, type TaskRecord } from "../core/task.js";
-import type { ActiveBinding } from "./task.js";
-import { fuzzyScore, loadPiTui, type PiTui, type Theme } from "./thread-picker.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { listTasks, type TaskRecord } from "../core/task.ts";
+import type { ActiveBinding } from "./task.ts";
+import { fuzzyScore, loadPiTui, type PiTui, type Theme } from "./thread-picker.ts";
 
 type TaskChoice =
 	| { kind: "bind"; value: string }

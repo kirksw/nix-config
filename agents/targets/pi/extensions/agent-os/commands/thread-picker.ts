@@ -1,8 +1,8 @@
 /// <reference path="../types.d.ts" />
 import * as path from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { AgentOsContext } from "../core/repo.js";
-import type { ThreadRecord } from "../core/schema.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import type { ThreadRecord } from "../core/schema.ts";
 import { readMarkdownThreads } from "../core/markdown-store.ts";
 
 export type Theme = {
@@ -39,7 +39,7 @@ export async function loadPiTui(): Promise<PiTui | null> {
 	if (dir) {
 		try {
 			piTui = await import(
-				path.join(dir, "npm/node_modules/@earendil-works/pi-tui/dist/index.js")
+				path.join(dir, "npm/node_modules/@earendil-works/pi-tui/dist/index.ts")
 			);
 			return piTui;
 		} catch {}

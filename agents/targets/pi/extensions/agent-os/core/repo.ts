@@ -4,7 +4,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { Scope } from "./schema.js";
+import type { Scope } from "./schema.ts";
 import { inferMode, type AgentOsMode } from "./mode.ts";
 import { policyFor, type AgentOsPolicy } from "./policy.ts";
 import { resolveTask } from "./task.ts";

@@ -2,10 +2,10 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { parseMarkdownDocument, writeMarkdownDocument } from "./markdown-store.ts";
-import type { TaskRecord, TaskStatus } from "./schema.js";
-import { slugify } from "./slug.js";
+import type { TaskRecord, TaskStatus } from "./schema.ts";
+import { slugify } from "./slug.ts";
 
-export type { TaskRecord, TaskStatus } from "./schema.js";
+export type { TaskRecord, TaskStatus } from "./schema.ts";
 
 export interface TaskBinding {
 	id: string;

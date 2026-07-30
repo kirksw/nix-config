@@ -13,7 +13,7 @@ import type {
 	ThreadLinear,
 	TaskRecord,
 	TaskStatus,
-} from "./schema.js";
+} from "./schema.ts";
 
 export interface MarkdownDocument {
 	file: string;

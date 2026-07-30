@@ -1,5 +1,5 @@
-import type { LifeOsData } from "../core/schema.js";
-import type { ScoredThread } from "../core/scoring.js";
+import type { LifeOsData } from "../core/schema.ts";
+import type { ScoredThread } from "../core/scoring.ts";
 
 type FocusData = Pick<LifeOsData, "tasks" | "outcomes">;
 

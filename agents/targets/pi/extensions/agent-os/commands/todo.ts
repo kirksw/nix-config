@@ -1,7 +1,7 @@
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
-import { addTodo, doneTodo, listTodos, type TodoContext } from "../core/todo.js";
-import { inferMode } from "../core/mode.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
+import { addTodo, doneTodo, listTodos, type TodoContext } from "../core/todo.ts";
+import { inferMode } from "../core/mode.ts";
 
 export async function handleTodo(
 	args: string,

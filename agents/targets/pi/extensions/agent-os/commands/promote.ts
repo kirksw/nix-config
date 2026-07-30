@@ -1,6 +1,6 @@
 /// <reference path="../types.d.ts" />
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
 import { promoteArtifactToWiki } from "../core/promotion.ts";
 
 export async function handlePromote(args: string, agentos: AgentOsContext, confirm: (title: string, body: string) => Promise<boolean>): Promise<string> {

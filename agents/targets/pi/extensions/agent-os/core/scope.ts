@@ -1,6 +1,6 @@
 /// <reference path="../types.d.ts" />
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { Scope } from "./schema.js";
+import type { Scope } from "./schema.ts";
 
 export interface ScopeResolution {
 	scope: Scope | null;

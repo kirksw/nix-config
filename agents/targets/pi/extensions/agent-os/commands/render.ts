@@ -1,10 +1,10 @@
-import type { AgentOsContext } from "../core/repo.js";
-import { requireWritable } from "../core/repo.js";
-import { scoreThreads } from "../core/scoring.js";
+import type { AgentOsContext } from "../core/repo.ts";
+import { requireWritable } from "../core/repo.ts";
+import { scoreThreads } from "../core/scoring.ts";
 import { readMarkdownData } from "../core/markdown-store.ts";
-import { focusMarkdown } from "../render/focus.js";
-import { latestTaskOutcomes, renderThreadReadme } from "../render/thread-readme.js";
-import { renderFocus, renderTracker } from "../render/tracker.js";
+import { focusMarkdown } from "../render/focus.ts";
+import { latestTaskOutcomes, renderThreadReadme } from "../render/thread-readme.ts";
+import { renderFocus, renderTracker } from "../render/tracker.ts";
 
 export async function handleRender(
 	_args: string,
