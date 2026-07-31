@@ -10,7 +10,10 @@ let
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
-    "npm:pi-cmux@0.1.16"
+    {
+      source = "npm:pi-cmux@0.1.16";
+      autoload = false;
+    }
     "npm:pi-cost@0.1.1"
     "npm:pi-dynamic-workflows@1.0.1"
     "npm:pi-goal-x@0.19.0"

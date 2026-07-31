@@ -710,12 +710,24 @@ in
             fi
           fi
           case "$_pi_session_profile" in
-            personal-default|work-default) ;;
-            *) _pi_session_profile="personal-default" ;;
+            personal-default) _pi_session_base="personal" ;;
+            work-default) _pi_session_base="work" ;;
+            *)
+              _pi_session_profile="personal-default"
+              _pi_session_base="personal"
+              ;;
           esac
           if [ "$_pi_session_profile" = "work-default" ]; then
             export AWS_PROFILE="lw-employee-ai"
             export AWS_REGION="eu-west-1"
+          fi
+          # pi-cmux is installed for regular profiles but only loaded in cmux.
+          # CMUX_SOCKET_PATH keeps compatibility with older cmux versions.
+          if [ -n "''${CMUX_WORKSPACE_ID:-}" ] || [ -n "''${CMUX_SOCKET_PATH:-}" ]; then
+            _nix_agents_extra_args+=(
+              --extension
+              "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile/npm/node_modules/pi-cmux/extensions/index.ts"
+            )
           fi
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
           mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
