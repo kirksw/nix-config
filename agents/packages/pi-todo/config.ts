@@ -1,5 +1,64 @@
-import type { GuidanceFields } from "@juicesharp/rpiv-config";
-import { loadJsonConfigWithLegacyFallback, validateGuidanceFields } from "@juicesharp/rpiv-config";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { isAbsolute, join } from "node:path";
+
+/** The subset of rpiv-config@2.2.0 needed by this local extension. */
+export interface GuidanceFields {
+	promptSnippet?: string;
+	promptGuidelines?: string[];
+}
+
+function expandTilde(path: string): string {
+	if (path === "~") return homedir();
+	if (path.startsWith("~/")) return join(homedir(), path.slice(2));
+	return path;
+}
+
+function defaultConfigDir(): string {
+	return join(homedir(), ".config");
+}
+
+function configDir(): string {
+	const xdg = process.env.XDG_CONFIG_HOME?.trim();
+	if (!xdg) return defaultConfigDir();
+	const expanded = expandTilde(xdg);
+	return isAbsolute(expanded) ? expanded : defaultConfigDir();
+}
+
+function loadJsonConfig<T>(path: string): T {
+	if (!existsSync(path)) return {} as T;
+	try {
+		const parsed = JSON.parse(readFileSync(path, "utf-8")) as unknown;
+		return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as T) : ({} as T);
+	} catch (error) {
+		console.warn(`rpiv-config: invalid JSON at ${path}, using default ({}) — ${(error as Error).message}`);
+		return {} as T;
+	}
+}
+
+function loadJsonConfigWithLegacyFallback<T>(name: string, file = "config.json"): T {
+	const xdgPath = join(configDir(), name, file);
+	if (existsSync(xdgPath)) return loadJsonConfig<T>(xdgPath);
+	return loadJsonConfig<T>(join(defaultConfigDir(), name, file));
+}
+
+/** Exact rpiv-config@2.2.0 guidance validation: each field is independently fail-soft. */
+export function validateGuidanceFields(fields: unknown): GuidanceFields {
+	if (!fields || typeof fields !== "object") return {};
+	const guidance = fields as Record<string, unknown>;
+	const result: GuidanceFields = {};
+	if (typeof guidance.promptSnippet === "string" && guidance.promptSnippet.length > 0) {
+		result.promptSnippet = guidance.promptSnippet;
+	}
+	if (
+		Array.isArray(guidance.promptGuidelines) &&
+		guidance.promptGuidelines.length > 0 &&
+		guidance.promptGuidelines.every((item) => typeof item === "string" && item.length > 0)
+	) {
+		result.promptGuidelines = guidance.promptGuidelines;
+	}
+	return result;
+}
 
 interface TodoConfig {
 	guidance?: GuidanceFields;
@@ -97,5 +156,3 @@ export function resolveCollapseKey(): CollapseKeySpec {
 	if (raw === COLLAPSE_KEY_OFF) return COLLAPSE_KEY_OFF;
 	return isValidCollapseKeySpec(raw) ? raw : DEFAULT_COLLAPSE_KEY;
 }
-
-export { validateGuidanceFields };

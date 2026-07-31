@@ -68,7 +68,6 @@
 		}
 	},
 	"dependencies": {
-		"@juicesharp/rpiv-config": "^2.2.0",
 		"typebox": "^1.1.24"
 	},
 	"devDependencies": {
