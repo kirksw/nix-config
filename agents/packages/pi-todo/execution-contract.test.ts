@@ -123,7 +123,7 @@ describe("todo execution contract", () => {
 	it("does not let an aborted child agent_end cancel the foreground guard", async () => {
 		const { pi, captured, ctx } = setup([task(1, "work", "pending")]);
 		const child = createMockCtx({ sessionId: "child" });
-		child.getSignal = vi.fn(() => ({ aborted: true }) as AbortSignal);
+		child.signal = { aborted: true } as AbortSignal;
 
 		await handler(captured, "input")({ source: "interactive" }, ctx);
 		await handler(captured, "agent_end")({}, child);
@@ -131,9 +131,9 @@ describe("todo execution contract", () => {
 		expect((pi.sendMessage as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1);
 	});
 
-	it("suppresses continuation when the foreground getSignal is aborted", async () => {
+	it("suppresses continuation when the foreground signal is aborted", async () => {
 		const { pi, captured, ctx } = setup([task(1, "work", "pending")]);
-		ctx.getSignal = vi.fn(() => ({ aborted: true }) as AbortSignal);
+		ctx.signal = { aborted: true } as AbortSignal;
 
 		await handler(captured, "input")({ source: "interactive" }, ctx);
 		await handler(captured, "agent_end")({}, ctx);

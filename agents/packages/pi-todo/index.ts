@@ -19,7 +19,7 @@
  * correctly after upgrade.
  */
 
-import type { ExtensionAPI, ExtensionContextActions, ExtensionUIContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionUIContext } from "@earendil-works/pi-coding-agent";
 import type { KeyId } from "@earendil-works/pi-tui";
 import { COLLAPSE_KEY_OFF, resolveCollapseKey } from "./config.js";
 import { I18N_NAMESPACE } from "./state/i18n-bridge.js";
@@ -202,9 +202,6 @@ export default function (pi: ExtensionAPI, importOverlay: TodoOverlayImporter = 
 		continuationSent: false,
 		cancelledRun: false,
 	});
-	type SignalContext = Pick<ExtensionContextActions, "getSignal">;
-	const getSignal = (ctx: Parameters<typeof sid>[0]) => (ctx as unknown as SignalContext).getSignal();
-
 	pi.on("before_agent_start", (event) => ({
 		systemPrompt: event.systemPrompt.includes(STATIC_EXECUTION_POLICY)
 			? event.systemPrompt
@@ -249,7 +246,7 @@ export default function (pi: ExtensionAPI, importOverlay: TodoOverlayImporter = 
 		const guard = continuationGuards.get(id);
 		// Pi has no cancellation field on agent_settled. Only suppress when the
 		// source explicitly exposes an aborted signal; do not infer cancellation.
-		if (guard && getSignal(ctx)?.aborted) {
+		if (guard && ctx.signal?.aborted) {
 			guard.cancelledRun = true;
 			guard.externalTurnOpen = false;
 		}
@@ -262,7 +259,7 @@ export default function (pi: ExtensionAPI, importOverlay: TodoOverlayImporter = 
 		if (
 			!guard ||
 			guard.cancelledRun ||
-			getSignal(ctx)?.aborted === true ||
+			ctx.signal?.aborted === true ||
 			!guard.externalTurnOpen ||
 			guard.continuationSent ||
 			!ctx.isIdle() ||

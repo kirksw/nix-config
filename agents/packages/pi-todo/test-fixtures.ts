@@ -163,7 +163,7 @@ function createMockModelRegistry(models: Model<Api>[] = []) {
 	};
 }
 
-export type MockContext = ExtensionContext & { getSignal: ReturnType<typeof vi.fn> };
+export type MockContext = ExtensionContext;
 
 export function createMockCtx(opts: MockCtxOptions = {}): MockContext {
 	return {
@@ -175,7 +175,7 @@ export function createMockCtx(opts: MockCtxOptions = {}): MockContext {
 		modelRegistry: createMockModelRegistry(opts.models ?? []),
 		isIdle: vi.fn(() => true),
 		hasPendingMessages: vi.fn(() => false),
-		getSignal: vi.fn(() => undefined),
+		signal: undefined,
 	} as unknown as MockContext;
 }
 
