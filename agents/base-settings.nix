@@ -6,6 +6,7 @@
 
 let
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
+  piTodoPackage = "${self}/agents/packages/pi-todo";
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -23,7 +24,7 @@ let
     "npm:pi-ponytail@0.1.2"
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
     "npm:@juicesharp/rpiv-btw@1.20.0"
-    "npm:@juicesharp/rpiv-todo@1.20.0"
+    piTodoPackage
   ];
   piFactoryPackageRefs = [
     piHerdrPackage
