@@ -22,6 +22,7 @@ let
     "npm:pi-simplify@0.2.2"
     "npm:pi-web-access@0.13.0"
     "npm:pi-ponytail@0.1.2"
+    "npm:@pi-plugins/fast-mode@0.1.8"
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
