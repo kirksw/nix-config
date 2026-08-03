@@ -113,6 +113,9 @@ _: {
       ];
       skills = [
         "grill-me"
+        "grill-with-docs"
+        "grilling"
+        "domain-modeling"
         "lavish"
         "homelab"
         "nix-agents"

@@ -32,9 +32,16 @@ Canonical naming is `<base>/<profile>`.
 
 - base: `personal`
 - agents: all
-- skills:
+- skills: all (the profile allowlist is empty)
+
+The default preset includes `grill-me`, `grill-with-docs`, `grilling`, and `domain-modeling` for this profile.
+
+- configured skill examples:
   - `add-module`
   - `grill-me`
+  - `grill-with-docs`
+  - `grilling`
+  - `domain-modeling`
   - `nix-agents`
   - `parallel-reviews`
   - `secrets-management`
@@ -48,6 +55,9 @@ Canonical naming is `<base>/<profile>`.
 - restricted agent set
 - skills:
   - `grill-me`
+  - `grill-with-docs`
+  - `grilling`
+  - `domain-modeling`
   - `nix-agents`
   - `parallel-reviews`
   - `system-context`

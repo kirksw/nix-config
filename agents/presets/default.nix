@@ -18,6 +18,9 @@
     ../defs/skills/add-module
     ../defs/skills/parallel-reviews
     ../defs/skills/grill-me
+    ../defs/skills/grill-with-docs
+    ../defs/skills/grilling
+    ../defs/skills/domain-modeling
     ../defs/skills/homelab
     ../defs/skills/last30days
     ../defs/skills/mmx-cli
