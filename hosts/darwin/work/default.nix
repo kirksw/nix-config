@@ -55,6 +55,9 @@
     };
 
     customSettings = {
+      extra-experimental-features = [
+        "provenance"
+      ];
       extra-sandbox-paths = [
         "/etc/nix/netrc"
         "/nix/var/determinate/netrc"
