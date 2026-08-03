@@ -3,20 +3,23 @@
   stdenvNoCC,
   fetchurl,
   _7zz,
+  curl,
+  jq,
   makeBinaryWrapper,
-  nix-update-script,
+  nix-update,
+  writeShellScript,
 }:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "cmux";
-  version = "browser-apple-review-20260722.1";
+  version = "0.64.22";
 
   __structuredAttrs = true;
   strictDeps = true;
 
   src = fetchurl {
     url = "https://github.com/manaflow-ai/cmux/releases/download/v${finalAttrs.version}/cmux-macos.dmg";
-    hash = "sha256-pq5qsvmBc+W/1Nz0a0Up/iOpynX9yHkxDX5t6CZpPnU=";
+    hash = "sha256-/RSNujUZ/n0wiEQInOTQYrF3ObpkViPwWPZ6ZHmM6iU=";
   };
 
   # -snld prevents "ERROR: Dangerous symbolic link path was ignored".
@@ -47,10 +50,22 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   # Preserve the notarized signature of the bundled binaries and resources.
   dontFixup = true;
 
-  passthru.updateScript = nix-update-script {
-    attrPath = "cmux";
-    extraArgs = [ "--flake" ];
-  };
+  passthru.updateScript = writeShellScript "update-cmux" ''
+    set -euo pipefail
+    tag="$(${lib.getExe curl} -fsSL 'https://api.github.com/repos/manaflow-ai/cmux/releases?per_page=100' |
+      ${lib.getExe jq} -r '
+        [ .[]
+          | select(.draft | not)
+          | select(.prerelease | not)
+          | select(any(.assets[]; .name == "cmux-macos.dmg"))
+        ]
+        | sort_by(.published_at) | reverse | .[0].tag_name // empty
+      ' )"
+    test -n "$tag"
+    version="''${tag#v}"
+    ${lib.getExe nix-update} --flake --version="$version" cmux
+    echo "Updated cmux to $tag"
+  '';
 
   meta = {
     description = "Native macOS terminal built on Ghostty, designed for AI coding agents";
