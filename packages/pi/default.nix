@@ -64,7 +64,7 @@ buildNpmPackage {
     ${lib.getExe curl} -fsSL "$tarball" -o "$tmp_dir/source.tgz"
     tar -xzf "$tmp_dir/source.tgz" -C "$tmp_dir" --strip-components=1
     rm -f "$tmp_dir/npm-shrinkwrap.json"
-    (cd "$tmp_dir" && ${nodejs_22}/bin/npm install --package-lock-only --ignore-scripts --omit=dev)
+    (cd "$tmp_dir" && ${nodejs_22}/bin/npm install --package-lock-only --ignore-scripts --omit=dev --legacy-peer-deps)
     cp "$tmp_dir/package-lock.json" "$lock_file"
     ${lib.getExe jq} -n --arg version "$version" --arg sourceHash "$source_hash" --arg npmDepsHash "${lib.fakeHash}" \
       '{formatVersion: 1, pi: {version: $version, sourceHash: $sourceHash, npmDepsHash: $npmDepsHash}}' > "$version_json"
