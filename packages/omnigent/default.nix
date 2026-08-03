@@ -7,6 +7,8 @@
   uv,
   python312,
   git,
+  gawk,
+  nix,
   nodejs_22,
   tmux,
 }:
@@ -18,7 +20,7 @@ let
     owner = "omnigent-ai";
     repo = "omnigent";
     inherit rev;
-    hash = "sha256-NjSVwykJXvEcLwkrDofPI3yI2Gb55kKE+XcicHkxH3M=";
+    hash = "sha256-Zvz7reA+h3QmK0Cf5/sKdyxWKx4wUBL0ia30ptM58o8=";
   };
   patchedSrc = runCommand "omnigent-${version}-patched-source" { } ''
     cp -R ${src} $out
@@ -80,26 +82,54 @@ writeShellApplication {
       PY
             )"
             tag="v$version"
-            rev=""
-            read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag^{}" || true) || true
+            rev="$(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag^{}" | ${lib.getExe gawk} 'NR == 1 { print $1 }')"
             if [ -z "$rev" ]; then
-              read -r rev _ < <(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag") || true
+              rev="$(${lib.getExe git} ls-remote https://github.com/omnigent-ai/omnigent.git "refs/tags/$tag" | ${lib.getExe gawk} 'NR == 1 { print $1 }')"
             fi
+            test -n "$rev"
 
-            ${lib.getExe python312} - "$version_json" "$version" "$rev" <<'PY'
+            source_url="https://github.com/omnigent-ai/omnigent/archive/$rev.tar.gz"
+            source_hash="$(${lib.getExe nix} hash convert --hash-algo sha256 --to sri \
+              "$(${nix}/bin/nix-prefetch-url --unpack --type sha256 "$source_url")")"
+            test -n "$source_hash"
+
+            ${lib.getExe python312} - "$version_json" "$repo_root/packages/omnigent/default.nix" "$version" "$rev" "$source_hash" <<'PY'
       import json
+      import re
       import sys
       from pathlib import Path
 
-      path = Path(sys.argv[1])
-      version, rev = sys.argv[2:]
-      data = json.loads(path.read_text())
+      version_path = Path(sys.argv[1])
+      nix_path = Path(sys.argv[2])
+      version, rev, source_hash = sys.argv[3:]
+      if not version or not rev or not source_hash:
+          raise SystemExit("missing Omnigent version, revision, or source hash")
+
+      data = json.loads(version_path.read_text())
       data.setdefault("formatVersion", 1)
       data.setdefault("omnigent", {}).update(version=version, rev=rev)
-      path.write_text(json.dumps(data, indent=2) + "\n")
+      version_text = json.dumps(data, indent=2) + "\n"
+
+      nix_text = nix_path.read_text()
+      nix_text, replacements = re.subn(
+          r'(owner = "omnigent-ai";.*?repo = "omnigent";.*?hash = )"[^"]+";',
+          rf'\1"{source_hash}";',
+          nix_text,
+          count=1,
+          flags=re.DOTALL,
+      )
+      if replacements != 1:
+          raise SystemExit("could not find Omnigent source hash in default.nix")
+
+      version_tmp = version_path.with_suffix(".json.tmp")
+      nix_tmp = nix_path.with_suffix(".nix.tmp")
+      version_tmp.write_text(version_text)
+      nix_tmp.write_text(nix_text)
+      version_tmp.replace(version_path)
+      nix_tmp.replace(nix_path)
       PY
 
-            echo "Updated omnigent to version $version (rev $rev)"
+            echo "Updated omnigent to version $version (rev $rev, hash $source_hash)"
     '';
   };
 
