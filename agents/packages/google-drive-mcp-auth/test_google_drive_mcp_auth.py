@@ -162,6 +162,29 @@ class BridgeTests(unittest.TestCase):
 
     @mock.patch.object(bridge, "_token", return_value="secret-token")
     @mock.patch.object(bridge, "_open")
+    def test_error_status_with_valid_body_is_forwarded(self, urlopen, _token):
+        # The preview endpoint can return a complete JSON-RPC response with an
+        # HTTP error status (observed: HTTP 403 carrying a tools/list result).
+        body = b'{"jsonrpc":"2.0","id":2,"result":{"tools":[]}}'
+        error = urllib.error.HTTPError(
+            bridge.ENDPOINT, 403, "forbidden", {"content-type": "application/json"}, io.BytesIO(body)
+        )
+        urlopen.side_effect = error
+        response = bridge.forward({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+        self.assertEqual(response, [{"jsonrpc": "2.0", "id": 2, "result": {"tools": []}}])
+
+    @mock.patch.object(bridge, "_token", return_value="secret-token")
+    @mock.patch.object(bridge, "_open")
+    def test_error_status_with_invalid_body_still_fails(self, urlopen, _token):
+        error = urllib.error.HTTPError(
+            bridge.ENDPOINT, 403, "forbidden", {"content-type": "application/json"}, io.BytesIO(b"not json")
+        )
+        urlopen.side_effect = error
+        response = bridge.forward({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+        self.assertEqual(response[0]["error"]["message"], "Google Drive MCP returned HTTP 403")
+
+    @mock.patch.object(bridge, "_token", return_value="secret-token")
+    @mock.patch.object(bridge, "_open")
     def test_failed_initialize_is_not_used_for_recovery(self, urlopen, _token):
         initialize = {
             "jsonrpc": "2.0",

@@ -171,9 +171,18 @@ def _forward_once(request):
         _last_http_status = error.code
         if error.code == 404:
             _session_id = None
+        # The preview endpoint can return a valid JSON-RPC body with an HTTP
+        # error status (observed: HTTP 403 carrying a complete tools/list
+        # result). Pass such bodies through instead of discarding them.
         # Never print the upstream body: it can echo request or credential material.
-        _diagnostic(f"upstream HTTP {error.code}")
-        return [_jsonrpc_error(request, f"Google Drive MCP returned HTTP {error.code}")]
+        try:
+            content_type = error.headers.get("content-type", "application/json")
+            parsed = _parse_body(_read_body(error, content_type), content_type)
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+            _diagnostic(f"upstream HTTP {error.code}")
+            return [_jsonrpc_error(request, f"Google Drive MCP returned HTTP {error.code}")]
+        _diagnostic(f"upstream HTTP {error.code} with a valid response body")
+        return parsed
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         _diagnostic(f"upstream response failed: {type(error).__name__}")
         return [_jsonrpc_error(request, "Google Drive MCP returned an invalid response")]
