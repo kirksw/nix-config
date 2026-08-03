@@ -17,6 +17,7 @@ let
     "npm:pi-cost@0.1.1"
     "npm:pi-dynamic-workflows@1.0.1"
     "npm:pi-goal-x@0.19.0"
+    "npm:@llblab/pi-telegram@0.26.16"
     piHerdrPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-mcp-adapter@2.11.0"
@@ -24,7 +25,6 @@ let
     "npm:pi-permission-system@0.8.0"
     "npm:pi-simplify@0.2.2"
     "npm:pi-web-access@0.13.0"
-    "npm:pi-ponytail@0.1.2"
     "npm:@pi-plugins/fast-mode@0.1.8"
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
     "npm:@juicesharp/rpiv-btw@1.20.0"
