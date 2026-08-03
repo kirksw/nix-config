@@ -32,6 +32,7 @@
     ../defs/mcps/lunar-skills.nix
     ../defs/mcps/granola.nix
     ../defs/mcps/grafana.nix
+    ../defs/mcps/google-drive.nix
     ../defs/mcps/linear.nix
     ../defs/mcps/sourcegraph.nix
     ../defs/mcps/swe-pruner.nix

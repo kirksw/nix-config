@@ -132,6 +132,7 @@ _: {
         "swe-pruner"
         "granola"
         "grafana"
+        "google-drive"
         "linear"
         "sourcegraph"
       ];

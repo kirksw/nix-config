@@ -21,12 +21,16 @@ let
     else
       { };
 
-  packages = builtins.listToAttrs (
-    map (name: {
-      inherit name;
-      value = pkgs.callPackage (packagesDir + "/${name}") (packageArgs name);
-    }) packageNames
-  );
+  packages =
+    builtins.listToAttrs (
+      map (name: {
+        inherit name;
+        value = pkgs.callPackage (packagesDir + "/${name}") (packageArgs name);
+      }) packageNames
+    )
+    // {
+      google-drive-mcp-auth = pkgs.callPackage ../agents/packages/google-drive-mcp-auth { };
+    };
 in
 {
   inherit packageNames packages;

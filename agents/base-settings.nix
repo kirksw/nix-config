@@ -119,6 +119,10 @@ let
         url = "https://mcp-grafana.lunar.tech/mcp";
         lifecycle = "lazy";
       };
+      google-drive = {
+        command = "${self.packages.${system}.google-drive-mcp-auth}/bin/google-drive-mcp-auth";
+        lifecycle = "lazy";
+      };
       linear = {
         url = "https://mcp.linear.app/mcp";
         lifecycle = "lazy";
