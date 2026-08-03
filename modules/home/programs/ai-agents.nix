@@ -23,10 +23,10 @@ let
       cp -r ${../../../agents}/. "$out/"
       chmod -R u+w "$out"
     '';
-  # Herdr v0.7.5's official Pi integration reports lifecycle state and the native
+  # Herdr v0.8.0's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.7.5/src/integration/assets/pi/herdr-agent-state.ts";
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.8.0/src/integration/assets/pi/herdr-agent-state.ts";
     hash = "sha256-Eu/SdZL78YU0PwNe5P0rGZnpNW4yPksBIl99a8ibFt4=";
   };
   herdrPiIntegrationTargets = [
