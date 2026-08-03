@@ -30,6 +30,7 @@ let
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
+    piAgentJournalPackage
   ];
   piFactoryPackageRefs = [
     piHerdrPackage
@@ -90,7 +91,7 @@ let
   piWorkSettings = builtins.toJSON (
     piWorkModelDefaults
     // {
-      packages = piPackageRefs ++ [ piAgentJournalPackage ];
+      packages = piPackageRefs;
       subagents.disableBuiltins = true;
     }
   );
