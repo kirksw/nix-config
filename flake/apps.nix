@@ -122,6 +122,7 @@ let
         ''
       ) (builtins.attrNames files)}
     '';
+  piWorkMcpSource = pkgs.writeText "nix-agents-pi-work-mcp.json" agentBaseSettingsTargets.pi.work."mcp.json";
 
   syncBaseSettingsCommands =
     target:
@@ -366,6 +367,28 @@ let
       fi
     }
 
+    cleanup_stale_google_drive_url() {
+      source_file="$1"
+      target_file="$2"
+
+      # The source now owns Google Drive's local command; remove only the
+      # target-only URL left behind by the old remote configuration.
+      if ${pkgs.jq}/bin/jq -e \
+        '(.mcpServers? // {})["google-drive"] as $server
+         | ($server | type == "object") and ($server.command? | type == "string")' \
+        "$source_file" >/dev/null 2>&1 \
+        && ${pkgs.jq}/bin/jq -e '.mcpServers["google-drive"].url? != null' "$target_file" >/dev/null 2>&1; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+          echo "DRY-RUN remove stale google-drive.url from $target_file"
+        else
+          _google_drive_tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          ${pkgs.jq}/bin/jq 'del(.mcpServers["google-drive"].url)' "$target_file" > "$_google_drive_tmp"
+          run ${pkgs.coreutils}/bin/cp "$_google_drive_tmp" "$target_file"
+          run ${pkgs.coreutils}/bin/rm -f "$_google_drive_tmp"
+        fi
+      fi
+    }
+
     sync_file() {
       source_file="$1"
       target_file="$2"
@@ -531,6 +554,10 @@ let
     }
 
     ${allBaseSettingsCommands}
+
+    cleanup_stale_google_drive_url \
+      "${piWorkMcpSource}" \
+      "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
 
     seed_mutable_file \
       "${piWorkAuthFile}" \
