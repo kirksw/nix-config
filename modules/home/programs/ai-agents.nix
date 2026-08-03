@@ -27,7 +27,7 @@ let
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
     url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.8.0/src/integration/assets/pi/herdr-agent-state.ts";
-    hash = "sha256-Eu/SdZL78YU0PwNe5P0rGZnpNW4yPksBIl99a8ibFt4=";
+    hash = "sha256-mxxBzXJSD8Kr5fKirsmVwSqSbM6ETfRyx/1fyuT02/o=";
   };
   herdrPiIntegrationTargets = [
     "nix-agents/pi/bases/personal/profiles/personal-default/extensions/herdr-agent-state.ts"

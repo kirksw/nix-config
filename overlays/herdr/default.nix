@@ -4,7 +4,7 @@ let
     owner = "ogulcancelik";
     repo = "herdr";
     tag = "v0.8.0";
-    hash = "sha256-3BA8eredGku+vsL2Af7sUf43QiArR5XTHNrI+X11vFM=";
+    hash = "sha256-empFQ+hrnCh2JhOzQRWSCLV0YoZC3DXW3bY6k8YuJjk=";
   };
 in
 {
@@ -15,7 +15,7 @@ in
       pname = "herdr";
       version = "0.8.0";
       inherit src;
-      hash = "sha256-lWnc0Ka0hp7bbm+dkKKj22Dbk+Cwrld86romXs3lzBs=";
+      hash = "sha256-E1lBgpTFZwNjeALeg/atwbDFL/XQbUnvCdX7ohbAHAc=";
     };
     zigDeps = prev.zig_0_15.fetchDeps {
       pname = "herdr";
@@ -24,5 +24,7 @@ in
       fetchAll = true;
       hash = "sha256-PnM+hZIlLyQwK8vJgd/Bhjt1lNIz06T8FahwliRmMrY=";
     };
+    # v0.8.0 no longer ships the skill file expected by nixpkgs' postInstall.
+    postInstall = "";
   });
 }
