@@ -3,9 +3,18 @@ keys:
   - &yubikey-backup age1yubikey1q2nwpd9tj446fluvv3pgexq8vq669aq0c8tt6d09z0hhzgkmrh7dszy0hs2
   - &manual age15p8k9vll4k7uqgmqydcn5n09dzc4dlw4nq6zwlnunnurpxg8wqlsyu9mlz
   - &k8s age1e4scgj83r7yddwk96sm8ghdes309e7lze2rq73ufmngkhpaa74vsqndxsx
+  - &nixos-ry6b age1rq0nrc44pwvah7ddf42tsgpx7nd9qrl88a5c553yt0vk8g2kqpds5ft5qe
 
 creation_rules:
-  - path_regex: secrets/ssh/ry(4a|6a|6b)-root\.yaml$
+  - path_regex: secrets/ssh/ry6b-root\.yaml$
+    key_groups:
+      - age:
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
+          - *k8s
+          - *nixos-ry6b
+  - path_regex: secrets/ssh/ry(4a|6a)-root\.yaml$
     key_groups:
       - age:
           - *yubikey-main

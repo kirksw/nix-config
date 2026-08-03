@@ -27,10 +27,11 @@ let
       modules = [
         disko.nixosModules.disko
         sops-nix.nixosModules.sops
-        microvm.nixosModules.host
-        # microvm guest module only imported by microvm guests, not the host
         config.hostModule
         { nixpkgs.overlays = (config.overlays or [ ]); }
+      ]
+      ++ lib.optionals (config.enableMicrovmHost or false) [
+        microvm.nixosModules.host
       ]
       ++ lib.optionals (config.enableHomeManager or false) [
         home-manager.nixosModules.home-manager

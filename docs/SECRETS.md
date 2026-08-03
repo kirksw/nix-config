@@ -25,6 +25,7 @@ secrets/
 | `yubikey-backup` | Backup hardware recipient |
 | `manual` | Manual recovery recipient |
 | `k8s` | Infrastructure recipient |
+| `nixos-ry6b` | Host-specific recipient for `nixos-ry6b` |
 
 Recipient public keys are defined once in [`.sops.yaml`](../.sops.yaml).
 
@@ -32,7 +33,8 @@ Recipient public keys are defined once in [`.sops.yaml`](../.sops.yaml).
 
 | Path | Recipients |
 | --- | --- |
-| `secrets/ssh/ry(4a\|6a\|6b)-root.yaml` | all four recipient groups |
+| `secrets/ssh/ry6b-root.yaml` | all four shared recipient groups plus `nixos-ry6b` |
+| `secrets/ssh/ry(4a\|6a)-root.yaml` | all four shared recipient groups |
 | `secrets/k8s/*.yaml` | all four recipient groups |
 | `secrets/cloudflare/*.yaml` | all four recipient groups |
 | `secrets/tailscale/agent-microvms.yaml` | all four recipient groups |

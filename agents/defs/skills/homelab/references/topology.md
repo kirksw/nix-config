@@ -26,13 +26,13 @@
 
 ### `nixos-ry6b`
 
-- Role: k3s agent config target
+- Role: clean/base headless NixOS host
 - Source files:
-  - `hosts/nixos/ry6b/configuration.nix`
-  - `modules/nixos/generic/k3s.nix`
+  - `hosts/nixos/ry6b/default.nix`
+  - `hosts/nixos/ry6b/hardware-configuration.nix`
 - Notes:
-  - Configured as a k3s agent joining `nixos-ry6a`.
-  - `deploy.nix` currently comments this node out because the hardware is broken.
+  - Has no k3s role.
+  - LAN deployment only; no Tailnet deployment node is configured yet.
 
 ## Deployment Surface
 
@@ -42,6 +42,7 @@ Remote activation is defined in `flake/deploy.nix` for:
 - `nixos-ry4a-ts`
 - `nixos-ry6a`
 - `nixos-ry6a-ts`
+- `nixos-ry6b`
 
 Use this deploy mapping when the task is "apply config to the homelab" rather than merely evaluate it.
 

@@ -40,11 +40,11 @@ in
       hostname = "100.121.104.120";
     };
 
-    # nixos-ry6b = mkNode {
-    #   nodeName = "nixos-ry6b";
-    #   configName = "nixos-ry6b";
-    #   hostname = "192.168.10.220";
-    # }; # hardware broken
+    nixos-ry6b = mkNode {
+      nodeName = "nixos-ry6b";
+      configName = "nixos-ry6b";
+      hostname = "192.168.10.92";
+    };
 
     nixos-ry4a = mkNode {
       nodeName = "nixos-ry4a";

@@ -3,4 +3,5 @@
   user = "root";
   hostModule = ../../../hosts/nixos/ry4a;
   homeModule = null;
+  enableMicrovmHost = true;
 }
