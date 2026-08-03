@@ -90,8 +90,6 @@ let
       mkdir -p "$out"
       cp -r ${../agents}/. "$out/"
       chmod -R u+w "$out"
-      mkdir -p "$out/targets/pi/extensions"
-      cp -r ${inputs.agenticos}/harnesses/pi/extensions/agent-os "$out/targets/pi/extensions/agent-os"
     '';
   piCommonChainsSrc = ../agents/targets/pi/chains/common;
   agentInputs = inputs // {

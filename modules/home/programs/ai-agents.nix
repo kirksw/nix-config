@@ -22,8 +22,6 @@ let
       mkdir -p "$out"
       cp -r ${../../../agents}/. "$out/"
       chmod -R u+w "$out"
-      mkdir -p "$out/targets/pi/extensions"
-      cp -r ${inputs.agenticos}/harnesses/pi/extensions/agent-os "$out/targets/pi/extensions/agent-os"
     '';
   # Herdr v0.7.5's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.

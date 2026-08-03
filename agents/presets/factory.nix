@@ -1,4 +1,4 @@
-# Minimal Pi profiles used by Agent OS factory wrappers.
+# Minimal Pi profiles used by factory wrappers.
 _: {
   providers = {
     personal-zai-key = {

@@ -44,12 +44,6 @@
     };
 
     nix-agents.url = "github:kirksw/nix-agents/main";
-    agenticos = {
-      # Alias host bypasses the url.insteadOf rule that rewrites
-      # ssh://git@github.com/kirksw/ into an ssh:// URL with an invalid port.
-      url = "git+ssh://git@github.com-kirksw/kirksw/agenticOS?ref=centralize-agenticos";
-      flake = false;
-    };
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 
@@ -265,8 +259,6 @@
                   mkdir -p "$out"
                   cp -r ${./agents}/. "$out/"
                   chmod -R u+w "$out"
-                  mkdir -p "$out/targets/pi/extensions"
-                  cp -r ${inputs.agenticos}/harnesses/pi/extensions/agent-os "$out/targets/pi/extensions/agent-os"
                 '';
                 profileMeta = nix-agents.lib.${system}.mkProfileMeta {
                   inherit pkgs;
