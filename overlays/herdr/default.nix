@@ -24,5 +24,14 @@ in
       fetchAll = true;
       hash = "sha256-PnM+hZIlLyQwK8vJgd/Bhjt1lNIz06T8FahwliRmMrY=";
     };
+    # v0.8.0 stores this file under skills/herdr rather than at repository root.
+    postInstall = ''
+      mkdir -p $out/share/herdr/skills/herdr
+      install -m 444 ${src}/skills/herdr/SKILL.md $out/share/herdr/skills/herdr/SKILL.md
+      installShellCompletion --cmd herdr \
+        --bash <("$out/bin/herdr" completion bash) \
+        --fish <("$out/bin/herdr" completion fish) \
+        --zsh <("$out/bin/herdr" completion zsh)
+    '';
   });
 }
