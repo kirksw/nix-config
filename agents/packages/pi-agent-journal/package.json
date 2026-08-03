@@ -1,0 +1,35 @@
+{
+  "name": "@kirksw/pi-agent-journal",
+  "version": "0.1.0-local.1",
+  "description": "Pi extension for append-only agent-ops journaling with jrnl.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "agent-journal",
+    "jrnl"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./index.ts"],
+    "skills": ["./skills"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "dependencies": {
+    "typebox": "^1.1.24"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "0.83.0",
+    "@earendil-works/pi-coding-agent": "0.83.0",
+    "@types/node": "22.15.0",
+    "typescript": "5.8.3",
+    "typebox": "1.1.24"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test gate.test.mjs",
+    "typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck index.ts"
+  }
+}

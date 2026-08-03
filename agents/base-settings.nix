@@ -7,6 +7,7 @@
 let
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
   piTodoPackage = "${self}/agents/packages/pi-todo";
+  piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -37,6 +38,7 @@ let
     "npm:pi-permission-system@0.8.0"
     "npm:pi-web-access@0.13.0"
   ];
+  piWorkFactoryPackageRefs = piFactoryPackageRefs ++ [ piAgentJournalPackage ];
 
   piPersonalSettings = builtins.toJSON {
     defaultProvider = "openai-codex";
@@ -87,7 +89,7 @@ let
   piWorkSettings = builtins.toJSON (
     piWorkModelDefaults
     // {
-      packages = piPackageRefs;
+      packages = piPackageRefs ++ [ piAgentJournalPackage ];
       subagents.disableBuiltins = true;
     }
   );
@@ -95,7 +97,7 @@ let
   piWorkFactorySettings = builtins.toJSON (
     piWorkModelDefaults
     // {
-      packages = piFactoryPackageRefs;
+      packages = piWorkFactoryPackageRefs;
       subagents.disableBuiltins = true;
     }
   );
