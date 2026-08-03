@@ -2,7 +2,6 @@
   agents.scout = {
     description = "Fast multimodal data processor — ingests, filters, and summarizes large volumes of text, images, and structured data.";
     mode = "subagent";
-    model = "C";
     tier = "employee";
     temperature = 0.3;
     prompt = ''

@@ -2,7 +2,6 @@
   agents.code-monkey = {
     description = "Handles the majority of engineering tasks — implementation, bug fixes, refactors, and maintenance.";
     mode = "subagent";
-    model = "B";
     tier = "employee";
     temperature = 0.2;
     prompt = ''

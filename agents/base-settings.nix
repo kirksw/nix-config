@@ -42,7 +42,8 @@ let
 
   piPersonalSettings = builtins.toJSON {
     defaultProvider = "openai-codex";
-    defaultModel = "gpt-5.6-luna";
+    defaultModel = "gpt-5.6-terra";
+    defaultThinkingLevel = "medium";
     enabledModels = [
       "gpt-5.6-sol"
       "gpt-5.6-terra"
@@ -65,7 +66,7 @@ let
 
   piWorkModelDefaults = {
     defaultProvider = "openai";
-    defaultModel = "gpt-5.6-luna";
+    defaultModel = "gpt-5.6-terra";
     defaultThinkingLevel = "medium";
     enabledModels = [
       "gpt-5.6-sol"

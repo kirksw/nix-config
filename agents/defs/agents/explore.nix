@@ -2,7 +2,6 @@
   agents.explore = {
     description = "Fast exploration agent for understanding codebases, finding files, and gathering context. Use for research, debugging, and initial investigation.";
     mode = "subagent";
-    model = "B";
     tier = "employee";
     temperature = 0.3;
     prompt = ''

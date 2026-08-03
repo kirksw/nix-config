@@ -1022,11 +1022,11 @@
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
-        "lastModified": 1783675296,
-        "narHash": "sha256-0+FjmHOYgu0Pi36DLCBJ8lVpjRZM1HBWZWOuNJiZxJQ=",
+        "lastModified": 1785790404,
+        "narHash": "sha256-bHsHN20QvyJKIf5QuJsRS6+bb2n1WkUW9ia+qFPDkOc=",
         "owner": "kirksw",
         "repo": "nix-agents",
-        "rev": "3da8a54f3e3d1634c5147a7e2de42801b479d498",
+        "rev": "fd0e25d267a85d249249590e37d96cdc01cff659",
         "type": "github"
       },
       "original": {

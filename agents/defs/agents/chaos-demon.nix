@@ -2,7 +2,6 @@
   agents.chaos-demon = {
     description = "Finds how things break — reports failure modes, edge cases, and resilience gaps without suggesting fixes.";
     mode = "subagent";
-    model = "B";
     tier = "employee";
     temperature = 0.5;
     prompt = ''

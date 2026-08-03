@@ -2,7 +2,6 @@
   agents.scribe = {
     description = "Updates documentation after work completes — session logs, README, ARCHITECTURE, and reference docs. Uses git commits as the changelog.";
     mode = "subagent";
-    model = "D";
     tier = "employee";
     temperature = 0.2;
     prompt = ''

@@ -2,7 +2,6 @@
   agents."10xBEAST" = {
     description = "Unblocks engineers, challenges bad plans, and forces decisions when progress stalls.";
     mode = "subagent";
-    model = "S";
     tier = "employee";
     reasoningEffort = "xhigh";
     temperature = 0.3;
