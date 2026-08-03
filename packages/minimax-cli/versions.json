@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "mmxCli": {
-    "version": "1.0.18",
-    "hash": "sha256-1yYHNSLSqDMVmhTWzvZF4L866agiRnfZb/H8pCKguvQ=",
-    "npmDepsHash": "sha256-fOYj/EWyH30zI5TioG0b4FKxnMuN2IYew9VKtF0BL4A="
+    "version": "1.0.19",
+    "hash": "sha256-OYESnGzoReby1flbIi/uN7x7kvZin218FX16SW+cwEY=",
+    "npmDepsHash": "sha256-yGq1vaSkg+yv4FjBc4neyvZp4+vix6MtjU9cflc0zhE="
   }
 }
