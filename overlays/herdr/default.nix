@@ -24,7 +24,5 @@ in
       fetchAll = true;
       hash = "sha256-PnM+hZIlLyQwK8vJgd/Bhjt1lNIz06T8FahwliRmMrY=";
     };
-    # v0.8.0 no longer ships the skill file expected by nixpkgs' postInstall.
-    postInstall = "";
   });
 }
