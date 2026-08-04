@@ -13,6 +13,12 @@
 let
   tailscaleCertHost = "nixos-ry6a.tail54de03.ts.net";
   dashboardCertDir = "/var/lib/tailscale/certs/kubernetes-dashboard";
+  mlflowPortForward = pkgs.writeShellScript "mlflow-port-forward" ''
+    while true; do
+      ${pkgs.k3s}/bin/k3s kubectl -n mlflow port-forward --address 127.0.0.1 service/mlflow 5000:5000 || true
+      sleep 5
+    done
+  '';
 in
 {
   imports = [
@@ -191,7 +197,7 @@ in
     requires = [ "k3s.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.k3s}/bin/k3s kubectl -n mlflow port-forward --address 127.0.0.1 service/mlflow 5000:5000";
+      ExecStart = mlflowPortForward;
       Restart = "always";
       RestartSec = "5s";
     };
