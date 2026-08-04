@@ -191,7 +191,7 @@ in
     requires = [ "k3s.service" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.k3s}/bin/k3s kubectl -n mlflow port-forward service/mlflow 127.0.0.1:5000:5000";
+      ExecStart = "${pkgs.k3s}/bin/k3s kubectl -n mlflow port-forward --address 127.0.0.1 service/mlflow 5000:5000";
       Restart = "always";
       RestartSec = "5s";
     };
