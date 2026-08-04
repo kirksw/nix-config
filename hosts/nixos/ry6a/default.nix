@@ -183,6 +183,43 @@ in
     tokenFile = config.sops.secrets."k8s/node/secret".path;
   };
 
+  # Keep MLflow private: the ClusterIP service is forwarded only on loopback,
+  # then Tailscale Serve terminates Tailnet TLS on this node's MagicDNS name.
+  systemd.services.mlflow-port-forward = {
+    description = "Forward the MLflow ClusterIP service to localhost";
+    after = [ "k3s.service" ];
+    requires = [ "k3s.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.k3s}/bin/k3s kubectl -n mlflow port-forward service/mlflow 127.0.0.1:5000:5000";
+      Restart = "always";
+      RestartSec = "5s";
+    };
+  };
+
+  systemd.services.mlflow-tailscale-serve = {
+    description = "Expose MLflow privately through Tailscale Serve";
+    after = [
+      "network-online.target"
+      "tailscaled.service"
+      "mlflow-port-forward.service"
+    ];
+    wants = [ "network-online.target" ];
+    requires = [
+      "tailscaled.service"
+      "mlflow-port-forward.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg --https=443 http://127.0.0.1:5000";
+      ExecStop = "${pkgs.tailscale}/bin/tailscale serve --https=443 off";
+      Restart = "on-failure";
+      RestartSec = "10s";
+    };
+  };
+
   systemd.services.kubernetes-dashboard-tailscale-cert = {
     description = "Issue Tailscale cert and sync dashboard TLS secret";
     after = [
