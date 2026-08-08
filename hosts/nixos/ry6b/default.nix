@@ -94,11 +94,26 @@
     defaultSopsFormat = "yaml";
     age.keyFile = "/root/.config/sops/age/keys.txt";
 
+    secrets."k8s/node/secret" = {
+      sopsFile = "${self}/secrets/k8s/node.yaml";
+      key = "secret";
+      mode = "0400";
+    };
+
     secrets."ssh/root/authorizedKey" = {
       sopsFile = "${self}/secrets/ssh/ry6b-root.yaml";
       key = "authorizedKey";
       mode = "0400";
     };
+  };
+
+  nixosModules.k3s = {
+    enable = true;
+    role = "agent";
+    nodeName = "nixos-ry6b";
+    # Use ry6a's LAN address: Tailnet ACLs do not permit the k3s API port.
+    serverAddr = "https://192.168.10.66:6443";
+    tokenFile = config.sops.secrets."k8s/node/secret".path;
   };
 
   system.activationScripts.rootAuthorizedKey = {

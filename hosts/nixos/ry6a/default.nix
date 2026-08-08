@@ -206,7 +206,7 @@ in
       set -euo pipefail
       install -d -m 0700 "${dashboardCertDir}"
       ${pkgs.tailscale}/bin/tailscale cert --cert-file "${dashboardCertDir}/tls.crt" --key-file "${dashboardCertDir}/tls.key" "${tailscaleCertHost}"
-      for ns in kubernetes-dashboard uptime-kuma; do
+      for ns in affine kubernetes-dashboard litellm uptime-kuma; do
         if ${pkgs.k3s}/bin/k3s kubectl get namespace "$ns" >/dev/null 2>&1; then
           ${pkgs.k3s}/bin/k3s kubectl -n "$ns" create secret tls kubernetes-dashboard-tls --cert="${dashboardCertDir}/tls.crt" --key="${dashboardCertDir}/tls.key" --dry-run=client -o yaml | ${pkgs.k3s}/bin/k3s kubectl apply -f -
         fi
