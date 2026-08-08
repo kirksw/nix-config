@@ -8,6 +8,7 @@ let
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
+  piMlflowTracerPackage = "${self.packages.${system}.pi-mlflow-tracer}";
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -31,9 +32,11 @@ let
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
     piAgentJournalPackage
+    piMlflowTracerPackage
   ];
   piFactoryPackageRefs = [
     piHerdrPackage
+    piMlflowTracerPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-permission-system@0.8.0"
@@ -155,7 +158,14 @@ let
     };
   };
 
+  piPersonalEnv = ''
+    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
+    export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
+  '';
+
   piWorkEnv = ''
+    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
+    export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
     if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
       export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
     fi
@@ -200,9 +210,11 @@ in
     pi = {
       personal = {
         "settings.json" = piPersonalSettings;
+        "env" = piPersonalEnv;
       };
       home-factory = {
         "settings.json" = piHomeFactorySettings;
+        "env" = piPersonalEnv;
       };
       work = {
         "mcp.json" = piWorkMcp;

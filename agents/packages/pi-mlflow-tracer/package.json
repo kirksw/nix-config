@@ -1,0 +1,24 @@
+{
+  "name": "@kirksw/pi-mlflow-tracer",
+  "version": "1.0.0-local.1",
+  "description": "Local MLflow tracing extension for Pi, authenticated through Cloudflare Access.",
+  "type": "module",
+  "license": "ISC",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "mlflow-tracing": "0.1.3"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck index.ts"
+  }
+}

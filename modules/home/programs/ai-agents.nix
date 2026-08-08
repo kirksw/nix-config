@@ -246,6 +246,8 @@ let
       LUNAR_OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
       LUNAR_ANTHROPIC_KEY_PATH="${config.sops.secrets."api/lunar/anthropic".path}"
       GIT_PAT_PATH="${config.sops.secrets."git/pat".path}"
+      MLFLOW_CF_ACCESS_CLIENT_ID_PATH="${config.sops.secrets."api/mlflow/client-id".path}"
+      MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH="${config.sops.secrets."api/mlflow/client-secret".path}"
 
       if [ -f "$ZAI_SECRET_PATH" ]; then
         export PERSONAL_ZAI_API_KEY="$(cat "$ZAI_SECRET_PATH")"
@@ -261,6 +263,12 @@ let
       fi
       if [ -f "$GIT_PAT_PATH" ]; then
         export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GIT_PAT_PATH")"
+      fi
+      if [ -f "$MLFLOW_CF_ACCESS_CLIENT_ID_PATH" ]; then
+        export CF_ACCESS_CLIENT_ID="$(tr -d '[:space:]' < "$MLFLOW_CF_ACCESS_CLIENT_ID_PATH")"
+      fi
+      if [ -f "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH" ]; then
+        export CF_ACCESS_CLIENT_SECRET="$(tr -d '[:space:]' < "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH")"
       fi
 
       _nix_agents_extra_args=()
@@ -603,6 +611,18 @@ in
           mode = "0400";
         };
       })
+      (lib.mkIf config.homeModules.piCodingAgent.enable {
+        "api/mlflow/client-id" = {
+          sopsFile = "${self}/secrets/api/mlflow.yaml";
+          key = "client-id";
+          mode = "0400";
+        };
+        "api/mlflow/client-secret" = {
+          sopsFile = "${self}/secrets/api/mlflow.yaml";
+          key = "client-secret";
+          mode = "0400";
+        };
+      })
     ];
 
     launchd.agents = lib.mkIf (config.homeModules.omnigent.enable && pkgs.stdenv.isDarwin) {
@@ -715,6 +735,11 @@ in
               _pi_session_base="personal"
               ;;
           esac
+          _pi_profile_env="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings/env"
+          if [ -f "$_pi_profile_env" ]; then
+            # Generated profile environment is trusted Nix configuration.
+            . "$_pi_profile_env"
+          fi
           if [ "$_pi_session_profile" = "work-default" ]; then
             export AWS_PROFILE="lw-employee-ai"
             export AWS_REGION="eu-west-1"
