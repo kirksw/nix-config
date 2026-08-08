@@ -20,7 +20,7 @@ let
     owner = "omnigent-ai";
     repo = "omnigent";
     inherit rev;
-    hash = "sha256-Zvz7reA+h3QmK0Cf5/sKdyxWKx4wUBL0ia30ptM58o8=";
+    hash = "sha256-ca3UDC5syAIaXddsDFO0aaL26n9a0jZr4z2v/0RmuWA=";
   };
   patchedSrc = runCommand "omnigent-${version}-patched-source" { } ''
     cp -R ${src} $out

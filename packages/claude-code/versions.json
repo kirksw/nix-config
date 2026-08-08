@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "claudeCode": {
-    "version": "2.1.220",
+    "version": "2.1.226",
     "hashes": {
-      "x86_64-linux": "sha256-Z09h8g/zBvMQDPkgDkw2xLcCeLW+8ohFSYGblCqJyGM=",
-      "aarch64-linux": "sha256-FZ5KUdeW878UZ3V3EA9++4RWEbHOrwwwy9jUZQ2UIYU=",
-      "x86_64-darwin": "sha256-3Ke+CqfT2SSDbUQODG2OPUfvPI5h+lgJtUuQFxcM4vM=",
-      "aarch64-darwin": "sha256-it3IV/P+ZNWgNor57lAyG1CvtKaRi6PvAYq4T1274IE="
+      "x86_64-linux": "sha256-TpvsEXfOlpDovZiLcQrCQQXnDaQo3QlMWty754alVVU=",
+      "aarch64-linux": "sha256-/rcV7gZtAqQAydg5QVkvEcjo+mYowePBQmK8Up+VBJg=",
+      "x86_64-darwin": "sha256-dzsJWHbxPduDNr+uICpXxi41ixiCdG8dVeNoBgGjLFk=",
+      "aarch64-darwin": "sha256-AToc8X31/x3MGJ1db9P91fCX3cPNQaqZkumYBVdP674="
     }
   }
 }
