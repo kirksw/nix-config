@@ -8,4 +8,5 @@ _:
   "ghostty"
   "cyberduck"
   "fluidvoice"
+  "whatsapp"
 ]

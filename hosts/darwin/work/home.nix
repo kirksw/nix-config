@@ -13,7 +13,6 @@
       nerd-fonts.fira-code
       nerd-fonts.fira-mono
       self.packages.${pkgs.system}.pindrop
-      whatsapp-for-mac
     ];
     sessionVariables = {
       LANG = "en_US.UTF-8";
@@ -45,6 +44,7 @@
   homeModules.wezterm.enable = true;
   homeModules.qemu.enable = true;
   # ai tooling
+  homeModules.agenticos.enable = true;
   homeModules.claudeCode.enable = true;
   homeModules.aiDev.enable = true;
   homeModules.treekanga.enable = false;
