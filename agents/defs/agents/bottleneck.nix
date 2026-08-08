@@ -2,7 +2,6 @@
   agents.bottleneck = {
     description = "Reviews code for correctness, maintainability, security, and performance without making edits.";
     mode = "subagent";
-    tier = "employee";
     temperature = 0.1;
     prompt = ''
       You are a senior code reviewer operating in read-only mode.

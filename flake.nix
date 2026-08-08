@@ -276,13 +276,18 @@
                   inherit self system;
                   lib = nixpkgs.lib;
                 };
-                expectedPackages = builtins.toJSON [
-                  "npm:pi-subagents@0.34.0"
+                expectedHomePackages = builtins.toJSON [
+                  "local:pi-herdr"
+                  "npm:@tintinweb/pi-subagents@0.14.3"
                   "npm:pi-mcp-adapter@2.11.0"
                   "npm:pi-permission-system@0.8.0"
                   "npm:pi-web-access@0.13.0"
                 ];
-                expectedPackagesFile = pkgs.writeText "factory-pi-packages.json" expectedPackages;
+                expectedWorkPackages = builtins.toJSON (
+                  (builtins.fromJSON expectedHomePackages) ++ [ "local:pi-agent-journal" ]
+                );
+                expectedHomePackagesFile = pkgs.writeText "home-factory-pi-packages.json" expectedHomePackages;
+                expectedWorkPackagesFile = pkgs.writeText "work-factory-pi-packages.json" expectedWorkPackages;
                 homeSettingsFile =
                   pkgs.writeText "home-factory-settings.json"
                     agentBaseSettings.targets.pi."home-factory"."settings.json";
@@ -305,12 +310,20 @@
                   }/skills -type f -print -quit)" ]
                   [ -f "${profileMeta."home-factory".storePath}/extensions/minimal-mode/index.ts" ]
                   [ -f "${profileMeta."work-factory".storePath}/extensions/minimal-mode/index.ts" ]
-                  python3 - "${expectedPackagesFile}" "${homeSettingsFile}" "${workSettingsFile}" <<'PY'
+                  python3 - "${expectedHomePackagesFile}" "${homeSettingsFile}" "${expectedWorkPackagesFile}" "${workSettingsFile}" <<'PY'
                   import json, sys
-                  expected = json.load(open(sys.argv[1]))
-                  for path in sys.argv[2:]:
-                      settings = json.load(open(path))
-                      assert settings["packages"] == expected, (path, settings["packages"])
+                  def normalize_package(package):
+                      if package.endswith("/agents/packages/pi-herdr"):
+                          return "local:pi-herdr"
+                      if package.endswith("/agents/packages/pi-agent-journal"):
+                          return "local:pi-agent-journal"
+                      return package
+
+                  for expected_path, settings_path in zip(sys.argv[1::2], sys.argv[2::2], strict=True):
+                      expected = json.load(open(expected_path))
+                      settings = json.load(open(settings_path))
+                      packages = [normalize_package(package) for package in settings["packages"]]
+                      assert packages == expected, (settings_path, settings["packages"])
                   PY
                   touch $out
                 '';

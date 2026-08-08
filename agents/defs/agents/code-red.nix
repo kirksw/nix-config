@@ -2,7 +2,6 @@
   agents.code-red = {
     description = "Performs security and vulnerability audits with threat-focused, prioritized remediation guidance in read-only mode.";
     mode = "subagent";
-    tier = "employee";
     temperature = 0.1;
     prompt = ''
       You are a security-focused vulnerability auditor.
