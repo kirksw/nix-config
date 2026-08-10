@@ -14,6 +14,10 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # Avoid deep CPU idle states while diagnosing unexplained hard resets.
+  boot.kernelParams = [ "processor.max_cstate=1" ];
+  # Keep the integrated GPU inactive while diagnosing green-screen hard locks.
+  boot.blacklistedKernelModules = [ "amdgpu" ];
 
   networking.hostName = "nixos-ry6b";
   networking.networkmanager.enable = true;
