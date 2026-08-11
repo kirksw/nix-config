@@ -1,4 +1,5 @@
 {
+  google-cloud-sdk,
   lib,
   python3,
   writeShellApplication,
@@ -6,7 +7,7 @@
 
 writeShellApplication {
   name = "google-drive-mcp-auth";
-  runtimeInputs = [ python3 ];
+  runtimeInputs = [ python3 google-cloud-sdk ];
   text = ''
     exec ${python3}/bin/python ${./google-drive-mcp-auth.py} "$@"
   '';

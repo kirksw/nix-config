@@ -1,0 +1,4 @@
+# MCPorter bundles contain generated parser literals with intentional whitespace.
+agents/defs/skills/linear/generated/*.mjs -whitespace
+agents/defs/skills/work-mcp/generated/*.cjs -whitespace
+agents/defs/skills/work-mcp/generated/*-client.* -whitespace

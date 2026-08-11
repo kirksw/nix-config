@@ -12,6 +12,10 @@
     ../defs/agents/scout.nix
     ../defs/skills/nix-agents
     ../defs/skills/system-context
+    ../defs/skills/linear
+    ../defs/skills/work-mcp
+    ../defs/skills/recruiting
+    ../defs/skills/platform-status
     ../defs/skills/secrets-management.nix
     ../defs/skills/session-heuristics
     ../defs/skills/skill-creator
@@ -24,10 +28,13 @@
     ../defs/skills/homelab
     ../defs/skills/last30days
     ../defs/skills/mmx-cli
+    ../defs/skills/fli
+    ../defs/skills/bladebro
     ../defs/skills/lavish
     ../defs/skills/what-if
     ../defs/skills/plan-x
     ../defs/skills/writing-great-skills
+    ../defs/skills/yeet
     ../defs/mcps/1password.nix
     ../defs/mcps/lunar-skills.nix
     ../defs/mcps/granola.nix

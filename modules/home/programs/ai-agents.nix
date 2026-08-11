@@ -17,12 +17,11 @@ let
     else
       args;
   localAgents = import ../../../agents { inherit pkgs; };
-  localAgentsSrc =
-    pkgs.runCommandLocal "nix-config-agents-src" { } ''
-      mkdir -p "$out"
-      cp -r ${../../../agents}/. "$out/"
-      chmod -R u+w "$out"
-    '';
+  localAgentsSrc = pkgs.runCommandLocal "nix-config-agents-src" { } ''
+    mkdir -p "$out"
+    cp -r ${../../../agents}/. "$out/"
+    chmod -R u+w "$out"
+  '';
   # Herdr v0.8.0's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
@@ -159,6 +158,7 @@ let
   piFactoryAgentsModules = localAgents.piFactoryModules;
 
   minimaxCliPackage = self.packages.${system}.minimax-cli;
+  fliPackage = self.packages.${system}.fli;
   minimaxCli = pkgs.writeShellApplication {
     name = "mmx";
     runtimeInputs = [
@@ -710,6 +710,7 @@ in
         '')
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
+        fliPackage
         (mkCredWrapper "pi" piPkg ''
           _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
           _d="$PWD"

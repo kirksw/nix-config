@@ -67,9 +67,8 @@ _: {
       pathPrefixes = [ ];
       agents = [ ]; # empty = all
       skills = [ ]; # empty = all
-      mcpServers = [
-        "swe-pruner"
-      ];
+      # MCP access is exposed through generated CLI skills, never direct tools.
+      mcpServers = [ ];
       tierMapping = {
         S = [ "openai-codex/gpt-5.6-sol" ];
         A = [
@@ -122,20 +121,16 @@ _: {
         "parallel-reviews"
         "session-heuristics"
         "system-context"
+        "linear"
+        "work-mcp"
+        "recruiting"
+        "platform-status"
         "what-if"
         "plan-x"
         "writing-great-skills"
       ];
-      mcpServers = [
-        "1password"
-        "lunar-skills"
-        "swe-pruner"
-        "granola"
-        "grafana"
-        "google-drive"
-        "linear"
-        "sourcegraph"
-      ];
+      # MCP access is exposed through generated CLI skills, never direct tools.
+      mcpServers = [ ];
       tierMapping = {
         S = [
           "openai/gpt-5.6-sol"

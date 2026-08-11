@@ -18,11 +18,9 @@ let
     }
     "npm:pi-cost@0.1.1"
     "npm:pi-dynamic-workflows@1.0.1"
-    "npm:pi-goal-x@0.19.0"
     "npm:@llblab/pi-telegram@0.26.16"
     piHerdrPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
-    "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-observational-memory@3.0.3"
     "npm:pi-permission-system@0.8.0"
     "npm:pi-simplify@0.2.2"
@@ -34,11 +32,11 @@ let
     piAgentJournalPackage
     piMlflowTracerPackage
   ];
+  piPersonalPackageRefs = piPackageRefs ++ [ "npm:bladebro@3.1.4" ];
   piFactoryPackageRefs = [
     piHerdrPackage
     piMlflowTracerPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
-    "npm:pi-mcp-adapter@2.11.0"
     "npm:pi-permission-system@0.8.0"
     "npm:pi-web-access@0.13.0"
   ];
@@ -59,7 +57,7 @@ let
       "qwen-3.7-max"
       "deepseek-v4-pro"
     ];
-    packages = piPackageRefs;
+    packages = piPersonalPackageRefs;
     subagents.disableBuiltins = true;
   };
 
@@ -111,8 +109,7 @@ let
     providers.openai.baseUrl = "https://eu.api.openai.com/v1";
   };
 
-  piWorkMcp = builtins.toJSON {
-    mcpServers = {
+  piWorkMcpServers = {
       "1password" = {
         command = "/Applications/1Password.app/Contents/MacOS/onepassword-mcp";
         lifecycle = "lazy";
@@ -138,8 +135,12 @@ let
         command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
         lifecycle = "lazy";
       };
+      swe-pruner = {
+        command = "${self.packages.${system}.swe-pruner-mcp}/bin/swe-pruner-mcp";
+        lifecycle = "lazy";
+      };
       hubble-mcp = {
-        url = "https://hubble-mcp.prod.lunar.tech/mcp/";
+        url = "https://hubble-mcp.prod.lunar.tech/mcp";
         auth = "oauth";
         lifecycle = "lazy";
       };
@@ -155,17 +156,46 @@ let
         ];
         lifecycle = "lazy";
       };
-    };
+  };
+
+
+  piEmptyMcporter = builtins.toJSON {
+    imports = [ ];
+    mcpServers = { };
+  };
+
+  piWorkMcporter = builtins.toJSON {
+    imports = [ ];
+    mcpServers = lib.mapAttrs (_: server: server // { lifecycle = "ephemeral"; }) piWorkMcpServers;
   };
 
   piPersonalEnv = ''
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
+    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/personal/settings/mcporter.json"
   '';
 
   piWorkEnv = ''
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
+    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/work/settings/mcporter.json"
+    if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+      export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+    fi
+    export AWS_PROFILE="lw-employee-ai"
+    export AWS_REGION="eu-west-1"
+  '';
+
+  piHomeFactoryEnv = ''
+    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
+    export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
+    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/home-factory/settings/mcporter.json"
+  '';
+
+  piWorkFactoryEnv = ''
+    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
+    export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
+    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/work-factory/settings/mcporter.json"
     if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
       export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
     fi
@@ -210,23 +240,26 @@ in
     pi = {
       personal = {
         "settings.json" = piPersonalSettings;
+        "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
       };
       home-factory = {
         "settings.json" = piHomeFactorySettings;
-        "env" = piPersonalEnv;
+        "mcporter.json" = piEmptyMcporter;
+        "env" = piHomeFactoryEnv;
       };
       work = {
-        "mcp.json" = piWorkMcp;
+        "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
         "settings.json" = piWorkSettings;
         "env" = piWorkEnv;
       };
       work-factory = {
         "auth.json" = piWorkAuth;
+        "mcporter.json" = piEmptyMcporter;
         "models.json" = piWorkModels;
         "settings.json" = piWorkFactorySettings;
-        "env" = piWorkEnv;
+        "env" = piWorkFactoryEnv;
       };
     };
   };

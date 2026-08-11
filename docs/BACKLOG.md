@@ -20,6 +20,7 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P2 M Make generated-profile synchronization race-safe with shared advisory locking, staged replacement, and bounded cleanup retries; document that concurrent wrappers can race with `sync-agents` (feat-mcporter-migration)
 - P2 M Diagnose and repair the 14 currently failing `pi-subagents` unit-test subcases for builtin-agent disabling, frontmatter assembly, agent-directory discovery, profiles, and skills fallback (feat-fix-pi-extension-compatibility)
 - P2 S Diagnose why `deploy --skip-checks .#nixos-ry4a` fails its remote build with no builder diagnostics while native remote `nixos-rebuild switch` succeeds (feat-kirk-model-policy)
 - P2 XS Revoke the former Kirk and Sanja LLM-router API keys after direct MiniMax/ZAI traffic is confirmed (feat-direct-assistant-providers)

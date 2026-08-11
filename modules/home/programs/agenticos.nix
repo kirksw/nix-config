@@ -2,7 +2,7 @@
 
 let
   agenticosCheckout =
-    "${config.home.homeDirectory}/git/github.com/kirksw/agenticOS";
+    "${config.home.homeDirectory}/git/github.com/kirksw/agenticOS/main";
 
   piAgenticos = pkgs.writeShellScriptBin "pi-agenticos" ''
     set -euo pipefail

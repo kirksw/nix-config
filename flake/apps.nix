@@ -84,6 +84,50 @@ let
     echo "Done!"
   '';
 
+  updateMcpSkills = pkgs.writeShellScriptBin "update-mcp-skills" ''
+    set -euo pipefail
+
+    repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel)"
+    cd "$repo_root"
+    config="$HOME/.config/nix-agents/pi/bases/work/settings/mcporter.json"
+    output_dir="agents/defs/skills/work-mcp/generated"
+    servers="1password granola grafana google-drive linear lunar-skills swe-pruner hubble-mcp sourcegraph slack"
+
+    if [ ! -r "$config" ]; then
+      echo "Missing generated work MCPorter configuration: $config" >&2
+      echo "Run: nix run .#sync-agents" >&2
+      exit 1
+    fi
+
+    ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
+    failures=""
+    for server in $servers; do
+      target="$output_dir/$server.cjs"
+      temporary="$target.tmp"
+      ${pkgs.coreutils}/bin/rm -f "$temporary"
+      echo "Generating $server..."
+      if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli "$server" --runtime node --bundle "$temporary" --minify; then
+        ${pkgs.coreutils}/bin/mv "$temporary" "$target"
+      else
+        ${pkgs.coreutils}/bin/rm -f "$temporary"
+        echo "Falling back to a generated typed client for $server..."
+        if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" emit-ts "$server" --mode client --out "$output_dir/$server-client.ts"; then
+          echo "Generated emit-ts fallback for $server."
+        else
+          failures="$failures $server"
+        fi
+      fi
+    done
+
+    if [ -n "$failures" ]; then
+      echo "Could not generate:$failures" >&2
+      echo "Authenticate each listed server with MCPorter, then rerun this command." >&2
+      exit 1
+    fi
+
+    echo "Generated complete MCP CLI wrappers in $output_dir."
+  '';
+
   localAgents = import ../agents { inherit pkgs; };
   localAgentsSrc =
     pkgs.runCommandLocal "nix-config-agents-src" { } ''
@@ -122,8 +166,6 @@ let
         ''
       ) (builtins.attrNames files)}
     '';
-  piWorkMcpSource = pkgs.writeText "nix-agents-pi-work-mcp.json" agentBaseSettingsTargets.pi.work."mcp.json";
-
   syncBaseSettingsCommands =
     target:
     let
@@ -367,24 +409,14 @@ let
       fi
     }
 
-    cleanup_stale_google_drive_url() {
-      source_file="$1"
-      target_file="$2"
-
-      # The source now owns Google Drive's local command; remove only the
-      # target-only URL left behind by the old remote configuration.
-      if ${pkgs.jq}/bin/jq -e \
-        '(.mcpServers? // {})["google-drive"] as $server
-         | ($server | type == "object") and ($server.command? | type == "string")' \
-        "$source_file" >/dev/null 2>&1 \
-        && ${pkgs.jq}/bin/jq -e '.mcpServers["google-drive"].url? != null' "$target_file" >/dev/null 2>&1; then
+    remove_legacy_pi_work_mcp() {
+      target_file="$1"
+      if [ -e "$target_file" ]; then
         if [ "$DRY_RUN" -eq 1 ]; then
-          echo "DRY-RUN remove stale google-drive.url from $target_file"
+          echo "DRY-RUN remove legacy direct MCP configuration $target_file"
         else
-          _google_drive_tmp="$(${pkgs.coreutils}/bin/mktemp)"
-          ${pkgs.jq}/bin/jq 'del(.mcpServers["google-drive"].url)' "$target_file" > "$_google_drive_tmp"
-          run ${pkgs.coreutils}/bin/cp "$_google_drive_tmp" "$target_file"
-          run ${pkgs.coreutils}/bin/rm -f "$_google_drive_tmp"
+          run ${pkgs.coreutils}/bin/chmod u+w "$target_file" 2>/dev/null || true
+          run ${pkgs.coreutils}/bin/rm -f "$target_file"
         fi
       fi
     }
@@ -555,9 +587,7 @@ let
 
     ${allBaseSettingsCommands}
 
-    cleanup_stale_google_drive_url \
-      "${piWorkMcpSource}" \
-      "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
+    remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
 
     seed_mutable_file \
       "${piWorkAuthFile}" \
@@ -605,6 +635,14 @@ in
     program = "${updateAllPackages}/bin/update-packages";
     meta = {
       description = "Run update scripts for custom packages in this repository.";
+    };
+  };
+
+  update-mcp-skills = {
+    type = "app";
+    program = "${updateMcpSkills}/bin/update-mcp-skills";
+    meta = {
+      description = "Explicitly generate complete MCP CLI wrappers from the configured work MCP servers.";
     };
   };
 

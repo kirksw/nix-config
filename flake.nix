@@ -35,7 +35,8 @@
     lunar-tools = {
       url = "git+ssh://git@github.com/lunarway/lw-nix?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.lunarctl.inputs.lunarctl.url = "git+ssh://git@github.com/lunarway/lunarctl?rev=149c51bec4176d1705bf6d38a40c56222ef84d2a";
+      inputs.lunarctl.inputs.lunarctl.url =
+        "git+ssh://git@github.com/lunarway/lunarctl?rev=149c51bec4176d1705bf6d38a40c56222ef84d2a";
     };
 
     sops-nix = {
@@ -278,8 +279,8 @@
                 };
                 expectedHomePackages = builtins.toJSON [
                   "local:pi-herdr"
+                  "local:pi-mlflow-tracer"
                   "npm:@tintinweb/pi-subagents@0.14.3"
-                  "npm:pi-mcp-adapter@2.11.0"
                   "npm:pi-permission-system@0.8.0"
                   "npm:pi-web-access@0.13.0"
                 ];
@@ -317,6 +318,8 @@
                           return "local:pi-herdr"
                       if package.endswith("/agents/packages/pi-agent-journal"):
                           return "local:pi-agent-journal"
+                      if "-pi-mlflow-tracer-" in package:
+                          return "local:pi-mlflow-tracer"
                       return package
 
                   for expected_path, settings_path in zip(sys.argv[1::2], sys.argv[2::2], strict=True):
