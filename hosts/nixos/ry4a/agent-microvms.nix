@@ -44,35 +44,6 @@ let
 
   assistants = [
     {
-      name = "personal-assistant";
-      kbRepo = "https://github.com/kirksw/kb-personal";
-      authSecret = "tailscale/microvms/authKey";
-      authKey = "assistantAuthKey";
-      mac = "02:00:00:10:00:01";
-    }
-    {
-      name = "household-assistant";
-      kbRepo = "https://github.com/kirksw/kb-household";
-      authSecret = "tailscale/microvms/authKey";
-      authKey = "assistantAuthKey";
-      mac = "02:00:00:10:00:02";
-      autostart = false;
-      openclaw = {
-        router = "home-llm-router";
-        secretsFile = "household";
-        telegramAllowFrom = [
-          8504646361
-          8771595122
-        ];
-        modelFallbacks = [ "router-anthropic/glm/glm-5.2" ];
-        sopsSecrets = [
-          "telegram_bot_token"
-          "llm_router_api_key"
-          "gateway_token"
-        ];
-      };
-    }
-    {
       name = "sanja-assistant";
       kbRepo = "https://github.com/kirksw/kb-personal";
       authSecret = "tailscale/microvms/authKey";
@@ -135,29 +106,9 @@ let
         ];
       };
     }
-    {
-      name = "work-assistant";
-      kbRepo = "https://github.com/kirksw/kb-lunar";
-      authSecret = "tailscale/microvms/authKey";
-      authKey = "assistantAuthKey";
-      mac = "02:00:00:10:00:03";
-    }
   ];
 
-  llmRouters = [
-    {
-      name = "home-llm-router";
-      hostPort = 20129;
-      sshPort = 20229;
-      mac = "02:00:00:10:00:11";
-    }
-    {
-      name = "work-llm-router";
-      hostPort = 20130;
-      sshPort = 20230;
-      mac = "02:00:00:10:00:12";
-    }
-  ];
+  llmRouters = [ ];
 
   mkSopsSecret = assistant: {
     name = assistant.authSecret;

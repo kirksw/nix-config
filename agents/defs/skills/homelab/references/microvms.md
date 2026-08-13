@@ -8,11 +8,12 @@ The main declarative microVM definitions live in:
 - `hosts/nixos/ry4a/agent-microvms.nix`
 - `modules/nixos/generic/microvm-host.nix`
 
-The active assistant VMs are:
+The configured assistant VMs are:
 
-- `personal-assistant`
-- `household-assistant`
-- `work-assistant`
+- `sanja-assistant`
+- `kirk-assistant`
+
+No LLM router VMs are currently configured.
 
 These are defined declaratively with `microvm.vms` and persistent volumes for assistant state, Tailscale identity, and OpenClaw state.
 
@@ -35,7 +36,7 @@ Remote inspection:
 
 ```sh
 ssh root@nixos-ry4a -- systemctl list-units 'microvm@*'
-ssh root@nixos-ry4a -- systemctl status microvm@work-assistant --no-pager
+ssh root@nixos-ry4a -- systemctl status microvm@kirk-assistant --no-pager
 ```
 
 ## Capacity Notes

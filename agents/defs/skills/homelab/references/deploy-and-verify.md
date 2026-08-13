@@ -44,7 +44,7 @@ Choose the smallest verification that proves the change landed.
 ### Host-level
 
 ```sh
-ssh root@nixos-ry4a -- systemctl status microvm@personal-assistant --no-pager
+ssh root@nixos-ry4a -- systemctl status microvm@kirk-assistant --no-pager
 ssh root@nixos-ry6a -- systemctl status k3s --no-pager
 ```
 
