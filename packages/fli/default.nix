@@ -1,7 +1,11 @@
 {
+  curl,
   lib,
   fetchFromGitHub,
+  gnused,
+  nix-update,
   python3Packages,
+  writeShellScript,
 }:
 
 python3Packages.buildPythonApplication rec {
@@ -30,6 +34,18 @@ python3Packages.buildPythonApplication rec {
   ];
 
   pythonImportsCheck = [ "fli" ];
+
+  passthru.updateScript = writeShellScript "update-fli" ''
+    set -euo pipefail
+    package_file="$repo_root/packages/fli/default.nix"
+    rev="$(${lib.getExe curl} -fsSL https://api.github.com/repos/punitarani/fli/commits/main | ${lib.getExe gnused} -n -E 's/^[[:space:]]*"sha": "([^"]+)",/\1/p' | ${lib.getExe gnused} -n '1p')"
+    version="$(${lib.getExe curl} -fsSL https://raw.githubusercontent.com/punitarani/fli/main/pyproject.toml | ${lib.getExe gnused} -n -E 's/^version = "([^"]+)"/\1/p')"
+    test -n "$rev"
+    test -n "$version"
+    ${lib.getExe gnused} -i -E "s|rev = \"[^\"]+\";|rev = \"$rev\";|" "$package_file"
+    ${lib.getExe nix-update} --flake --version="$version" fli
+    echo "Updated fli to version $version ($rev)"
+  '';
 
   meta = {
     description = "Flight search CLI using Google Flights data";
