@@ -17,7 +17,7 @@ buildGoModule rec {
   src = fetchFromGitHub {
     owner = "steipete";
     repo = "gifgrep";
-    rev = "d02a00600066efc612c184d8202bb37fa9ae31a8	refs/tags/v0.3.0^{}";
+    rev = "d02a00600066efc612c184d8202bb37fa9ae31a8";
     hash = "sha256-GIsaFNB05hnNFCJwWnPML2Gh1sOedkUj8QFKeKIrOAI=";
   };
 
@@ -32,7 +32,7 @@ buildGoModule rec {
     test -n "$tag"
     version="''${tag#v}"
     rev="$(${lib.getExe git} ls-remote https://github.com/steipete/gifgrep.git "refs/tags/$tag^{}" |
-      ${lib.getExe gnused} -E 's/\\t.*//p')"
+      ${lib.getExe gnused} -n -E 's/\\t.*//p')"
     test -n "$rev"
     ${lib.getExe gnused} -i -E "s|rev = \"[^\"]+\";|rev = \"$rev\";|" "$repo_root/packages/gifgrep/default.nix"
     ${lib.getExe nix-update} --flake --version="$version" gifgrep
