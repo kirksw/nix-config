@@ -271,6 +271,20 @@ let
         export CF_ACCESS_CLIENT_SECRET="$(tr -d '[:space:]' < "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH")"
       fi
 
+      ensure_aws_sso_profile() {
+        local profile="$1"
+        local sso_session="$2"
+        local aws="${lib.getExe pkgs.awscli2}"
+
+        if "$aws" sts get-caller-identity --profile "$profile" >/dev/null 2>&1; then
+          return 0
+        fi
+
+        echo "AWS profile '$profile' is not usable; logging in to SSO session '$sso_session'." >&2
+        "$aws" sso login --sso-session "$sso_session"
+        "$aws" sts get-caller-identity --profile "$profile" >/dev/null
+      }
+
       _nix_agents_extra_args=()
       _nix_agents_exec=("${nixAgentsPkg}/bin/${target}")
 
@@ -736,14 +750,18 @@ in
               _pi_session_base="personal"
               ;;
           esac
+          export PI_CODING_AGENT_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile"
           _pi_profile_env="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings/env"
           if [ -f "$_pi_profile_env" ]; then
             # Generated profile environment is trusted Nix configuration.
             . "$_pi_profile_env"
           fi
           if [ "$_pi_session_profile" = "work-default" ]; then
+            unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
             export AWS_PROFILE="lw-employee-ai"
             export AWS_REGION="eu-west-1"
+            export AWS_SDK_LOAD_CONFIG=1
+            ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
           fi
           # pi-cmux is installed for regular profiles but only loaded in cmux.
           if [ -n "''${CMUX_WORKSPACE_ID:-}" ]; then
@@ -794,8 +812,11 @@ in
           fi
         '')
         (mkCredWrapper "pi-work-factory" piWorkFactoryPkg ''
+          unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
           export AWS_PROFILE="lw-employee-ai"
           export AWS_REGION="eu-west-1"
+          export AWS_SDK_LOAD_CONFIG=1
+          ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/work-factory"
           mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 

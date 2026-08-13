@@ -1,5 +1,4 @@
 [
-  ./programs/agenticos.nix
   ./programs/ai-agents.nix
   ./programs/ai.nix
   ./programs/appearance-sync.nix

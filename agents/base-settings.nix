@@ -9,6 +9,7 @@ let
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piMlflowTracerPackage = "${self.packages.${system}.pi-mlflow-tracer}";
+  agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -33,6 +34,7 @@ let
     piMlflowTracerPackage
   ];
   piPersonalPackageRefs = piPackageRefs ++ [ "npm:bladebro@3.1.4" ];
+  piWorkPackageRefs = piPackageRefs ++ [ agenticOSPackage ];
   piFactoryPackageRefs = [
     piHerdrPackage
     piMlflowTracerPackage
@@ -43,8 +45,8 @@ let
   piWorkFactoryPackageRefs = piFactoryPackageRefs ++ [ piAgentJournalPackage ];
 
   piPersonalSettings = builtins.toJSON {
-    defaultProvider = "openai-codex";
-    defaultModel = "gpt-5.6-terra";
+    defaultProvider = "zai";
+    defaultModel = "glm-5.2";
     defaultThinkingLevel = "medium";
     enabledModels = [
       "gpt-5.6-sol"
@@ -54,7 +56,7 @@ let
       "glm-5.2"
       "grok-4.5"
       "kimi-k3"
-      "qwen-3.7-max"
+      "qwen3.7-max"
       "deepseek-v4-pro"
     ];
     packages = piPersonalPackageRefs;
@@ -92,7 +94,7 @@ let
   piWorkSettings = builtins.toJSON (
     piWorkModelDefaults
     // {
-      packages = piPackageRefs;
+      packages = piWorkPackageRefs;
       subagents.disableBuiltins = true;
     }
   );
@@ -178,12 +180,14 @@ let
   piWorkEnv = ''
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
+    export AGENTICOS_INSTANCE="lunarOS"
     export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/work/settings/mcporter.json"
     if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
       export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
     fi
     export AWS_PROFILE="lw-employee-ai"
     export AWS_REGION="eu-west-1"
+    export AWS_SDK_LOAD_CONFIG=1
   '';
 
   piHomeFactoryEnv = ''
@@ -201,6 +205,7 @@ let
     fi
     export AWS_PROFILE="lw-employee-ai"
     export AWS_REGION="eu-west-1"
+    export AWS_SDK_LOAD_CONFIG=1
   '';
 
   piWorkAuth = builtins.toJSON {

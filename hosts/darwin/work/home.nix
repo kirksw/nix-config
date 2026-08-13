@@ -44,7 +44,6 @@
   homeModules.wezterm.enable = true;
   homeModules.qemu.enable = true;
   # ai tooling
-  homeModules.agenticos.enable = true;
   homeModules.claudeCode.enable = true;
   homeModules.aiDev.enable = true;
   homeModules.treekanga.enable = false;
