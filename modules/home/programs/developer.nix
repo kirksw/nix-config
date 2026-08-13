@@ -303,17 +303,56 @@ in
 
         [keys]
         prefix = "ctrl+a"
-        goto = ""
+
+        # Session and UI.
+        help = "prefix+?"
+        settings = "prefix+s"
+        detach = "prefix+q"
+        reload_config = "prefix+shift+r"
+        open_notification_target = "prefix+o"
+        toggle_sidebar = "prefix+b"
+
+        # Workspaces and worktrees.
+        workspace_picker = "prefix+w"
+        goto = "prefix+f"
+        new_workspace = "prefix+shift+n"
+        rename_workspace = "prefix+shift+w"
+        close_workspace = "prefix+shift+d"
+        previous_workspace = "prefix+left"
+        next_workspace = "prefix+right"
+        switch_workspace = "prefix+shift+1..9"
+        new_worktree = "prefix+shift+g"
+        open_worktree = "prefix+shift+o"
+        remove_worktree = "prefix+shift+x"
+
+        # Agents.
+        previous_agent = "prefix+up"
+        next_agent = "prefix+down"
+        focus_agent = "prefix+alt+1..9"
+
+        # Tabs.
+        new_tab = "prefix+c"
+        previous_tab = "prefix+p"
+        next_tab = "prefix+n"
+        switch_tab = "prefix+1..9"
+        rename_tab = "prefix+comma"
+        close_tab = "prefix+ampersand"
+
+        # Panes. Direct focus remains delegated to herdr-smart-focus below.
+        rename_pane = "prefix+shift+p"
+        edit_scrollback = "prefix+e"
         focus_pane_left = ""
         focus_pane_down = ""
         focus_pane_up = ""
         focus_pane_right = ""
-        previous_tab = "prefix+p"
-        rename_tab = "prefix+comma"
-        close_tab = "prefix+ampersand"
+        cycle_pane_next = "prefix+tab"
+        cycle_pane_previous = "prefix+shift+tab"
+        last_pane = "prefix+backtick"
         split_vertical = "prefix+|"
         split_horizontal = "prefix+minus"
+        close_pane = "prefix+x"
         zoom = "prefix+m"
+        resize_mode = "prefix+r"
 
         [[keys.command]]
         key = "cmd+p"
