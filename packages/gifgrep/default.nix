@@ -21,7 +21,7 @@ buildGoModule rec {
     hash = "sha256-1wr+A8McmODSibQd9qLg8DIuhgQnbbv07WjrDIhGXvo=";
   };
 
-  vendorHash = "sha256-w8l8VB4QVJfCvzC9NsYz4ZEy+0pX6ulmSmT/tU1x3sA=";
+  vendorHash = "sha256-Bthc6ERm1bXeWI+OMKBeRU3H+I6/Zcrzv7+B7d+segY=";
 
   subPackages = [ "cmd/gifgrep" ];
 
