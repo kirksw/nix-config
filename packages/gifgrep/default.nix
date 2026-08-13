@@ -18,7 +18,7 @@ buildGoModule rec {
     owner = "steipete";
     repo = "gifgrep";
     rev = "d02a00600066efc612c184d8202bb37fa9ae31a8";
-    hash = "sha256-GIsaFNB05hnNFCJwWnPML2Gh1sOedkUj8QFKeKIrOAI=";
+    hash = "sha256-1wr+A8McmODSibQd9qLg8DIuhgQnbbv07WjrDIhGXvo=";
   };
 
   vendorHash = "sha256-w8l8VB4QVJfCvzC9NsYz4ZEy+0pX6ulmSmT/tU1x3sA=";
