@@ -25,6 +25,7 @@
       inputs.brew-src.follows = "homebrew-brew";
     };
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
+    flake-schemas.url = "https://flakehub.com/f/DeterminateSystems/flake-schemas/0";
     flake-utils.url = "github:numtide/flake-utils";
 
     disko = {
@@ -92,6 +93,7 @@
     inputs@{
       self,
       nixpkgs,
+      flake-schemas,
       flake-utils,
       deploy-rs,
       lunar-tools,
@@ -212,6 +214,8 @@
       deployChecks = import ./flake/checks.nix {
         inherit deploy-rs deploy;
       };
+
+      exportedSchemas = import ./flake/schemas.nix;
     in
     let
       systemOutputs = flake-utils.lib.eachDefaultSystem (
@@ -346,7 +350,8 @@
       nixosConfigurations = builtins.mapAttrs mylibs.nixos.mkNixosSystem nixosSystems;
     }
     // {
-      inherit deploy;
+      inherit deploy exportedSchemas;
+      schemas = flake-schemas.exportedSchemas // exportedSchemas;
       checks = nixpkgs.lib.recursiveUpdate (systemOutputs.checks or { }) deployChecks;
     };
 }

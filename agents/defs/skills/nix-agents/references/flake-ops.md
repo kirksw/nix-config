@@ -31,7 +31,7 @@ nix flake show --all-systems 2>/dev/null | rg 'sync'
 
 Expected non-fatal warnings in this repo:
 
-- `warning: The following flake outputs are unchecked: deploy.`
+- Upstream Nix, which does not support flake schemas, may report `deploy`, `schemas`, and `exportedSchemas` as unchecked outputs.
 - `warning: The check omitted these incompatible systems: ...`
 - `warning: Git tree ... has uncommitted changes` when the worktree is dirty
 
