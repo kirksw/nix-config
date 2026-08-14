@@ -1,9 +1,14 @@
 import * as mlflow from "mlflow-tracing";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { agenticosEndAttributes, agenticosStartAttributes } from "./agenticos-attributes.js";
 
 let currentAgentSpan: mlflow.LiveSpan | undefined;
 let llmSpan: mlflow.LiveSpan | undefined;
-const toolSpans = new Map<string, mlflow.LiveSpan>();
+const toolSpans = new Map<string, {
+  span: mlflow.LiveSpan;
+  toolName: string;
+  args: unknown;
+}>();
 
 function installCloudflareAccessHeaders(trackingUri: string): () => void {
   const clientId = process.env.CF_ACCESS_CLIENT_ID;
@@ -125,21 +130,36 @@ export default async function (pi: ExtensionAPI) {
   });
 
   pi.on("tool_execution_start", (event) => {
+    const isAgenticosTool = event.toolName.startsWith("agenticos_");
     const span = mlflow.startSpan({
       name: `tool_${event.toolName}`,
       spanType: mlflow.SpanType.TOOL,
       parent: currentAgentSpan,
       inputs: event.args,
+      ...(isAgenticosTool
+        ? { attributes: agenticosStartAttributes(event.toolName, event.args) }
+        : {}),
     });
-    toolSpans.set(event.toolCallId, span);
+    toolSpans.set(event.toolCallId, { span, toolName: event.toolName, args: event.args });
   });
 
   pi.on("tool_execution_end", (event) => {
-    const span = toolSpans.get(event.toolCallId);
-    if (span) {
-      span.end({
+    const toolSpan = toolSpans.get(event.toolCallId);
+    if (toolSpan) {
+      const isAgenticosTool = toolSpan.toolName.startsWith("agenticos_");
+      toolSpan.span.end({
         outputs: event.result,
         status: event.isError ? mlflow.SpanStatusCode.ERROR : mlflow.SpanStatusCode.OK,
+        ...(isAgenticosTool
+          ? {
+              attributes: agenticosEndAttributes(
+                toolSpan.toolName,
+                toolSpan.args,
+                event.result,
+                event.isError,
+              ),
+            }
+          : {}),
       });
       toolSpans.delete(event.toolCallId);
     }
