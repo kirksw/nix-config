@@ -13,9 +13,17 @@ The configured assistant VMs are:
 - `sanja-assistant`
 - `kirk-assistant`
 
+The interactive agent VM is:
+
+- `personal-agent`
+
+It provides the personal-default Pi profile and a persistent Herdr server that is reachable through SSH with `herdr --remote personal-agent`.
+Its home directory, workspace, and Tailscale identity are persistent.
+Pi credentials are provisioned manually and remain in the persistent home volume.
+
 No LLM router VMs are currently configured.
 
-These are defined declaratively with `microvm.vms` and persistent volumes for assistant state, Tailscale identity, and OpenClaw state.
+These are defined declaratively with `microvm.vms` and persistent volumes for agent state and Tailscale identity.
 
 ## What To Change Where
 
@@ -36,7 +44,8 @@ Remote inspection:
 
 ```sh
 ssh root@nixos-ry4a -- systemctl list-units 'microvm@*'
-ssh root@nixos-ry4a -- systemctl status microvm@kirk-assistant --no-pager
+ssh root@nixos-ry4a -- systemctl status microvm@personal-agent --no-pager
+herdr --remote personal-agent
 ```
 
 ## Capacity Notes

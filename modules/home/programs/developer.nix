@@ -60,6 +60,13 @@ let
       key = "ry4a";
     }
     {
+      match = "personal-agent";
+      hostname = "personal-agent";
+      user = "agent";
+      key = "ry4a";
+      forwardAgent = false;
+    }
+    {
       match = "ry6b";
       hostname = "ry6b";
       user = "k8s";
@@ -81,7 +88,7 @@ let
                 User = host.user;
                 IdentityFile = "${config.sops.secrets."ssh/${host.key}/private".path}";
                 IdentitiesOnly = true;
-                ForwardAgent = true;
+                ForwardAgent = host.forwardAgent or true;
                 AddKeysToAgent = "yes";
               };
             }

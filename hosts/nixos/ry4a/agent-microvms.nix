@@ -107,6 +107,62 @@ let
 
   llmRouters = [ ];
 
+  personalAgent = {
+    name = "personal-agent";
+    authSecret = "tailscale/microvms/authKey";
+    authKey = "assistantAuthKey";
+    mac = "02:00:00:10:00:06";
+  };
+
+  herdrPiIntegration = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.8.0/src/integration/assets/pi/herdr-agent-state.ts";
+    hash = "sha256-mxxBzXJSD8Kr5fKirsmVwSqSbM6ETfRyx/1fyuT02/o=";
+  };
+  localAgents = import ../../../agents { inherit pkgs; };
+  localAgentsSrc = ../../../agents;
+  nixAgentsLib = inputs.nix-agents.lib.${pkgs.system};
+  agentInputs = inputs // {
+    inherit self;
+  };
+  personalPiAgentSystem = nixAgentsLib.mkAgentSystem {
+    inherit pkgs;
+    target = "pi";
+    inputs = agentInputs;
+    modules = localAgents.piModules;
+    src = localAgentsSrc;
+  };
+  personalPiBaseProfileMeta = nixAgentsLib.mkProfileMeta {
+    inherit pkgs;
+    target = "pi";
+    inputs = agentInputs;
+    modules = localAgents.piModules;
+    src = localAgentsSrc;
+  };
+  personalPiProfile = personalPiBaseProfileMeta."personal-default";
+  personalPiProfileMeta = personalPiBaseProfileMeta // {
+    "personal-default" = personalPiProfile // {
+      storePath = pkgs.runCommandLocal "nix-config-personal-agent-profile" { } ''
+        cp -r ${personalPiProfile.storePath} "$out"
+        chmod -R u+w "$out"
+        mkdir -p "$out/extensions"
+        cp ${herdrPiIntegration} "$out/extensions/herdr-agent-state.ts"
+      '';
+    };
+  };
+  personalPi = nixAgentsLib.mkWrappedTool (
+    {
+      inherit pkgs;
+      target = "pi";
+      tool = self.packages.${pkgs.system}.pi;
+      agentSystem = personalPiAgentSystem;
+      profileMeta = personalPiProfileMeta;
+      profile = "personal-default";
+    }
+    // lib.optionalAttrs ((builtins.functionArgs nixAgentsLib.mkWrappedTool) ? syncMode) {
+      syncMode = "bootstrap";
+    }
+  );
+
   mkSopsSecret = assistant: {
     name = assistant.authSecret;
     value = {
@@ -387,6 +443,166 @@ let
       };
     };
 
+  personalAgentVm =
+    let
+      authKeyFile = config.sops.secrets.${personalAgent.authSecret}.path;
+      authKeyDir = builtins.dirOf authKeyFile;
+      piLauncher = pkgs.writeShellScriptBin "pi" ''
+        exec ${personalPi}/bin/pi "$@"
+      '';
+    in
+    {
+      name = personalAgent.name;
+      value = {
+        autostart = true;
+        restartIfChanged = false;
+        config = {
+          networking.hostName = personalAgent.name;
+          system.stateVersion = "25.05";
+
+          nix.settings.experimental-features = [
+            "nix-command"
+            "flakes"
+          ];
+
+          environment.systemPackages = [
+            piLauncher
+            pkgs.curl
+            pkgs.fd
+            pkgs.git
+            pkgs.herdr
+            pkgs.htop
+            pkgs.jq
+            pkgs.neovim
+            pkgs.nodejs
+            pkgs.openssh
+            pkgs.ripgrep
+          ];
+
+          environment.variables = {
+            EDITOR = "nvim";
+            PERSONAL_AGENT_WORKSPACE = "/srv/workspace";
+          };
+
+          users.users = {
+            root.openssh.authorizedKeys.keys = [ rootSshKey ];
+            agent = {
+              isNormalUser = true;
+              description = "Personal Pi agent operator";
+              home = "/home/agent";
+              createHome = true;
+              extraGroups = [ "wheel" ];
+              openssh.authorizedKeys.keys = [ rootSshKey ];
+            };
+          };
+          security.sudo.wheelNeedsPassword = false;
+
+          services.openssh = {
+            enable = true;
+            hostKeys = [
+              {
+                path = "/home/agent/.ssh/host/ssh_host_ed25519_key";
+                type = "ed25519";
+              }
+              {
+                path = "/home/agent/.ssh/host/ssh_host_rsa_key";
+                type = "rsa";
+                bits = 4096;
+              }
+            ];
+            settings = {
+              PasswordAuthentication = false;
+              PermitRootLogin = "prohibit-password";
+            };
+          };
+
+          services.tailscale = {
+            enable = true;
+            authKeyFile = "/run/host-secrets/tailscale/authKey";
+          };
+          systemd.services.tailscaled.restartIfChanged = false;
+
+          networking.firewall = {
+            enable = true;
+            interfaces.tailscale0.allowedTCPPorts = [ 22 ];
+          };
+          networking.nameservers = [
+            "100.100.100.100"
+            "8.8.8.8"
+            "1.1.1.1"
+          ];
+          networking.search = [ "tail54de03.ts.net" ];
+          systemd.network.enable = true;
+
+          systemd.tmpfiles.rules = [
+            "d /home/agent 0700 agent users -"
+            "d /home/agent/.config 0700 agent users -"
+            "d /home/agent/.config/herdr 0700 agent users -"
+            "d /home/agent/.ssh 0700 agent users -"
+            "d /home/agent/.ssh/host 0700 root root -"
+            "d /srv/workspace 0755 agent users -"
+            "C+ /home/agent/.config/herdr/config.toml 0600 agent users - /etc/personal-agent/herdr-config.toml"
+          ];
+
+          environment.etc."personal-agent/herdr-config.toml".text = ''
+            [session]
+            resume_agents_on_restore = true
+
+            [ui.toast]
+            delivery = "herdr"
+
+            [ui]
+            show_agent_labels_on_pane_borders = true
+          '';
+
+          microvm = {
+            hypervisor = "qemu";
+            mem = 8192;
+            vcpu = 4;
+            interfaces = [
+              {
+                type = "user";
+                id = "qemu";
+                mac = personalAgent.mac;
+              }
+            ];
+            volumes = [
+              {
+                image = "/var/lib/microvms/${personalAgent.name}/home.img";
+                mountPoint = "/home/agent";
+                size = 32768;
+                fsType = "ext4";
+                autoCreate = true;
+              }
+              {
+                image = "/var/lib/microvms/${personalAgent.name}/workspace.img";
+                mountPoint = "/srv/workspace";
+                size = 65536;
+                fsType = "ext4";
+                autoCreate = true;
+              }
+              {
+                image = "/var/lib/microvms/${personalAgent.name}/tailscale.img";
+                mountPoint = "/var/lib/tailscale";
+                size = 1024;
+                fsType = "ext4";
+                autoCreate = true;
+              }
+            ];
+            shares = [
+              {
+                source = authKeyDir;
+                mountPoint = "/run/host-secrets/tailscale";
+                tag = "tailscale-secrets";
+                proto = "virtiofs";
+                readOnly = true;
+              }
+            ];
+          };
+        };
+      };
+    };
+
   mkRouterVm = router: {
     name = router.name;
     value = {
@@ -540,7 +756,7 @@ in
 {
   sops.secrets =
     # Deduplicate tailscale auth keys (all assistants share one key)
-    builtins.listToAttrs (lib.unique (map (a: mkSopsSecret a) assistants))
+    builtins.listToAttrs (lib.unique (map (a: mkSopsSecret a) (assistants ++ [ personalAgent ])))
     // builtins.foldl' (
       acc: a: if a ? openclaw then acc // mkOpenClawSopsSecrets a else acc
     ) { } assistants;
@@ -552,12 +768,13 @@ in
 
   systemd.tmpfiles.rules =
     (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -") assistants)
-    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") (
-      llmRouters
-    ));
+    ++ [ "d /var/lib/microvms/${personalAgent.name} 0700 root root -" ]
+    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") (llmRouters));
 
   microvm.vms =
     builtins.listToAttrs (map mkVm assistants)
-    // builtins.listToAttrs (map mkRouterVm llmRouters)
-;
+    // {
+      ${personalAgentVm.name} = personalAgentVm.value;
+    }
+    // builtins.listToAttrs (map mkRouterVm llmRouters);
 }
