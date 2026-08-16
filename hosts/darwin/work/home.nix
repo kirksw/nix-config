@@ -61,7 +61,6 @@
   # disabled custom modules
   homeModules.communication.enable = false;
   homeModules.homerow.enable = false;
-  # google-drive-mcp-auth obtains credentials with gcloud.
   homeModules.gcloud.enable = true;
   homeModules.vscode.enable = false;
   homeModules.colima.enable = false;

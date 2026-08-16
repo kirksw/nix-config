@@ -12,7 +12,7 @@ const cli = resolve(skillDir, "generated", `${server}.cjs`);
 const typedClient = resolve(skillDir, "generated", `${server}-client.d.ts`);
 if (!existsSync(cli) && !existsSync(typedClient)) throw new Error(`No generated wrapper exists for '${server}'. Run: nix run .#update-mcp-skills`);
 
-const writeOperation = /^(create|update|delete|archive|unarchive|add|remove|prepare|upload|set|assign|move|change|link|unlink|subscribe|unsubscribe|resolve|unresolve|start|stop|cancel|merge|approve|reject|invite|revoke)/;
+const writeOperation = /(^|[-_])(add|append|approve|archive|assign|cancel|change|copy|create|delete|download|invite|link|manage|mark|merge|move|prepare|refresh|reject|remove|rename|resolve|revoke|save|send|set|start|stop|submit|subscribe|triage|unarchive|unlink|unresolve|unsubscribe|update|upload)([-_]|$)/;
 if (writeOperation.test(tool) && process.env.MCP_WRITE_CONFIRMED !== "1") {
   throw new Error(`Refusing mutating ${server} command '${tool}'. Obtain confirmation, then set MCP_WRITE_CONFIRMED=1.`);
 }

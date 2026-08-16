@@ -1,6 +1,6 @@
 {
   skills.work-mcp = {
-    description = "Use complete generated CLI wrappers for configured work MCP servers through Context Mode.";
+    description = "Shared MCPorter runner, authentication, output-bounding, regeneration, and mutation controls for dedicated work-tool skills.";
     src = ./.;
     version = "1.0.0";
   };

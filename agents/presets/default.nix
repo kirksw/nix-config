@@ -12,10 +12,16 @@
     ../defs/agents/scout.nix
     ../defs/skills/nix-agents
     ../defs/skills/system-context
+    ../defs/skills/1password
+    ../defs/skills/granola
+    ../defs/skills/grafana
+    ../defs/skills/hubble-mcp
     ../defs/skills/linear
+    ../defs/skills/lunar-skills
+    ../defs/skills/slack
+    ../defs/skills/sourcegraph
+    ../defs/skills/swe-pruner
     ../defs/skills/work-mcp
-    ../defs/skills/recruiting
-    ../defs/skills/platform-status
     ../defs/skills/secrets-management.nix
     ../defs/skills/session-heuristics
     ../defs/skills/skill-creator
@@ -39,7 +45,6 @@
     ../defs/mcps/lunar-skills.nix
     ../defs/mcps/granola.nix
     ../defs/mcps/grafana.nix
-    ../defs/mcps/google-drive.nix
     ../defs/mcps/linear.nix
     ../defs/mcps/sourcegraph.nix
     ../defs/mcps/swe-pruner.nix

@@ -91,7 +91,7 @@ let
     cd "$repo_root"
     config="$HOME/.config/nix-agents/pi/bases/work/settings/mcporter.json"
     output_dir="agents/defs/skills/work-mcp/generated"
-    servers="1password granola grafana google-drive linear lunar-skills swe-pruner hubble-mcp sourcegraph slack"
+    servers="1password granola grafana linear lunar-skills swe-pruner hubble-mcp sourcegraph slack"
 
     if [ ! -r "$config" ]; then
       echo "Missing generated work MCPorter configuration: $config" >&2
@@ -129,12 +129,11 @@ let
   '';
 
   localAgents = import ../agents { inherit pkgs; };
-  localAgentsSrc =
-    pkgs.runCommandLocal "nix-config-agents-src" { } ''
-      mkdir -p "$out"
-      cp -r ${../agents}/. "$out/"
-      chmod -R u+w "$out"
-    '';
+  localAgentsSrc = pkgs.runCommandLocal "nix-config-agents-src" { } ''
+    mkdir -p "$out"
+    cp -r ${../agents}/. "$out/"
+    chmod -R u+w "$out"
+  '';
   piCommonChainsSrc = ../agents/targets/pi/chains/common;
   agentInputs = inputs // {
     inherit self;
@@ -469,7 +468,7 @@ let
           echo "DRY-RUN merge_json $source_file -> $target_file"
         else
           _seed_merge_tmp="$(${pkgs.coreutils}/bin/mktemp)"
-          ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$target_file" "$source_file" > "$_seed_merge_tmp"
+          ${pkgs.jq}/bin/jq -s '.[0] + .[1]' "$target_file" "$source_file" > "$_seed_merge_tmp"
           run ${pkgs.coreutils}/bin/cp "$_seed_merge_tmp" "$target_file"
           run ${pkgs.coreutils}/bin/chmod "$mode" "$target_file"
           run ${pkgs.coreutils}/bin/rm -f "$_seed_merge_tmp"
@@ -595,6 +594,12 @@ let
       0600
 
     ${allSyncCommands}
+
+    # MCPorter tool caches are derived from mutable server configuration.
+    # Clear them after profile sync so removed servers cannot remain discoverable.
+    run ${pkgs.coreutils}/bin/rm -f \
+      "$CONFIG_BASE/pi/bases/work/profiles/work-default/mcp-cache.json" \
+      "$CONFIG_BASE/pi/bases/work-factory/profiles/work-factory/mcp-cache.json"
 
     seed_mutable_file \
       "${piSubagentsSettingsFile}" \

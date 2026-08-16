@@ -223,6 +223,11 @@
         let
           pkgs = import nixpkgs { inherit system; };
           packageData = mkPackageData system;
+          appSet = mkApps {
+            inherit system;
+            appCommands = appCommandsBySystem.${system} or [ ];
+            inherit (packageData) packageNames packages;
+          };
           pre-commit-check = git-hooks.lib.${system}.run {
             src = ./.;
             hooks = {
@@ -241,11 +246,7 @@
         {
           packages = packageData.packages;
 
-          apps = mkApps {
-            inherit system;
-            appCommands = appCommandsBySystem.${system} or [ ];
-            inherit (packageData) packageNames packages;
-          };
+          apps = appSet;
 
           checks = {
             inherit pre-commit-check;
@@ -258,6 +259,34 @@
                   ${pkgs.lua}/bin/luac -p ${./config/wezterm/wezterm.lua}
                   touch $out
                 '';
+
+            sync-agents-settings-merge = pkgs.runCommand "sync-agents-settings-merge" { } ''
+              export HOME="$TMPDIR/home"
+              export XDG_CONFIG_HOME="$TMPDIR/config"
+
+              settings_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/settings"
+              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-default"
+              mkdir -p "$settings_dir" "$profile_dir"
+
+              cat > "$settings_dir/mcporter.json" <<'JSON'
+              {
+                "mcpServers": {
+                  "google-drive": { "command": "stale" },
+                  "linear": { "url": "stale" }
+                },
+                "runtimeUserSetting": { "preserved": true }
+              }
+              JSON
+              printf '{"servers":{"google-drive":{"tools":[]}}}\n' > "$profile_dir/mcp-cache.json"
+
+              ${appSet.sync-agents.program}
+
+              ${pkgs.jq}/bin/jq -e '.runtimeUserSetting.preserved == true' "$settings_dir/mcporter.json" >/dev/null
+              ${pkgs.jq}/bin/jq -e '.mcpServers | has("google-drive") | not' "$settings_dir/mcporter.json" >/dev/null
+              ${pkgs.jq}/bin/jq -e '.mcpServers.linear.url == "https://mcp.linear.app/mcp"' "$settings_dir/mcporter.json" >/dev/null
+              test ! -e "$profile_dir/mcp-cache.json"
+              touch $out
+            '';
 
             agentic-factory-profiles =
               let

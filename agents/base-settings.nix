@@ -112,54 +112,49 @@ let
   };
 
   piWorkMcpServers = {
-      "1password" = {
-        command = "/Applications/1Password.app/Contents/MacOS/onepassword-mcp";
-        lifecycle = "lazy";
-      };
-      granola = {
-        url = "https://mcp.granola.ai/mcp";
-        auth = "oauth";
-        lifecycle = "lazy";
-      };
-      grafana = {
-        url = "https://mcp-grafana.lunar.tech/mcp";
-        lifecycle = "lazy";
-      };
-      google-drive = {
-        command = "${self.packages.${system}.google-drive-mcp-auth}/bin/google-drive-mcp-auth";
-        lifecycle = "lazy";
-      };
-      linear = {
-        url = "https://mcp.linear.app/mcp";
-        lifecycle = "lazy";
-      };
-      lunar-skills = {
-        command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
-        lifecycle = "lazy";
-      };
-      swe-pruner = {
-        command = "${self.packages.${system}.swe-pruner-mcp}/bin/swe-pruner-mcp";
-        lifecycle = "lazy";
-      };
-      hubble-mcp = {
-        url = "https://hubble-mcp.prod.lunar.tech/mcp";
-        auth = "oauth";
-        lifecycle = "lazy";
-      };
-      sourcegraph = {
-        url = "https://lunar.sourcegraph.com/.api/mcp";
-        lifecycle = "lazy";
-      };
-      slack = {
-        command = "npx";
-        args = [
-          "-y"
-          "@jtalk22/slack-mcp"
-        ];
-        lifecycle = "lazy";
-      };
+    "1password" = {
+      command = "/Applications/1Password.app/Contents/MacOS/onepassword-mcp";
+      lifecycle = "lazy";
+    };
+    granola = {
+      url = "https://mcp.granola.ai/mcp";
+      auth = "oauth";
+      lifecycle = "lazy";
+    };
+    grafana = {
+      url = "https://mcp-grafana.lunar.tech/mcp";
+      lifecycle = "lazy";
+    };
+    linear = {
+      url = "https://mcp.linear.app/mcp";
+      lifecycle = "lazy";
+    };
+    lunar-skills = {
+      command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
+      lifecycle = "lazy";
+    };
+    swe-pruner = {
+      command = "${self.packages.${system}.swe-pruner-mcp}/bin/swe-pruner-mcp";
+      lifecycle = "lazy";
+    };
+    hubble-mcp = {
+      url = "https://hubble-mcp.prod.lunar.tech/mcp";
+      auth = "oauth";
+      lifecycle = "lazy";
+    };
+    sourcegraph = {
+      url = "https://lunar.sourcegraph.com/.api/mcp";
+      lifecycle = "lazy";
+    };
+    slack = {
+      command = "npx";
+      args = [
+        "-y"
+        "@jtalk22/slack-mcp"
+      ];
+      lifecycle = "lazy";
+    };
   };
-
 
   piEmptyMcporter = builtins.toJSON {
     imports = [ ];
