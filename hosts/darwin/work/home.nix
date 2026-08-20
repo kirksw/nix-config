@@ -13,6 +13,7 @@
       nerd-fonts.fira-code
       nerd-fonts.fira-mono
       self.packages.${pkgs.system}.pindrop
+      self.packages.${pkgs.system}.terminal-browser
     ];
     sessionVariables = {
       LANG = "en_US.UTF-8";
