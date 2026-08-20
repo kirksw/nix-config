@@ -273,16 +273,14 @@ let
 
       ensure_aws_sso_profile() {
         local profile="$1"
-        local sso_session="$2"
         local aws="${lib.getExe pkgs.awscli2}"
 
-        if "$aws" sts get-caller-identity --profile "$profile" >/dev/null 2>&1; then
+        if "$aws" sts get-caller-identity --profile "$profile" >/dev/null; then
           return 0
         fi
 
-        echo "AWS profile '$profile' is not usable; logging in to SSO session '$sso_session'." >&2
-        "$aws" sso login --sso-session "$sso_session"
-        "$aws" sts get-caller-identity --profile "$profile" >/dev/null
+        echo "AWS profile '$profile' is not usable; automatic SSO login is disabled so the original error remains visible." >&2
+        return 1
       }
 
       _nix_agents_extra_args=()
