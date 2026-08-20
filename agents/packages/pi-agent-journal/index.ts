@@ -24,22 +24,18 @@ const FAILURE_GATE_NOTICE =
 const NonEmptyText = Type.String({ minLength: 1 });
 const Limit = Type.Integer({ minimum: 1, maximum: MAX_LIMIT });
 
-// Keep verify's required fields visible to tool callers in the schema. Runtime
-// validation below remains authoritative because extensions can be called directly.
-const Parameters = Type.Union([
-	Type.Object({ action: Type.Literal("rant"), text: NonEmptyText }),
-	Type.Object({ action: Type.Literal("search"), query: NonEmptyText, limit: Type.Optional(Limit) }),
-	Type.Object({ action: Type.Literal("list"), query: Type.Optional(Type.String()), limit: Type.Optional(Limit) }),
-	Type.Object({ action: Type.Literal("claim"), issue: NonEmptyText, text: NonEmptyText }),
-	Type.Object({ action: Type.Literal("ready"), issue: NonEmptyText, text: NonEmptyText }),
-	Type.Object({
-		action: Type.Literal("verify"),
-		issue: NonEmptyText,
-		command: NonEmptyText,
-		exitStatus: Type.Integer({ minimum: 0 }),
-		evidence: NonEmptyText,
-	}),
-]);
+// Bedrock Converse requires a top-level object schema for every tool. Action-specific
+// requirements remain enforced by executeJournal's runtime validation.
+const Parameters = Type.Object({
+	action: Type.String({ enum: ["rant", "search", "list", "claim", "ready", "verify"] }),
+	text: Type.Optional(NonEmptyText),
+	query: Type.Optional(Type.String()),
+	issue: Type.Optional(NonEmptyText),
+	command: Type.Optional(NonEmptyText),
+	exitStatus: Type.Optional(Type.Integer({ minimum: 0 })),
+	evidence: Type.Optional(NonEmptyText),
+	limit: Type.Optional(Limit),
+});
 
 type JournalParams = {
 	action: "rant" | "search" | "list" | "claim" | "ready" | "verify";

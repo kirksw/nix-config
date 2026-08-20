@@ -29,7 +29,7 @@
     "typebox": "1.1.24"
   },
   "scripts": {
-    "test": "node --experimental-strip-types --test gate.test.mjs",
+    "test": "node --experimental-strip-types --test *.test.mjs",
     "typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck index.ts"
   }
 }
