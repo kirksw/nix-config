@@ -58,9 +58,9 @@ const STALE_OVERLAY_MESSAGE = "Todo overlay module cache is stale; restart Pi";
 export const LIVE_TASK_CUSTOM_TYPE = "rpiv-todo-live-task-contract";
 export const AUTO_CONTINUATION_CUSTOM_TYPE = "rpiv-todo-auto-continuation";
 export const STATIC_EXECUTION_POLICY = [
-	"Todo execution policy (immutable): open todos are an execution contract, not suggestions.",
-	"Work the next unblocked pending or in_progress item; keep todo statuses accurate as work starts and finishes.",
-	"Do not claim completion or casually stop while actionable work remains. Report genuine blockers and leave blocked work open.",
+	"Todo execution policy: open todos are an execution contract, not suggestions.",
+	"Work exactly one next unblocked task at a time: mark it in_progress before work and complete it immediately only after validation.",
+	"Do not stop while actionable work remains; report blockers and leave blocked work open.",
 ].join(" ");
 
 type LiveTaskState = ReturnType<typeof getState>;

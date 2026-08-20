@@ -33,8 +33,19 @@ let
     piAgentJournalPackage
     piMlflowTracerPackage
   ];
-  piPersonalPackageRefs = piPackageRefs ++ [ "npm:bladebro@3.1.4" ];
-  piWorkPackageRefs = piPackageRefs ++ [ agenticOSPackage ];
+  packageSource = package: if builtins.isAttrs package then package.source else package;
+  piLeanExcludedPackageRefs = [
+    "npm:context-mode@1.0.169"
+    piAgentJournalPackage
+  ];
+  piPersonalPackageRefs = builtins.filter (
+    package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
+  ) piPackageRefs;
+  piPersonalFullPackageRefs = piPackageRefs ++ [ "npm:bladebro@3.1.4" ];
+  piWorkFullPackageRefs = piPackageRefs ++ [ agenticOSPackage ];
+  piWorkPackageRefs = builtins.filter (
+    package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
+  ) piWorkFullPackageRefs;
   piFactoryPackageRefs = [
     piHerdrPackage
     piMlflowTracerPackage
@@ -44,7 +55,7 @@ let
   ];
   piWorkFactoryPackageRefs = piFactoryPackageRefs ++ [ piAgentJournalPackage ];
 
-  piPersonalSettings = builtins.toJSON {
+  piPersonalModelDefaults = {
     defaultProvider = "zai";
     defaultModel = "glm-5.2";
     defaultThinkingLevel = "medium";
@@ -59,9 +70,22 @@ let
       "qwen3.7-max"
       "deepseek-v4-pro"
     ];
-    packages = piPersonalPackageRefs;
     subagents.disableBuiltins = true;
   };
+
+  piPersonalSettings = builtins.toJSON (
+    piPersonalModelDefaults
+    // {
+      packages = piPersonalPackageRefs;
+    }
+  );
+
+  piPersonalFullSettings = builtins.toJSON (
+    piPersonalModelDefaults
+    // {
+      packages = piPersonalFullPackageRefs;
+    }
+  );
 
   piHomeFactorySettings = builtins.toJSON {
     packages = piFactoryPackageRefs;
@@ -95,6 +119,14 @@ let
     piWorkModelDefaults
     // {
       packages = piWorkPackageRefs;
+      subagents.disableBuiltins = true;
+    }
+  );
+
+  piWorkFullSettings = builtins.toJSON (
+    piWorkModelDefaults
+    // {
+      packages = piWorkFullPackageRefs;
       subagents.disableBuiltins = true;
     }
   );
@@ -166,24 +198,42 @@ let
     mcpServers = lib.mapAttrs (_: server: server // { lifecycle = "ephemeral"; }) piWorkMcpServers;
   };
 
-  piPersonalEnv = ''
+  mkPiPersonalEnv = base: ''
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
-    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/personal/settings/mcporter.json"
+    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/${base}/settings/mcporter.json"
   '';
 
-  piWorkEnv = ''
-    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
-    export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
-    export AGENTICOS_INSTANCE="lunarOS"
-    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/work/settings/mcporter.json"
-    if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-      export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-    fi
-    export AWS_PROFILE="lw-employee-ai"
-    export AWS_REGION="eu-west-1"
-    export AWS_SDK_LOAD_CONFIG=1
-  '';
+  piPersonalEnv = mkPiPersonalEnv "personal";
+  piPersonalFullEnv = mkPiPersonalEnv "personal-full";
+
+  mkPiWorkEnv =
+    {
+      base,
+      agenticosToolMode,
+    }:
+    ''
+      export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
+      export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
+      export AGENTICOS_INSTANCE="lunarOS"
+      export AGENTICOS_TOOL_MODE="${agenticosToolMode}"
+      export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/${base}/settings/mcporter.json"
+      if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+        export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+      fi
+      export AWS_PROFILE="lw-employee-ai"
+      export AWS_REGION="eu-west-1"
+      export AWS_SDK_LOAD_CONFIG=1
+    '';
+
+  piWorkEnv = mkPiWorkEnv {
+    base = "work";
+    agenticosToolMode = "lazy";
+  };
+  piWorkFullEnv = mkPiWorkEnv {
+    base = "work-full";
+    agenticosToolMode = "eager";
+  };
 
   piHomeFactoryEnv = ''
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
@@ -243,6 +293,11 @@ in
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
       };
+      personal-full = {
+        "settings.json" = piPersonalFullSettings;
+        "mcporter.json" = piEmptyMcporter;
+        "env" = piPersonalFullEnv;
+      };
       home-factory = {
         "settings.json" = piHomeFactorySettings;
         "mcporter.json" = piEmptyMcporter;
@@ -253,6 +308,12 @@ in
         "models.json" = piWorkModels;
         "settings.json" = piWorkSettings;
         "env" = piWorkEnv;
+      };
+      work-full = {
+        "mcporter.json" = piWorkMcporter;
+        "models.json" = piWorkModels;
+        "settings.json" = piWorkFullSettings;
+        "env" = piWorkFullEnv;
       };
       work-factory = {
         "auth.json" = piWorkAuth;

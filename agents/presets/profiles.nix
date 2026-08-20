@@ -42,7 +42,23 @@ _: {
       };
     };
 
-    # work — work projects, restricted agent set, shared work credentials
+    # personal-full — explicit escape hatch with the complete personal tool surface
+    personal-full = {
+      pathPrefixes = [ ];
+      providers = [
+        "personal-zai-key"
+        "personal-minimax-key"
+      ];
+      defaultProfile = "personal-full";
+      git = {
+        userName = "Kirk Sweeney";
+        userEmail = "kirk@cntd.io";
+        signingKey = "/Users/kisw/.config/sops-nix/secrets/ssh/kirksw/private";
+        gpgFormat = "ssh";
+      };
+    };
+
+    # work — work projects, lean default, shared work credentials
     work = {
       pathPrefixes = [
         "~/git/github.com/lunarway/"
@@ -57,6 +73,19 @@ _: {
         gpgFormat = "ssh";
       };
     };
+
+    # work-full — explicit escape hatch with the complete work tool surface
+    work-full = {
+      pathPrefixes = [ ];
+      providers = [ "work-openai-key" ];
+      defaultProfile = "work-full";
+      git = {
+        userName = "Kirk Sweeney";
+        userEmail = "kisw@lunar.app";
+        signingKey = "/Users/kisw/.config/sops-nix/secrets/ssh/lunarway/private";
+        gpgFormat = "ssh";
+      };
+    };
   };
 
   profiles = {
@@ -64,6 +93,52 @@ _: {
 
     personal-default = {
       base = "personal";
+      pathPrefixes = [ ];
+      agents = [
+        "the-architect"
+        "code-monkey"
+        "explore"
+        "scout"
+        "bottleneck"
+      ];
+      skills = [
+        "add-module"
+        "domain-modeling"
+        "lavish"
+        "nix-agents"
+        "secrets-management"
+        "session-heuristics"
+        "skill-creator"
+        "system-context"
+      ];
+      # MCP access is exposed through generated CLI skills, never direct tools.
+      mcpServers = [ ];
+      tierMapping = {
+        S = [ "openai-codex/gpt-5.6-sol" ];
+        A = [
+          "openai-codex/gpt-5.6-terra"
+          "openai-codex/gpt-5.5"
+          "zai/glm-5.2"
+        ];
+        B = [
+          "openai-codex/gpt-5.6-luna"
+          "openai-codex/gpt-5.4"
+        ];
+        C = [
+          "openai-codex/gpt-5.4-mini"
+          "minimax/minimax-m3"
+        ];
+        D = [
+          "openai-codex/gpt-5.3-codex-spark"
+          "minimax/minimax-m2.7-highspeed"
+          "zai/glm-5-turbo"
+        ];
+        E = [ "openai-codex/gpt-5.4-nano" ];
+      };
+    };
+
+    personal-full = {
+      base = "personal-full";
       pathPrefixes = [ ];
       agents = [ ]; # empty = all
       skills = [ ]; # empty = all
@@ -98,6 +173,63 @@ _: {
     # work/stable: conservative model tiers, stricter permissions
     work-default = {
       base = "work";
+      pathPrefixes = [ ];
+      agents = [
+        "10xBEAST"
+        "the-architect"
+        "code-monkey"
+        "explore"
+        "scout"
+        "bottleneck"
+      ];
+      skills = [
+        "nix-agents"
+        "system-context"
+        "work-mcp"
+        "1password"
+        "granola"
+        "grafana"
+        "hubble-mcp"
+        "linear"
+        "lunar-skills"
+        "slack"
+        "sourcegraph"
+        "swe-pruner"
+      ];
+      # MCP access is exposed through generated CLI skills, never direct tools.
+      mcpServers = [ ];
+      tierMapping = {
+        S = [
+          "openai/gpt-5.6-sol"
+          "anthropic/claude-fable-5"
+        ];
+        A = [
+          "openai/gpt-5.6-terra"
+          "anthropic/claude-opus-4-8"
+          "openai/gpt-5.5"
+        ];
+        B = [
+          "openai/gpt-5.6-luna"
+          "anthropic/claude-sonnet-4-6"
+          "openai/gpt-5.4"
+        ];
+        C = [ "openai/gpt-5.4-mini" ];
+        D = [ "openai/gpt-5.3-codex-spark" ];
+        E = [
+          "anthropic/claude-haiku-4-5-20251001"
+          "openai/gpt-5.4-nano"
+        ];
+      };
+      permissions = {
+        edit = null;
+        bash = null;
+        task = null;
+        webfetch = "deny";
+      };
+    };
+
+    work-full = {
+      base = "work-full";
       pathPrefixes = [ ];
       agents = [
         "10xBEAST"

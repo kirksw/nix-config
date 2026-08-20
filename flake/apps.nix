@@ -72,11 +72,13 @@ let
     CONFIG_BASE="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents"
 
     for target in opencode claude codex pi; do
-      target_dir="$CONFIG_BASE/$target/bases/work/profiles/work-default/skills"
-      if [ -d "$target_dir" ]; then
-        ${pkgs.coreutils}/bin/cp -R "$source_skills"/. "$target_dir/"
-        echo "  -> $target_dir"
-      fi
+      for base_profile in work/work-default work-full/work-full; do
+        target_dir="$CONFIG_BASE/$target/bases/$base_profile/skills"
+        if [ -d "$target_dir" ]; then
+          ${pkgs.coreutils}/bin/cp -R "$source_skills"/. "$target_dir/"
+          echo "  -> $target_dir"
+        fi
+      done
     done
 
     echo "Done!"
@@ -284,7 +286,9 @@ let
               target == "pi"
               && builtins.elem profileName [
                 "personal-default"
+                "personal-full"
                 "work-default"
+                "work-full"
               ]
             then
               ''
@@ -585,10 +589,16 @@ let
     ${allBaseSettingsCommands}
 
     remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
+    remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work-full/settings/mcp.json"
 
     seed_mutable_file \
       "${piWorkAuthFile}" \
       "$CONFIG_BASE/pi/bases/work/settings/auth.json" \
+      0600
+
+    seed_mutable_file \
+      "${piWorkAuthFile}" \
+      "$CONFIG_BASE/pi/bases/work-full/settings/auth.json" \
       0600
 
     ${allSyncCommands}
@@ -597,6 +607,7 @@ let
     # Clear them after profile sync so removed servers cannot remain discoverable.
     run ${pkgs.coreutils}/bin/rm -f \
       "$CONFIG_BASE/pi/bases/work/profiles/work-default/mcp-cache.json" \
+      "$CONFIG_BASE/pi/bases/work-full/profiles/work-full/mcp-cache.json" \
       "$CONFIG_BASE/pi/bases/work-factory/profiles/work-factory/mcp-cache.json"
 
     seed_mutable_file \
@@ -606,7 +617,17 @@ let
 
     seed_mutable_file \
       "${piSubagentsSettingsFile}" \
+      "$CONFIG_BASE/pi/bases/personal-full/profiles/personal-full/subagents.json" \
+      0600
+
+    seed_mutable_file \
+      "${piSubagentsSettingsFile}" \
       "$CONFIG_BASE/pi/bases/work/profiles/work-default/subagents.json" \
+      0600
+
+    seed_mutable_file \
+      "${piSubagentsSettingsFile}" \
+      "$CONFIG_BASE/pi/bases/work-full/profiles/work-full/subagents.json" \
       0600
 
     seed_mutable_file \

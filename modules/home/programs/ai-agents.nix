@@ -30,7 +30,9 @@ let
   };
   herdrPiIntegrationTargets = [
     "nix-agents/pi/bases/personal/profiles/personal-default/extensions/herdr-agent-state.ts"
+    "nix-agents/pi/bases/personal-full/profiles/personal-full/extensions/herdr-agent-state.ts"
     "nix-agents/pi/bases/work/profiles/work-default/extensions/herdr-agent-state.ts"
+    "nix-agents/pi/bases/work-full/profiles/work-full/extensions/herdr-agent-state.ts"
     "nix-agents/pi/bases/home-factory/profiles/home-factory/extensions/herdr-agent-state.ts"
     "nix-agents/pi/bases/work-factory/profiles/work-factory/extensions/herdr-agent-state.ts"
   ];
@@ -742,10 +744,12 @@ in
           fi
           case "$_pi_session_profile" in
             personal-default) _pi_session_base="personal" ;;
+            personal-full) _pi_session_base="personal-full" ;;
             work-default) _pi_session_base="work" ;;
+            work-full) _pi_session_base="work-full" ;;
             *)
-              _pi_session_profile="personal-default"
-              _pi_session_base="personal"
+              echo "unknown nix-agents profile: $_pi_session_profile" >&2
+              exit 2
               ;;
           esac
           export PI_CODING_AGENT_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile"
@@ -754,13 +758,15 @@ in
             # Generated profile environment is trusted Nix configuration.
             . "$_pi_profile_env"
           fi
-          if [ "$_pi_session_profile" = "work-default" ]; then
-            unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
-            export AWS_PROFILE="lw-employee-ai"
-            export AWS_REGION="eu-west-1"
-            export AWS_SDK_LOAD_CONFIG=1
-            ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
-          fi
+          case "$_pi_session_profile" in
+            work-default|work-full)
+              unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
+              export AWS_PROFILE="lw-employee-ai"
+              export AWS_REGION="eu-west-1"
+              export AWS_SDK_LOAD_CONFIG=1
+              ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
+              ;;
+          esac
           # pi-cmux is installed for regular profiles but only loaded in cmux.
           if [ -n "''${CMUX_WORKSPACE_ID:-}" ]; then
             _nix_agents_extra_args+=(
@@ -772,9 +778,9 @@ in
           mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
           _pi_tmp_root="/tmp/personal"
-          if [ "$_pi_session_profile" = "work-default" ]; then
-            _pi_tmp_root="/tmp/lunar"
-          fi
+          case "$_pi_session_profile" in
+            work-default|work-full) _pi_tmp_root="/tmp/lunar" ;;
+          esac
 
           mkdir -p "$_pi_tmp_root"
           export TMPDIR="$_pi_tmp_root"
@@ -782,21 +788,24 @@ in
           export TEMP="$_pi_tmp_root"
 
 
-          if is_lunar_project; then
-            if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-              export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-            fi
-            if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-              export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-            fi
-          else
-            if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-              export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
-            fi
-            if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
-              export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
-            fi
-          fi
+          case "$_pi_session_profile" in
+            work-default|work-full)
+              if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+                export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+              fi
+              if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
+                export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
+              fi
+              ;;
+            *)
+              if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+                export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
+              fi
+              if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+                export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+              fi
+              ;;
+          esac
         '')
         (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"
@@ -832,7 +841,7 @@ in
             set -euo pipefail
 
             usage() {
-              printf '%s\n' "usage: pix [--profile default|factory] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted" >&2
+              printf '%s\n' "usage: pix [--profile default|full|factory] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted" >&2
             }
 
             die() {
@@ -881,8 +890,8 @@ in
             done
 
             case "$profile" in
-              ""|default|factory) ;;
-              *) die "invalid profile: $profile (expected default or factory)" ;;
+              ""|default|full|factory) ;;
+              *) die "invalid profile: $profile (expected default, full, or factory)" ;;
             esac
             case "$scope" in
               ""|home|work) ;;
@@ -890,7 +899,7 @@ in
             esac
 
             if [ -z "$profile" ]; then
-              profile="$(printf '%s\n' default factory | fzf --prompt='Pi profile> ' --height=5 --reverse)" || exit 130
+              profile="$(printf '%s\n' default full factory | fzf --prompt='Pi profile> ' --height=7 --reverse)" || exit 130
             fi
 
             if [ "$profile" = "factory" ] && [ -z "$scope" ]; then
@@ -903,8 +912,8 @@ in
                 _d="''${_d%/*}"
               done
               case "$_pi_scope_profile" in
-                work-default) scope=work ;;
-                personal-default) scope=home ;;
+                work-default|work-full) scope=work ;;
+                personal-default|personal-full) scope=home ;;
               esac
               if [ -z "$scope" ]; then
                 case "$PWD" in
@@ -928,6 +937,14 @@ in
                 ;;
               default:work)
                 export NIX_AGENTS_PROFILE=work-default
+                exec pi "''${pi_args[@]}"
+                ;;
+              full:|full:home)
+                export NIX_AGENTS_PROFILE=personal-full
+                exec pi "''${pi_args[@]}"
+                ;;
+              full:work)
+                export NIX_AGENTS_PROFILE=work-full
                 exec pi "''${pi_args[@]}"
                 ;;
               factory:home)
