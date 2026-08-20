@@ -288,6 +288,18 @@
               touch $out
             '';
 
+            herdr-cli-compatibility =
+              pkgs.runCommand "herdr-cli-compatibility"
+                {
+                  nativeBuildInputs = [ self.packages.${system}.herdr ];
+                }
+                ''
+                  GREP=${pkgs.gnugrep}/bin/grep \
+                    ${pkgs.bash}/bin/bash ${./scripts/check-herdr-cli.sh} \
+                    ${self.packages.${system}.herdr}/bin/herdr
+                  touch $out
+                '';
+
             agentic-factory-profiles =
               let
                 localAgents = import ./agents { inherit pkgs; };

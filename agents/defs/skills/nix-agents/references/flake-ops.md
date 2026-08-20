@@ -73,7 +73,9 @@ nix flake init -t github:kirksw/nix-agents
 ## Other Repository Commands
 
 - `nix flake update [input]` updates flake inputs.
-- `nix run .#update-packages` updates entries under `packages/`.
+- `nix run .#update-packages` updates entries under `packages/` that define `passthru.updateScript`.
+  Entries without an update script are intentionally treated as pinned and reported as skipped.
+  Herdr is included and advances to the latest stable GitHub release together with its coupled source, dependency, and Pi integration hashes.
 - `nix build .#<package-name>` builds a touched package.
 - `nix run .#install-hooks` installs the repository pre-commit hooks.
 

@@ -24,9 +24,12 @@ let
       passthru = pkg.passthru or { };
     in
     if passthru ? updateScript then
-      toString passthru.updateScript
+      ''
+        echo "-> Updating ${name}..."
+        ${toString passthru.updateScript}
+      ''
     else
-      "echo 'No updateScript for ${name}'";
+      "echo '-> Pinned ${name} (no updateScript; skipped)'";
 
   updateAllPackages = pkgs.writeShellScriptBin "update-packages" ''
     set -euo pipefail
@@ -36,13 +39,8 @@ let
     export NIX_CONF_DIR="''${TMPDIR:-/tmp}/nix-update-conf"
     ${pkgs.coreutils}/bin/mkdir -p "$NIX_CONF_DIR"
     printf '%s\n' 'experimental-features = nix-command flakes' > "$NIX_CONF_DIR/nix.conf"
-    echo "Updating all packages..."
-    ${builtins.concatStringsSep "\n" (
-      map (name: ''
-        echo "-> Updating ${name}..."
-        ${updateCommandFor name}
-      '') packageNames
-    )}
+    echo "Checking package updates..."
+    ${builtins.concatStringsSep "\n" (map updateCommandFor packageNames)}
     echo "Done!"
   '';
 
