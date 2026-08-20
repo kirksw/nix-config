@@ -1,20 +1,18 @@
 {
   "name": "@kirksw/pi-herdr",
   "version": "0.2.5-local.1",
-  "description": "Local patched pi-herdr package with the herdr extension plus operating skill.",
+  "description": "Local patched pi-herdr package with the native Herdr extension.",
   "type": "module",
   "keywords": [
     "pi-package",
     "pi-extension",
-    "pi-skill",
     "herdr",
     "pane-management",
     "agent-workflows"
   ],
   "license": "MIT",
   "pi": {
-    "extensions": ["./index.ts"],
-    "skills": ["./skills"]
+    "extensions": ["./index.ts"]
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

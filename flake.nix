@@ -300,6 +300,25 @@
                   touch $out
                 '';
 
+            pi-herdr-extension-load = pkgs.runCommand "pi-herdr-extension-load" { } ''
+              export HOME="$TMPDIR/home"
+              export PI_CODING_AGENT_DIR="$TMPDIR/pi-agent"
+              export PI_OFFLINE=1
+              mkdir -p "$HOME" "$PI_CODING_AGENT_DIR"
+
+              printf '%s\n' '{"type":"get_state"}' \
+                | ${self.packages.${system}.pi}/bin/pi \
+                  --mode rpc \
+                  --no-session \
+                  --no-extensions \
+                  --extension ${./agents/packages/pi-herdr/index.ts} \
+                  > "$TMPDIR/response.jsonl"
+              ${pkgs.jq}/bin/jq -s -e \
+                'any(.[]; .type == "response" and .command == "get_state" and .success == true)' \
+                "$TMPDIR/response.jsonl" >/dev/null
+              touch $out
+            '';
+
             agentic-factory-profiles =
               let
                 localAgents = import ./agents { inherit pkgs; };

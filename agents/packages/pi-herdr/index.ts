@@ -7,6 +7,24 @@ import { Type } from "@sinclair/typebox";
 type AgentStatus = "idle" | "working" | "blocked" | "done" | "unknown";
 type ReadSource = "visible" | "recent" | "recent-unwrapped";
 
+interface WaitOutputOptions {
+	source?: ReadSource;
+	lines?: number;
+	timeout?: number;
+	regex?: boolean;
+	raw?: boolean;
+}
+
+function buildWaitOutputArgs(paneId: string, match: string, options: WaitOutputOptions = {}): string[] {
+	const args = ["pane", "wait-output", paneId];
+	args.push(options.regex ? "--regex" : "--match", match);
+	if (options.source) args.push("--source", options.source);
+	if (options.lines != null) args.push("--lines", String(options.lines));
+	if (options.timeout != null) args.push("--timeout", String(options.timeout));
+	if (options.raw) args.push("--raw");
+	return args;
+}
+
 interface WorkspaceInfo {
 	workspace_id: string;
 	number: number;
@@ -780,12 +798,13 @@ export default function (pi: ExtensionAPI) {
 					const updateTimer = onUpdate ? setInterval(publishWatchUpdate, 1000) : null;
 
 					try {
-						const args = ["wait", "output", resolved.pane.pane_id, "--match", match];
-						if (params.source) args.push("--source", params.source);
-						if (params.lines != null) args.push("--lines", String(params.lines));
-						if (params.timeout != null) args.push("--timeout", String(params.timeout));
-						if (params.regex) args.push("--regex");
-						if (params.raw) args.push("--raw");
+						const args = buildWaitOutputArgs(resolved.pane.pane_id, match, {
+							source: params.source,
+							lines: params.lines,
+							timeout: params.timeout,
+							regex: params.regex,
+							raw: params.raw,
+						});
 
 						const response = await execHerdrJson<{
 							result: {
