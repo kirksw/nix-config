@@ -1,0 +1,22 @@
+{
+  "name": "@kirksw/pi-anthropic-communication-policy",
+  "version": "0.1.0-local.1",
+  "description": "Inject a concise communication policy for Claude Fable, Sonnet, and Opus models.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "anthropic",
+    "system-prompt"
+  ],
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test index.test.mjs"
+  }
+}

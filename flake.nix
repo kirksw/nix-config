@@ -342,10 +342,12 @@
                   lib = nixpkgs.lib;
                 };
                 expectedHomePackages = builtins.toJSON [
+                  "local:pi-anthropic-communication-policy"
                   "local:pi-herdr"
                   "local:pi-mlflow-tracer"
                   "npm:@tintinweb/pi-subagents@0.14.3"
                   "npm:pi-permission-system@0.8.0"
+                  "npm:pi-verbosity-control@0.3.0"
                   "npm:pi-web-access@0.13.0"
                 ];
                 expectedWorkPackages = builtins.toJSON (
@@ -378,6 +380,8 @@
                   python3 - "${expectedHomePackagesFile}" "${homeSettingsFile}" "${expectedWorkPackagesFile}" "${workSettingsFile}" <<'PY'
                   import json, sys
                   def normalize_package(package):
+                      if package.endswith("/agents/packages/pi-anthropic-communication-policy"):
+                          return "local:pi-anthropic-communication-policy"
                       if package.endswith("/agents/packages/pi-herdr"):
                           return "local:pi-herdr"
                       if package.endswith("/agents/packages/pi-agent-journal"):
