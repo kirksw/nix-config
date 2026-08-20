@@ -292,6 +292,22 @@ in
       nw = "${notesCli}/bin/notes-capture --context work";
     };
 
+    xdg.configFile."ezgit/config.toml" = {
+      force = true;
+      text = ''
+        [git]
+        clone_dir = "~/git/github.com"
+        open_command = "herdr workspace create --cwd \"$absPath\" --label \"$repoPath\" --focus"
+        shallow_prompt_threshold_kb = 204800
+
+        [organizations]
+        orgs = [
+            "cntd-io",
+            "lunarway",
+        ]
+      '';
+    };
+
     xdg.configFile."herdr/config.toml" = {
       force = true;
       text = ''
@@ -307,6 +323,9 @@ in
 
         [session]
         resume_agents_on_restore = true
+
+        [experimental]
+        kitty_graphics = true
 
         [keys]
         prefix = "ctrl+a"
@@ -368,8 +387,10 @@ in
 
         [[keys.command]]
         key = "prefix+g"
-        type = "pane"
-        command = "herdr-project-palette ezgit"
+        type = "popup"
+        command = "ezgit"
+        width = "80%"
+        height = "80%"
 
         [[keys.command]]
         key = "ctrl+j"
