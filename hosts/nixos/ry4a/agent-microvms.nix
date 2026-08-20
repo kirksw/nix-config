@@ -183,6 +183,24 @@ let
     };
   };
 
+  personalAgentProviderSecrets = builtins.listToAttrs (
+    map
+      (name: {
+        name = "personal-agent/${name}";
+        value = {
+          inherit (directProviderSecretKeys.${name}) key;
+          sopsFile = directProviderSecretKeys.${name}.sopsFile;
+          mode = "0440";
+          owner = "kisw";
+          group = "kvm";
+        };
+      })
+      [
+        "minimax_api_key"
+        "zai_api_key"
+      ]
+  );
+
   # Sops secrets for OpenClaw-enabled assistants.
   # Per-assistant keys come from secrets/assistants/<name>.yaml. Direct-provider
   # credentials are mounted only for assistants configured for direct access.
@@ -342,6 +360,7 @@ let
 
           services.openssh = {
             enable = true;
+            openFirewall = false;
             hostKeys = [
               {
                 path = "/srv/assistant/ssh/ssh_host_ed25519_key";
@@ -362,10 +381,14 @@ let
           services.tailscale = {
             enable = true;
             authKeyFile = "/run/host-secrets/tailscale/authKey";
+            extraSetFlags = [ "--ssh" ];
           };
           systemd.services.tailscaled.restartIfChanged = false;
 
-          networking.firewall.enable = true;
+          networking.firewall = {
+            enable = true;
+            interfaces.tailscale0.allowedTCPPorts = [ 22 ];
+          };
           networking.nameservers = [
             "100.100.100.100"
             "8.8.8.8"
@@ -447,7 +470,18 @@ let
     let
       authKeyFile = config.sops.secrets.${personalAgent.authSecret}.path;
       authKeyDir = builtins.dirOf authKeyFile;
+      providerKeyDir = builtins.dirOf config.sops.secrets."personal-agent/zai_api_key".path;
       piLauncher = pkgs.writeShellScriptBin "pi" ''
+        zaiKeyFile=/run/personal-agent-secrets/zai_api_key
+        minimaxKeyFile=/run/personal-agent-secrets/minimax_api_key
+
+        if [ -r "$zaiKeyFile" ]; then
+          export PERSONAL_ZAI_API_KEY="$(${pkgs.coreutils}/bin/cat "$zaiKeyFile")"
+        fi
+        if [ -r "$minimaxKeyFile" ]; then
+          export PERSONAL_MINIMAX_API_KEY="$(${pkgs.coreutils}/bin/cat "$minimaxKeyFile")"
+        fi
+
         exec ${personalPi}/bin/pi "$@"
       '';
     in
@@ -499,6 +533,7 @@ let
 
           services.openssh = {
             enable = true;
+            openFirewall = false;
             hostKeys = [
               {
                 path = "/home/agent/.ssh/host/ssh_host_ed25519_key";
@@ -519,8 +554,22 @@ let
           services.tailscale = {
             enable = true;
             authKeyFile = "/run/host-secrets/tailscale/authKey";
+            extraSetFlags = [ "--ssh" ];
           };
           systemd.services.tailscaled.restartIfChanged = false;
+
+          systemd.services.personal-agent-provider-secrets = {
+            description = "Stage personal-agent provider secrets";
+            wantedBy = [ "multi-user.target" ];
+            before = [ "multi-user.target" ];
+            unitConfig.RequiresMountsFor = [ "/run/host-secrets/providers" ];
+            serviceConfig.Type = "oneshot";
+            script = ''
+              ${pkgs.coreutils}/bin/install -d -m 0700 -o agent -g users /run/personal-agent-secrets
+              ${pkgs.coreutils}/bin/install -m 0400 -o agent -g users /run/host-secrets/providers/zai_api_key /run/personal-agent-secrets/zai_api_key
+              ${pkgs.coreutils}/bin/install -m 0400 -o agent -g users /run/host-secrets/providers/minimax_api_key /run/personal-agent-secrets/minimax_api_key
+            '';
+          };
 
           networking.firewall = {
             enable = true;
@@ -595,6 +644,14 @@ let
                 mountPoint = "/run/host-secrets/tailscale";
                 tag = "tailscale-secrets";
                 proto = "virtiofs";
+                readOnly = true;
+              }
+              {
+                source = providerKeyDir;
+                mountPoint = "/run/host-secrets/providers";
+                tag = "provider-secrets";
+                proto = "9p";
+                securityModel = "passthrough";
                 readOnly = true;
               }
             ];
@@ -757,6 +814,7 @@ in
   sops.secrets =
     # Deduplicate tailscale auth keys (all assistants share one key)
     builtins.listToAttrs (lib.unique (map (a: mkSopsSecret a) (assistants ++ [ personalAgent ])))
+    // personalAgentProviderSecrets
     // builtins.foldl' (
       acc: a: if a ? openclaw then acc // mkOpenClawSopsSecrets a else acc
     ) { } assistants;
@@ -765,6 +823,14 @@ in
     router.hostPort
     router.sshPort
   ]) llmRouters;
+
+  systemd.services."microvm@personal-agent".serviceConfig.ExecStartPre = [
+    "+${pkgs.writeShellScript "personal-agent-secret-permissions" ''
+      secretDir=$(${pkgs.coreutils}/bin/readlink -f /run/secrets/personal-agent)
+      ${pkgs.coreutils}/bin/chgrp kvm "$secretDir"
+      ${pkgs.coreutils}/bin/chmod 0750 "$secretDir"
+    ''}"
+  ];
 
   systemd.tmpfiles.rules =
     (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -") assistants)
