@@ -300,6 +300,49 @@
                   touch $out
                 '';
 
+            mlx-dspark-server-smoke =
+              if system == "aarch64-darwin" then
+                pkgs.runCommand "mlx-dspark-server-smoke" { } ''
+                  export HOME="$TMPDIR/home"
+                  export CURL_BIN=${pkgs.curl}/bin/curl
+                  export JQ_BIN=${pkgs.jq}/bin/jq
+                  mkdir -p "$HOME"
+                  ${pkgs.bash}/bin/bash ${./scripts/check-mlx-dspark.sh} \
+                    ${self.packages.${system}.mlx-dspark}/bin/mlx-dspark
+                  touch $out
+                ''
+              else
+                pkgs.runCommand "mlx-dspark-server-smoke-skipped" { } "touch $out";
+
+            pi-mlx-dspark-provider = pkgs.runCommand "pi-mlx-dspark-provider" { } ''
+              export HOME="$TMPDIR/home"
+              export XDG_CONFIG_HOME="$TMPDIR/config"
+              ${appSet.sync-agents.program}
+
+              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/profiles/personal-default"
+              test -L "$profile_dir/models.json"
+              ${pkgs.jq}/bin/jq -e \
+                '.providers["mlx-dspark"] as $provider
+                 | $provider.baseUrl == "http://127.0.0.1:18080"
+                   and $provider.api == "anthropic-messages"
+                   and $provider.models[0].id == "Qwen3-8B-4bit"
+                   and $provider.models[0].contextWindow == 131072
+                   and $provider.models[0].maxTokens == 8192' \
+                "$profile_dir/models.json" >/dev/null
+              ${pkgs.jq}/bin/jq -e '.defaultProvider == "zai"' "$profile_dir/settings.json" >/dev/null
+              ${pkgs.jq}/bin/jq -e \
+                '.providers | has("mlx-dspark") | not' \
+                "$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-default/models.json" >/dev/null
+              model_check_dir="$TMPDIR/pi-model-check"
+              mkdir -p "$model_check_dir"
+              cp "$profile_dir/models.json" "$model_check_dir/models.json"
+              printf '{}\n' > "$model_check_dir/settings.json"
+              PI_CODING_AGENT_DIR="$model_check_dir" \
+                ${self.packages.${system}.pi}/bin/pi --no-extensions --list-models mlx-dspark \
+                | ${pkgs.gnugrep}/bin/grep -F 'Qwen3-8B-4bit' >/dev/null
+              touch $out
+            '';
+
             pi-herdr-extension-load = pkgs.runCommand "pi-herdr-extension-load" { } ''
               export HOME="$TMPDIR/home"
               export PI_CODING_AGENT_DIR="$TMPDIR/pi-agent"

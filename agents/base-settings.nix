@@ -92,6 +92,21 @@ let
     }
   );
 
+  piPersonalModels = builtins.toJSON {
+    providers.mlx-dspark = {
+      baseUrl = "http://127.0.0.1:18080";
+      api = "anthropic-messages";
+      apiKey = "mlx-dspark";
+      models = [
+        {
+          id = "Qwen3-8B-4bit";
+          contextWindow = 131072;
+          maxTokens = 8192;
+        }
+      ];
+    };
+  };
+
   piHomeFactorySettings = builtins.toJSON {
     packages = piFactoryPackageRefs;
     subagents.disableBuiltins = true;
@@ -295,11 +310,13 @@ in
     pi = {
       personal = {
         "settings.json" = piPersonalSettings;
+        "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
       };
       personal-full = {
         "settings.json" = piPersonalFullSettings;
+        "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalFullEnv;
       };

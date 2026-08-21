@@ -1,0 +1,20 @@
+{
+  "formatVersion": 1,
+  "mlx": {
+    "version": "0.32.0",
+    "cp314Macos14Arm64Hash": "sha256-LuebH4wsKjKa/JXs59zgvnmNQ/PedxpjcNK5+XArvZo=",
+    "metalMacos14Arm64Hash": "sha256-W2SyCsJLDEAfSJ3gHoIJ7cTTchJSAfGTFObznjhTIqo="
+  },
+  "mlxDspark": {
+    "version": "0.14.0",
+    "hash": "sha256-bZEPyhzkYB+zy1Wfx8ulvPjodaiu2baAGZdzyWsshio="
+  },
+  "mlxAudio": {
+    "version": "0.4.3",
+    "hash": "sha256-joe631ag9zv5HjeXsRlcAUQKGBzwtkoqCNwb2ksDf1Q="
+  },
+  "mlxVlm": {
+    "version": "0.6.12",
+    "hash": "sha256-aLwnwUgrfRFF6aw9ns01LMVckeVJKpNVxci0DV1DzLA="
+  }
+}

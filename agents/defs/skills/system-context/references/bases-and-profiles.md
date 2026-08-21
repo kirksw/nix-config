@@ -17,6 +17,7 @@
 - providers:
   - `personal-zai-key`
   - `personal-minimax-key`
+  - local `mlx-dspark/Qwen3-8B-4bit` at `http://127.0.0.1:18080` when the explicit server is running
 
 ### `personal-full`
 
@@ -25,9 +26,31 @@
 - providers:
   - `personal-zai-key`
   - `personal-minimax-key`
+  - local `mlx-dspark/Qwen3-8B-4bit` at `http://127.0.0.1:18080` when the explicit server is running
 - purpose: preserve the complete personal package, agent, and skill surface as an escape hatch
 
 Use it through `pix --profile full` or `NIX_AGENTS_PROFILE=personal-full pi`.
+
+Start the local personal model explicitly before selecting it:
+
+```sh
+mlx-dspark serve \
+  --model mlx-community/Qwen3-8B-4bit \
+  --host 127.0.0.1 \
+  --port 18080 \
+  --no-thinking \
+  --context-window 131072 \
+  --kv-bits 8
+
+pi --provider mlx-dspark --model Qwen3-8B-4bit
+```
+
+The model and drafter download into `~/.cache/huggingface/hub/` on first use.
+Check readiness and runtime memory with `curl http://127.0.0.1:18080/health` and `curl http://127.0.0.1:18080/metrics`.
+Use `Ctrl-C` in the foreground server terminal to stop it and release model memory.
+An interrupted first download resumes automatically; inspect or remove partial model directories under `~/.cache/huggingface/hub/models--mlx-community--Qwen3-8B-4bit` and `~/.cache/huggingface/hub/models--deepseek-ai--dspark_qwen3_8b_block7` when cleanup is intentional.
+The 128K value is a maximum context, not an 8 GiB memory guarantee; memory grows as the KV cache fills.
+The first validated 9.5K-token Pi tool-call session used about 6.4 GiB active MLX memory, with a 9.95 GiB one-time loading/calibration peak reported by `/metrics`.
 
 ### `work`
 
