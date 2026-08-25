@@ -219,6 +219,7 @@ let
   };
 
   mkPiPersonalEnv = base: ''
+    export PI_CACHE_RETENTION="long"
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
     export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/${base}/settings/mcporter.json"
@@ -233,6 +234,7 @@ let
       agenticosToolMode,
     }:
     ''
+      export PI_CACHE_RETENTION="long"
       export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
       export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
       export AGENTICOS_INSTANCE="lunarOS"
@@ -256,12 +258,14 @@ let
   };
 
   piHomeFactoryEnv = ''
+    export PI_CACHE_RETENTION="long"
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
     export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/home-factory/settings/mcporter.json"
   '';
 
   piWorkFactoryEnv = ''
+    export PI_CACHE_RETENTION="long"
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
     export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
     export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/work-factory/settings/mcporter.json"
