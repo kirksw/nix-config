@@ -152,7 +152,7 @@ in
             echo "LITELLM_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/litellm_api_key)"
           fi
           if [ -f ${cfg.sopsDir}/minimax_api_key ]; then
-            echo "MINIMAX_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/minimax_api_key)"
+            echo "MINIMAX_CODE_PLAN_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/minimax_api_key)"
           fi
           if [ -f ${cfg.sopsDir}/zai_api_key ]; then
             echo "ZAI_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/zai_api_key)"
@@ -343,6 +343,7 @@ in
             followSymlinks = false;
           };
         };
+        models.mode = "replace";
         models.providers =
           if cfg.providerMode == "litellm" then
             {
@@ -386,26 +387,20 @@ in
             }
           else if cfg.providerMode == "direct" then
             {
-              openai = {
-                baseUrl = "https://chatgpt.com/backend-api/codex";
-                api = "openai-chatgpt-responses";
-                models = [ ];
-              };
-
               minimax = {
                 baseUrl = "https://api.minimax.io/v1";
                 api = "openai-completions";
                 apiKey = {
                   source = "env";
                   provider = "default";
-                  id = "MINIMAX_API_KEY";
+                  id = "MINIMAX_CODE_PLAN_KEY";
                 };
                 models = [
                   {
                     id = "MiniMax-M3";
                     name = "MiniMax M3";
                     contextWindow = 1000000;
-                    maxTokens = 524288;
+                    maxTokens = 131072;
                     reasoning = true;
                     input = [
                       "text"
@@ -413,10 +408,52 @@ in
                     ];
                   }
                   {
+                    id = "MiniMax-M2.7";
+                    name = "MiniMax M2.7";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
                     id = "MiniMax-M2.7-highspeed";
                     name = "MiniMax M2.7 Highspeed";
                     contextWindow = 204800;
-                    maxTokens = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "MiniMax-M2.5";
+                    name = "MiniMax M2.5";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "MiniMax-M2.5-highspeed";
+                    name = "MiniMax M2.5 Highspeed";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "MiniMax-M2.1";
+                    name = "MiniMax M2.1";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "MiniMax-M2.1-highspeed";
+                    name = "MiniMax M2.1 Highspeed";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "MiniMax-M2";
+                    name = "MiniMax M2";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
                     reasoning = true;
                   }
                 ];
@@ -432,6 +469,13 @@ in
                 };
                 models = [
                   {
+                    id = "glm-5.3";
+                    name = "GLM 5.3";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
                     id = "glm-5.2";
                     name = "GLM 5.2";
                     contextWindow = 1000000;
@@ -439,15 +483,53 @@ in
                     reasoning = true;
                   }
                   {
-                    id = "glm-4.6v";
-                    name = "GLM 4.6V";
-                    contextWindow = 128000;
+                    id = "glm-5.1";
+                    name = "GLM 5.1";
+                    contextWindow = 204800;
                     maxTokens = 131072;
                     reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
+                  }
+                  {
+                    id = "glm-5";
+                    name = "GLM 5";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-5-turbo";
+                    name = "GLM 5 Turbo";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.7";
+                    name = "GLM 4.7";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.6";
+                    name = "GLM 4.6";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.5";
+                    name = "GLM 4.5";
+                    contextWindow = 131072;
+                    maxTokens = 98304;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.5-air";
+                    name = "GLM 4.5 Air";
+                    contextWindow = 131072;
+                    maxTokens = 98304;
+                    reasoning = true;
                   }
                 ];
               };
