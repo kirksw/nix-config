@@ -10,6 +10,7 @@ let
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piMlflowTracerPackage = "${self.packages.${system}.pi-mlflow-tracer}";
+  bladebroPackage = "npm:bladebro@3.9.0";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
 
   piPackageRefs = [
@@ -41,10 +42,12 @@ let
     "npm:context-mode@1.0.169"
     piAgentJournalPackage
   ];
-  piPersonalPackageRefs = builtins.filter (
-    package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
-  ) piPackageRefs;
-  piPersonalFullPackageRefs = piPackageRefs ++ [ "npm:bladebro@3.1.4" ];
+  piPersonalPackageRefs =
+    builtins.filter (
+      package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
+    ) piPackageRefs
+    ++ [ bladebroPackage ];
+  piPersonalFullPackageRefs = piPackageRefs ++ [ bladebroPackage ];
   piWorkFullPackageRefs = piPackageRefs ++ [ agenticOSPackage ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
@@ -308,7 +311,7 @@ let
   '';
 in
 {
-  inherit piWorkAuth;
+  inherit piPersonalPackageRefs piWorkAuth;
 
   targets = {
     codex = {

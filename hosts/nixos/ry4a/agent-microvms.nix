@@ -120,6 +120,13 @@ let
   };
   localAgents = import ../../../agents { inherit pkgs; };
   localAgentsSrc = ../../../agents;
+  agentBaseSettings = import ../../../agents/base-settings.nix {
+    inherit self lib;
+    system = pkgs.system;
+  };
+  personalPiPackageSettings = pkgs.writeText "personal-agent-pi-packages.json" (
+    builtins.toJSON { packages = agentBaseSettings.piPersonalPackageRefs; }
+  );
   nixAgentsLib = inputs.nix-agents.lib.${pkgs.system};
   agentInputs = inputs // {
     inherit self;
@@ -482,6 +489,12 @@ let
           export PERSONAL_MINIMAX_API_KEY="$(${pkgs.coreutils}/bin/cat "$minimaxKeyFile")"
         fi
 
+        export BLADE_CONSENT=reject
+        export BLADE_NO_WARMING=1
+        export BLADE_PROFILE_DIR=/home/agent/.blade/profile
+        export CHROME_PATH=${pkgs.chromium}/bin/chromium
+        export PATH=/home/agent/.config/nix-agents/pi/bases/personal/profiles/personal-default/npm/node_modules/.bin:$PATH
+
         exec ${personalPi}/bin/pi "$@"
       '';
     in
@@ -499,8 +512,15 @@ let
             "flakes"
           ];
 
+          programs.nix-ld = {
+            enable = true;
+            libraries = [ pkgs.stdenv.cc.cc.lib ];
+          };
+
           environment.systemPackages = [
             piLauncher
+            pkgs.agent-browser
+            pkgs.chromium
             pkgs.curl
             pkgs.fd
             pkgs.git
@@ -511,9 +531,15 @@ let
             pkgs.nodejs
             pkgs.openssh
             pkgs.ripgrep
+            pkgs.xvfb
           ];
 
           environment.variables = {
+            AGENT_BROWSER_CONFIRM_ACTIONS = "fill,download,upload,state";
+            AGENT_BROWSER_CONTENT_BOUNDARIES = "1";
+            AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
+            AGENT_BROWSER_MAX_OUTPUT = "50000";
+            AGENT_BROWSER_PROFILE = "/home/agent/.agent-browser/profile";
             EDITOR = "nvim";
             PERSONAL_AGENT_WORKSPACE = "/srv/workspace";
           };
@@ -558,6 +584,56 @@ let
           };
           systemd.services.tailscaled.restartIfChanged = false;
 
+          systemd.services.personal-agent-browser-skills = {
+            description = "Reconcile personal-agent browser skills";
+            wantedBy = [ "multi-user.target" ];
+            before = [ "multi-user.target" ];
+            unitConfig.RequiresMountsFor = [ "/home/agent" ];
+            serviceConfig.Type = "oneshot";
+            script = ''
+              source=${personalPiProfileMeta."personal-default".storePath}/skills
+              target=/home/agent/.config/nix-agents/pi/bases/personal/profiles/personal-default/skills
+
+              ${pkgs.coreutils}/bin/install -d -m 0755 -o agent -g users "$target"
+              ${pkgs.coreutils}/bin/rm -rf "$target/bladebro"
+              for skill in \
+                activities-search-bladebro \
+                agent-browser \
+                google-flights-bladebro \
+                google-hotels \
+                google-hotels-bladebro \
+                travel-search-bladebro
+              do
+                ${pkgs.coreutils}/bin/rm -rf "$target/$skill"
+                ${pkgs.coreutils}/bin/cp -R --no-preserve=mode,ownership "$source/$skill" "$target/$skill"
+                ${pkgs.coreutils}/bin/chown -R agent:users "$target/$skill"
+                ${pkgs.coreutils}/bin/chmod -R u=rwX,go=rX "$target/$skill"
+              done
+            '';
+          };
+
+          systemd.services.personal-agent-pi-packages = {
+            description = "Reconcile personal-agent Pi packages";
+            wantedBy = [ "multi-user.target" ];
+            before = [ "multi-user.target" ];
+            unitConfig.RequiresMountsFor = [ "/home/agent" ];
+            serviceConfig.Type = "oneshot";
+            script = ''
+              target=/home/agent/.config/nix-agents/pi/bases/personal/state/settings.json
+              source=${personalPiPackageSettings}
+              tmp=$(${pkgs.coreutils}/bin/mktemp)
+              trap '${pkgs.coreutils}/bin/rm -f "$tmp"' EXIT
+
+              ${pkgs.coreutils}/bin/install -d -m 0755 -o agent -g users "$(${pkgs.coreutils}/bin/dirname "$target")"
+              if [ -f "$target" ] && ${pkgs.jq}/bin/jq empty "$target" >/dev/null 2>&1; then
+                ${pkgs.jq}/bin/jq -s '.[0] * .[1]' "$target" "$source" >"$tmp"
+              else
+                ${pkgs.coreutils}/bin/cp "$source" "$tmp"
+              fi
+              ${pkgs.coreutils}/bin/install -m 0600 -o agent -g users "$tmp" "$target"
+            '';
+          };
+
           systemd.services.personal-agent-provider-secrets = {
             description = "Stage personal-agent provider secrets";
             wantedBy = [ "multi-user.target" ];
@@ -586,6 +662,10 @@ let
           systemd.tmpfiles.rules = [
             "d /home/agent 0700 agent users -"
             "d /home/agent/.config 0700 agent users -"
+            "d /home/agent/.agent-browser 0700 agent users -"
+            "d /home/agent/.agent-browser/profile 0700 agent users -"
+            "d /home/agent/.blade 0700 agent users -"
+            "d /home/agent/.blade/profile 0700 agent users -"
             "d /home/agent/.config/herdr 0700 agent users -"
             "d /home/agent/.ssh 0700 agent users -"
             "d /home/agent/.ssh/host 0700 root root -"

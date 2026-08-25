@@ -35,7 +35,12 @@
     ../defs/skills/last30days
     ../defs/skills/mmx-cli
     ../defs/skills/fli
-    ../defs/skills/bladebro
+    ../defs/skills/activities-search
+    ../defs/skills/agent-browser
+    ../defs/skills/google-flights
+    ../defs/skills/google-hotels
+    ../defs/skills/hotel-search
+    ../defs/skills/travel-search
     ../defs/skills/lavish
     ../defs/skills/what-if
     ../defs/skills/plan-x

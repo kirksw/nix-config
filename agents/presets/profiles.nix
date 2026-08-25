@@ -103,13 +103,19 @@ _: {
       ];
       skills = [
         "add-module"
+        "activities-search-bladebro"
+        "agent-browser"
         "domain-modeling"
+        "google-flights-bladebro"
+        "google-hotels"
+        "google-hotels-bladebro"
         "lavish"
         "nix-agents"
         "secrets-management"
         "session-heuristics"
         "skill-creator"
         "system-context"
+        "travel-search-bladebro"
       ];
       # MCP access is exposed through generated CLI skills, never direct tools.
       mcpServers = [ ];
