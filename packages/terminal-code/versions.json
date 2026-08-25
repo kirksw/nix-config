@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "terminalCodeVersions": {
+    "version": "0.2.0",
+    "urls": {
+      "darwin": {
+        "aarch64": {
+          "url": "https://tode-releases.zenbu-labs.workers.dev/dl/stable/v0.2.0/tode-darwin-arm64.tar.gz",
+          "hash": "sha256-p9hov1gVpsHshoAYIN0+RqipN+EY5KShbH/pOqbC8b4="
+        }
+      },
+      "linux": {
+        "aarch64": {
+          "url": "https://tode-releases.zenbu-labs.workers.dev/dl/stable/v0.2.0/tode-linux-arm64.tar.gz",
+          "hash": "sha256-i4kehK6hPleuaJ4Pz2ZZTKyY+aPalTwf2HtXQL0IrNI="
+        },
+        "x86_64": {
+          "url": "https://tode-releases.zenbu-labs.workers.dev/dl/stable/v0.2.0/tode-linux-x64.tar.gz",
+          "hash": "sha256-g+pW/SovwCr2oZ6X02EAipr4U4gjETDgN/bnP0rIMfs="
+        }
+      }
+    }
+  }
+}
