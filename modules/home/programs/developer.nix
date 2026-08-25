@@ -262,6 +262,7 @@ in
       envsubst # cli env var substitution
       fd # user friendly alternative to find
       herdr
+      terminal-code
       neovide
       nil # nix
       nixd
