@@ -330,9 +330,16 @@
                    and $provider.models[0].maxTokens == 8192' \
                 "$profile_dir/models.json" >/dev/null
               ${pkgs.jq}/bin/jq -e '.defaultProvider == "zai"' "$profile_dir/settings.json" >/dev/null
+              for work_profile in work/profiles/work-default work-full/profiles/work-full; do
+                work_profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/$work_profile"
+                ${pkgs.jq}/bin/jq -e \
+                  '.providers["mlx-dspark"].models[0].id == "Qwen3-8B-4bit"
+                   and .providers.openai.baseUrl == "https://eu.api.openai.com/v1"' \
+                  "$work_profile_dir/models.json" >/dev/null
+              done
               ${pkgs.jq}/bin/jq -e \
                 '.providers | has("mlx-dspark") | not' \
-                "$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-default/models.json" >/dev/null
+                "$XDG_CONFIG_HOME/nix-agents/pi/bases/work-factory/profiles/work-factory/models.json" >/dev/null
               model_check_dir="$TMPDIR/pi-model-check"
               mkdir -p "$model_check_dir"
               cp "$profile_dir/models.json" "$model_check_dir/models.json"

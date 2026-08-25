@@ -92,19 +92,21 @@ let
     }
   );
 
+  piMlxDsparkProvider = {
+    baseUrl = "http://127.0.0.1:18080";
+    api = "anthropic-messages";
+    apiKey = "mlx-dspark";
+    models = [
+      {
+        id = "Qwen3-8B-4bit";
+        contextWindow = 131072;
+        maxTokens = 8192;
+      }
+    ];
+  };
+
   piPersonalModels = builtins.toJSON {
-    providers.mlx-dspark = {
-      baseUrl = "http://127.0.0.1:18080";
-      api = "anthropic-messages";
-      apiKey = "mlx-dspark";
-      models = [
-        {
-          id = "Qwen3-8B-4bit";
-          contextWindow = 131072;
-          maxTokens = 8192;
-        }
-      ];
-    };
+    providers.mlx-dspark = piMlxDsparkProvider;
   };
 
   piHomeFactorySettings = builtins.toJSON {
@@ -160,6 +162,13 @@ let
   );
 
   piWorkModels = builtins.toJSON {
+    providers = {
+      openai.baseUrl = "https://eu.api.openai.com/v1";
+      mlx-dspark = piMlxDsparkProvider;
+    };
+  };
+
+  piWorkFactoryModels = builtins.toJSON {
     providers.openai.baseUrl = "https://eu.api.openai.com/v1";
   };
 
@@ -344,7 +353,7 @@ in
       work-factory = {
         "auth.json" = piWorkAuth;
         "mcporter.json" = piEmptyMcporter;
-        "models.json" = piWorkModels;
+        "models.json" = piWorkFactoryModels;
         "settings.json" = piWorkFactorySettings;
         "env" = piWorkFactoryEnv;
       };
