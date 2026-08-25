@@ -109,6 +109,7 @@ _: {
         "google-flights-bladebro"
         "google-hotels"
         "google-hotels-bladebro"
+        "home-mcp"
         "lavish"
         "nix-agents"
         "secrets-management"
@@ -116,6 +117,7 @@ _: {
         "skill-creator"
         "system-context"
         "travel-search-bladebro"
+        "xcode"
       ];
       # MCP access is exposed through generated CLI skills, never direct tools.
       mcpServers = [ ];

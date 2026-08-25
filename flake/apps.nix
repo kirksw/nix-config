@@ -128,6 +128,37 @@ let
     echo "Generated complete MCP CLI wrappers in $output_dir."
   '';
 
+  updateHomeMcpSkills = pkgs.writeShellScriptBin "update-home-mcp-skills" ''
+    set -euo pipefail
+
+    repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel)"
+    cd "$repo_root"
+    config="$HOME/.config/nix-agents/pi/bases/personal/settings/mcporter.json"
+    output_dir="agents/defs/skills/home-mcp/generated"
+    target="$output_dir/xcode.cjs"
+    temporary="$target.tmp"
+
+    if [ ! -r "$config" ]; then
+      echo "Missing generated personal MCPorter configuration: $config" >&2
+      echo "Run: nix run .#sync-agents" >&2
+      exit 1
+    fi
+
+    ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
+    ${pkgs.coreutils}/bin/rm -f "$temporary"
+    echo "Generating xcode..."
+    if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli xcode --runtime node --bundle "$temporary" --minify; then
+      ${pkgs.coreutils}/bin/mv "$temporary" "$target"
+      ${pkgs.perl}/bin/perl -pi -e 's/\t/  /g; s/[ \t]+$//' "$target"
+    else
+      ${pkgs.coreutils}/bin/rm -f "$temporary"
+      echo "Could not generate the Xcode MCP CLI wrapper." >&2
+      exit 1
+    fi
+
+    echo "Generated complete Xcode MCP CLI wrapper at $target."
+  '';
+
   localAgents = import ../agents { inherit pkgs; };
   localAgentsSrc = pkgs.runCommandLocal "nix-config-agents-src" { } ''
     mkdir -p "$out"
@@ -667,6 +698,14 @@ in
     program = "${updateMcpSkills}/bin/update-mcp-skills";
     meta = {
       description = "Explicitly generate complete MCP CLI wrappers from the configured work MCP servers.";
+    };
+  };
+
+  update-home-mcp-skills = {
+    type = "app";
+    program = "${updateHomeMcpSkills}/bin/update-home-mcp-skills";
+    meta = {
+      description = "Explicitly generate the Xcode MCP CLI wrapper for personal profiles.";
     };
   };
 

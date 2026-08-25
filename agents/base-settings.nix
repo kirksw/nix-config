@@ -175,6 +175,14 @@ let
     providers.openai.baseUrl = "https://eu.api.openai.com/v1";
   };
 
+  piPersonalMcpServers = {
+    xcode = {
+      command = "xcrun";
+      args = [ "mcpbridge" ];
+      lifecycle = "lazy";
+    };
+  };
+
   piWorkMcpServers = {
     "1password" = {
       command = "/Applications/1Password.app/Contents/MacOS/onepassword-mcp";
@@ -223,6 +231,11 @@ let
   piEmptyMcporter = builtins.toJSON {
     imports = [ ];
     mcpServers = { };
+  };
+
+  piPersonalMcporter = builtins.toJSON {
+    imports = [ ];
+    mcpServers = lib.mapAttrs (_: server: server // { lifecycle = "ephemeral"; }) piPersonalMcpServers;
   };
 
   piWorkMcporter = builtins.toJSON {
@@ -327,13 +340,13 @@ in
       personal = {
         "settings.json" = piPersonalSettings;
         "models.json" = piPersonalModels;
-        "mcporter.json" = piEmptyMcporter;
+        "mcporter.json" = piPersonalMcporter;
         "env" = piPersonalEnv;
       };
       personal-full = {
         "settings.json" = piPersonalFullSettings;
         "models.json" = piPersonalModels;
-        "mcporter.json" = piEmptyMcporter;
+        "mcporter.json" = piPersonalMcporter;
         "env" = piPersonalFullEnv;
       };
       home-factory = {

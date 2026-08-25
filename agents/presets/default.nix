@@ -22,6 +22,8 @@
     ../defs/skills/sourcegraph
     ../defs/skills/swe-pruner
     ../defs/skills/work-mcp
+    ../defs/skills/home-mcp
+    ../defs/skills/xcode
     ../defs/skills/secrets-management.nix
     ../defs/skills/session-heuristics
     ../defs/skills/skill-creator
@@ -53,6 +55,7 @@
     ../defs/mcps/linear.nix
     ../defs/mcps/sourcegraph.nix
     ../defs/mcps/swe-pruner.nix
+    ../defs/mcps/xcode.nix
     # NOTE: session-write hooks require pkgs and must be wired in flake.nix:
     #   modules = defaultModules ++ [ (import ./defs/hooks/session-write.nix { inherit pkgs; }) ];
   ];
