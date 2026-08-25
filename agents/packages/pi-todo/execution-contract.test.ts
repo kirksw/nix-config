@@ -46,41 +46,49 @@ describe("todo execution contract", () => {
 		expect(result.systemPrompt).toContain(STATIC_EXECUTION_POLICY);
 	});
 
-	it("removes stale live state and emits no block when empty", async () => {
-		const { captured, ctx } = setup();
-		const context = handler(captured, "context");
-		const stale = {
-			role: "custom",
-			customType: LIVE_TASK_CUSTOM_TYPE,
-			content: "old",
-			display: false,
-		};
-		const result = await context({ messages: [stale] }, ctx);
-		expect(result.messages).toEqual([]);
-	});
-
-	it("keeps exactly one current live block with dependency and actionable state", async () => {
+	it("injects one persistent live-state snapshot per external turn", async () => {
 		const tasks = [
 			task(1, "done", "completed"),
 			task(2, "blocked", "pending", [3]),
 			task(3, "next", "in_progress", [1]),
 		];
 		const { captured, ctx } = setup(tasks);
-		const context = handler(captured, "context");
-		const result = await context(
-			{
-				messages: [
-					{ role: "custom", customType: LIVE_TASK_CUSTOM_TYPE, content: "stale", display: false },
-					{ role: "user", content: "keep" },
-				],
-			},
-			ctx,
-		);
-		const live = result.messages.filter((message: any) => message.customType === LIVE_TASK_CUSTOM_TYPE);
-		expect(live).toHaveLength(1);
-		expect(live[0].content).toContain('"subject":"blocked"');
-		expect(live[0].content).toContain('"nextActionableTask":{"id":3');
+		const input = handler(captured, "input");
+		const beforeStart = handler(captured, "before_agent_start");
+
+		await input({ source: "interactive" }, ctx);
+		const first = await beforeStart({ systemPrompt: "base" }, ctx);
+		const continuation = await beforeStart({ systemPrompt: "base" }, ctx);
+
+		expect(first.message.customType).toBe(LIVE_TASK_CUSTOM_TYPE);
+		expect(first.message.content).toContain('"subject":"blocked"');
+		expect(first.message.content).toContain('"nextActionableTask":{"id":3');
+		expect(continuation.message).toBeUndefined();
 		expect(buildLiveTaskBlock({ tasks: [task(1, "x", "completed")], nextId: 2 })).toBeUndefined();
+	});
+
+	it("keeps only the newest live snapshot in its chronological position", async () => {
+		const { captured } = setup();
+		const context = handler(captured, "context");
+		const oldSnapshot = { role: "custom", customType: LIVE_TASK_CUSTOM_TYPE, content: "old", display: false };
+		const currentSnapshot = {
+			role: "custom",
+			customType: LIVE_TASK_CUSTOM_TYPE,
+			content: "current",
+			display: false,
+		};
+		const user = { role: "user", content: "keep" };
+		const assistant = { role: "assistant", content: "also keep" };
+		const result = await context({ messages: [oldSnapshot, user, currentSnapshot, assistant] });
+		expect(result.messages).toEqual([user, currentSnapshot, assistant]);
+	});
+
+	it("injects an empty snapshot to supersede historical open tasks", async () => {
+		const { captured, ctx } = setup();
+		await handler(captured, "input")({ source: "rpc" }, ctx);
+		const result = await handler(captured, "before_agent_start")({ systemPrompt: "base" }, ctx);
+		expect(result.message.content).toContain('"tasks":[]');
+		expect(result.message.content).toContain('"nextActionableTask":null');
 	});
 
 	it("continues once per external user turn and sets the guard before sending", async () => {
