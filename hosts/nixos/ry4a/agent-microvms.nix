@@ -18,28 +18,49 @@ let
     pkgs.procps
     pkgs.which
   ];
-  openclawAcpxOverlay = final: prev: {
-    openclawRuntimePlugins = prev.openclawRuntimePlugins // {
-      acpx = prev.openclawRuntimePlugins.acpx.overrideAttrs (_: {
-        # ponytail: upstream installer's fs.cpSync trips over the Nix store; plain cp works.
-        installPhase = ''
-          runHook preInstall
+  # ponytail: upstream installer's fs.cpSync trips over the Nix store; plain cp works.
+  openclawAcpxPlainCpInstall = peerLink: ''
+    runHook preInstall
 
-          mkdir -p "$out"
-          cp -r ./. "$out/"
-          rm -rf "$out/node_modules/.bin"
+    mkdir -p "$out"
+    cp -r ./. "$out/"
+    rm -rf "$out/node_modules/.bin"
 
+    ${
+      if peerLink then
+        ''
           if [ -n "''${OPENCLAW_GATEWAY_PACKAGE:-}" ] && [ -e "$OPENCLAW_GATEWAY_PACKAGE/lib/openclaw/package.json" ]; then
             mkdir -p "$out/node_modules"
             ln -sfn "$OPENCLAW_GATEWAY_PACKAGE/lib/openclaw" "$out/node_modules/openclaw"
           fi
+        ''
+      else
+        ""
+    }
 
-          runHook postInstall
-        '';
+    runHook postInstall
+  '';
+  openclawAcpxOverlay = final: prev: {
+    openclawRuntimePlugins = prev.openclawRuntimePlugins // {
+      acpx = prev.openclawRuntimePlugins.acpx.overrideAttrs (_: {
+        installPhase = openclawAcpxPlainCpInstall true;
       });
     };
 
     openclaw-runtime-plugin-acpx = final.openclawRuntimePlugins.acpx;
+
+    # The gateway bundles its own acpx copy through the same broken installer;
+    # swap in a plain-cp build with the peer link dropped so it cannot depend
+    # on the gateway itself, then forward the patched gateway into the bundle.
+    openclaw-gateway = prev.openclaw-gateway.override {
+      bundledAcpx = final.openclawRuntimePlugins.acpx.overrideAttrs (old: {
+        installPhase = openclawAcpxPlainCpInstall false;
+        env = builtins.removeAttrs (old.env or { }) [ "OPENCLAW_GATEWAY_PACKAGE" ];
+      });
+    };
+    openclaw = prev.openclaw.override {
+      openclaw-gateway = final.openclaw-gateway;
+    };
   };
 
   assistants = [
