@@ -11,6 +11,21 @@ _: {
       credentialRef = "PERSONAL_MINIMAX_API_KEY";
       envVar = "MINIMAX_API_KEY";
     };
+    personal-litellm-api-key = {
+      credentialSource = "env";
+      credentialRef = "PERSONAL_LITELLM_API_KEY";
+      envVar = "LITELLM_API_KEY";
+    };
+    personal-litellm-cf-client-id = {
+      credentialSource = "env";
+      credentialRef = "PERSONAL_LITELLM_CF_ACCESS_CLIENT_ID";
+      envVar = "LITELLM_CF_ACCESS_CLIENT_ID";
+    };
+    personal-litellm-cf-client-secret = {
+      credentialSource = "env";
+      credentialRef = "PERSONAL_LITELLM_CF_ACCESS_CLIENT_SECRET";
+      envVar = "LITELLM_CF_ACCESS_CLIENT_SECRET";
+    };
     work-openai-key = {
       credentialSource = "env";
       credentialRef = "LUNAR_OPENAI_API_KEY";
@@ -24,6 +39,9 @@ _: {
       providers = [
         "personal-zai-key"
         "personal-minimax-key"
+        "personal-litellm-api-key"
+        "personal-litellm-cf-client-id"
+        "personal-litellm-cf-client-secret"
       ];
       defaultProfile = "home-factory";
       git = {

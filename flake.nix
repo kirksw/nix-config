@@ -399,9 +399,13 @@
                   "npm:pi-permission-system@0.8.0"
                   "npm:pi-verbosity-control@0.3.0"
                   "npm:pi-web-access@0.13.0"
+                  "local:pi-litellm-provider"
                 ];
                 expectedWorkPackages = builtins.toJSON (
-                  (builtins.fromJSON expectedHomePackages) ++ [ "local:pi-agent-journal" ]
+                  builtins.filter (package: package != "local:pi-litellm-provider") (
+                    builtins.fromJSON expectedHomePackages
+                  )
+                  ++ [ "local:pi-agent-journal" ]
                 );
                 expectedHomePackagesFile = pkgs.writeText "home-factory-pi-packages.json" expectedHomePackages;
                 expectedWorkPackagesFile = pkgs.writeText "work-factory-pi-packages.json" expectedWorkPackages;
@@ -438,6 +442,8 @@
                           return "local:pi-agent-journal"
                       if "-pi-mlflow-tracer-" in package:
                           return "local:pi-mlflow-tracer"
+                      if package.endswith("/agents/packages/pi-litellm-provider"):
+                          return "local:pi-litellm-provider"
                       return package
 
                   for expected_path, settings_path in zip(sys.argv[1::2], sys.argv[2::2], strict=True):

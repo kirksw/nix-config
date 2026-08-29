@@ -10,6 +10,7 @@ let
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piMlflowTracerPackage = "${self.packages.${system}.pi-mlflow-tracer}";
+  piLitellmProviderPackage = "${self}/agents/packages/pi-litellm-provider";
   bladebroPackage = "npm:bladebro@3.9.0";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
 
@@ -46,8 +47,14 @@ let
     builtins.filter (
       package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
     ) piPackageRefs
-    ++ [ bladebroPackage ];
-  piPersonalFullPackageRefs = piPackageRefs ++ [ bladebroPackage ];
+    ++ [
+      bladebroPackage
+      piLitellmProviderPackage
+    ];
+  piPersonalFullPackageRefs = piPackageRefs ++ [
+    bladebroPackage
+    piLitellmProviderPackage
+  ];
   piWorkFullPackageRefs = piPackageRefs ++ [ agenticOSPackage ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
@@ -61,6 +68,7 @@ let
     "npm:pi-verbosity-control@0.3.0"
     "npm:pi-web-access@0.13.0"
   ];
+  piHomeFactoryPackageRefs = piFactoryPackageRefs ++ [ piLitellmProviderPackage ];
   piWorkFactoryPackageRefs = piFactoryPackageRefs ++ [ piAgentJournalPackage ];
 
   piPersonalModelDefaults = {
@@ -68,15 +76,14 @@ let
     defaultModel = "glm-5.2";
     defaultThinkingLevel = "medium";
     enabledModels = [
-      "gpt-5.6-sol"
-      "gpt-5.6-terra"
-      "gpt-5.6-luna"
-      "minimax-m3"
-      "glm-5.2"
-      "grok-4.5"
-      "kimi-k3"
-      "qwen3.7-max"
-      "deepseek-v4-pro"
+      "litellm/openai/gpt-5.3-codex-spark"
+      "litellm/openai/gpt-5.5"
+      "litellm/openai/gpt-5.6-sol"
+      "litellm/openai/gpt-5.6-terra"
+      "litellm/openai/gpt-5.6-luna"
+      "litellm/minimax-m3"
+      "litellm/glm-5.3"
+      "litellm/glm-5.3-flash"
     ];
     subagents.disableBuiltins = true;
   };
@@ -113,7 +120,7 @@ let
   };
 
   piHomeFactorySettings = builtins.toJSON {
-    packages = piFactoryPackageRefs;
+    packages = piHomeFactoryPackageRefs;
     subagents.disableBuiltins = true;
   };
 
@@ -199,6 +206,7 @@ let
     };
     linear = {
       url = "https://mcp.linear.app/mcp";
+      auth = "oauth";
       lifecycle = "lazy";
     };
     lunar-skills = {

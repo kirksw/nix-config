@@ -222,6 +222,22 @@ let
       exec ${lib.getExe minimaxCliPackage} "$@"
     '';
   };
+  loadPersonalLitellmCredentials = ''
+    LITELLM_API_KEY_PATH="${config.sops.secrets."api/litellm/api-key".path}"
+    LITELLM_CF_ACCESS_CLIENT_ID_PATH="${config.sops.secrets."api/litellm/cf-client-id".path}"
+    LITELLM_CF_ACCESS_CLIENT_SECRET_PATH="${config.sops.secrets."api/litellm/cf-client-secret".path}"
+
+    if [ -f "$LITELLM_API_KEY_PATH" ]; then
+      export PERSONAL_LITELLM_API_KEY="$(tr -d '[:space:]' < "$LITELLM_API_KEY_PATH")"
+    fi
+    if [ -f "$LITELLM_CF_ACCESS_CLIENT_ID_PATH" ]; then
+      export PERSONAL_LITELLM_CF_ACCESS_CLIENT_ID="$(tr -d '[:space:]' < "$LITELLM_CF_ACCESS_CLIENT_ID_PATH")"
+    fi
+    if [ -f "$LITELLM_CF_ACCESS_CLIENT_SECRET_PATH" ]; then
+      export PERSONAL_LITELLM_CF_ACCESS_CLIENT_SECRET="$(tr -d '[:space:]' < "$LITELLM_CF_ACCESS_CLIENT_SECRET_PATH")"
+    fi
+  '';
+
   # Thin wrapper that reads sops-decrypted secrets into env vars,
   # then execs the nix-agents wrapper which handles profile detection
   # and credential resolution.
@@ -636,6 +652,21 @@ in
           key = "client-secret";
           mode = "0400";
         };
+        "api/litellm/api-key" = {
+          sopsFile = "${self}/secrets/api/litellm.yaml";
+          key = "api-key";
+          mode = "0400";
+        };
+        "api/litellm/cf-client-id" = {
+          sopsFile = "${self}/secrets/api/litellm.yaml";
+          key = "cf-client-id";
+          mode = "0400";
+        };
+        "api/litellm/cf-client-secret" = {
+          sopsFile = "${self}/secrets/api/litellm.yaml";
+          key = "cf-client-secret";
+          mode = "0400";
+        };
       })
     ];
 
@@ -798,6 +829,7 @@ in
               fi
               ;;
             *)
+              ${loadPersonalLitellmCredentials}
               if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
                 export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
               fi
@@ -808,6 +840,7 @@ in
           esac
         '')
         (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
+          ${loadPersonalLitellmCredentials}
           export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"
           mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 

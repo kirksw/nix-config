@@ -8,7 +8,7 @@ source for how decrypted values are exposed.
 
 ```text
 secrets/
-├── api/{default,lunar}.yaml
+├── api/{default,litellm,lunar,mlflow}.yaml
 ├── assistants/{household,kirk,sanja}.yaml
 ├── cloudflare/ry6a-tunnel-token.yaml
 ├── git/{kirksw,lunarway,pat}.yaml
