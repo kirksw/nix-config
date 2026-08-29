@@ -51,7 +51,7 @@
           "make test*" = "allow";
           "make lint*" = "allow";
           "make check*" = "allow";
-          "nix flake check*" = "allow";
+          "nix flake check --no-build*" = "allow";
           "nix build*" = "allow";
           "nixfmt --check*" = "allow";
           "statix check*" = "allow";

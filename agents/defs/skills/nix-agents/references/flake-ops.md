@@ -35,6 +35,16 @@ Expected non-fatal warnings in this repo:
 - `warning: The check omitted these incompatible systems: ...`
 - `warning: Git tree ... has uncommitted changes` when the worktree is dirty
 
+Do not run plain `nix flake check` with builds on the macOS work host. The
+deploy-rs generated checks pull the x86_64-linux MicroVM closures into a local
+build, and the host's case-insensitive `/nix` corrupts substituted Linux
+inputs that contain case-colliding paths (ncurses terminfo gains
+`~nix~case~hack~` directory names), which fails builds such as
+`initrd-linux` with missing-terminfo errors. This is an environment
+limitation, not a repo regression; see "Linux Deployment From macOS" below and
+upstream [NixOS/nix#10746](https://github.com/NixOS/nix/issues/10746). Validate
+locally with `--no-build` and build Linux artifacts remotely via deploy-rs.
+
 ## Workflow After Any Change
 
 After modifying `agents/`, `modules/home/programs/ai-agents.nix`, or local agent packages:
@@ -86,7 +96,7 @@ nix flake init -t github:kirksw/nix-agents
 
 ## Linux Deployment From macOS
 
-`apps/x86_64-linux/switch <host>` is a local Linux switch wrapper, not the remote deployment path. macOS's case-insensitive `/nix` can produce invalid Linux initrds during local cross-builds.
+`apps/x86_64-linux/switch <host>` is a local Linux switch wrapper, not the remote deployment path. macOS's case-insensitive `/nix` can produce invalid Linux initrds during local cross-builds (upstream: NixOS/nix#10746).
 
 For remote Linux deployment from macOS, use the repository's deploy-rs output, which sets `remoteBuild = true` in `flake/deploy.nix`:
 

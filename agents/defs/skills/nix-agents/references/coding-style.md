@@ -91,5 +91,7 @@ Run before committing:
 ```bash
 nix run .#fmt
 nix run .#lint
-nix flake check
+nix flake check --no-build
 ```
+
+Use `--no-build` on the macOS work host; see the case-insensitive store note in [`flake-ops.md`](flake-ops.md).

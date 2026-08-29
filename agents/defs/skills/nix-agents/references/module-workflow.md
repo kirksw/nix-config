@@ -84,7 +84,7 @@ Directory-backed shape:
 1. Create `agents/defs/<type>/<name>.nix` or a directory-backed module when that structure is clearer.
 2. Import it from the relevant preset in `agents/presets/`.
 3. If an agent references the new skill or MCP server, add it to the agent's `skills` or `mcpServers` list.
-4. Run `nix flake check`.
+4. Run `nix flake check --no-build` (full-build checks are unsupported on the macOS work host; see [`flake-ops.md`](flake-ops.md)).
 
 ## Validation Checks
 

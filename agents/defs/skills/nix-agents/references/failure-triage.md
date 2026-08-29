@@ -24,6 +24,7 @@ Use this reference before changing code in response to a Nix error. First classi
 | `warning: The following flake outputs are unchecked: deploy` | This repo exposes custom `deploy` output for deploy-rs | Expected unless changing deploy behavior |
 | `warning: The check omitted these incompatible systems` | `nix flake check` only checked the current system | Expected unless cross-system validation is required; use `--all-systems` when needed |
 | `warning: Git tree ... has uncommitted changes` | Working tree is dirty | Informational unless reproducibility or lockfile purity is the task |
+| Linux build fails at `initrd-linux` with missing terminfo (for example `terminfo/l/linux`), or store paths show `~nix~case~hack~` names | Case-insensitive macOS `/nix` corrupted substituted Linux inputs with case-colliding paths | Environment limitation, not a repo regression; validate with `--no-build` and build Linux artifacts remotely (see [`flake-ops.md`](flake-ops.md)) |
 
 ## Darwin / Home Manager Validation
 
