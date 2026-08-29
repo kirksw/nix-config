@@ -1,0 +1,16 @@
+{
+  "name": "@kirksw/pi-litellm-provider",
+  "version": "0.1.0-local.1",
+  "description": "Dynamically register models served by the private LiteLLM gateway.",
+  "type": "module",
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test index.test.mjs"
+  }
+}
