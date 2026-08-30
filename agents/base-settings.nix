@@ -47,10 +47,7 @@ let
     builtins.filter (
       package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
     ) piPackageRefs
-    ++ [
-      bladebroPackage
-      piLitellmProviderPackage
-    ];
+    ++ [ piLitellmProviderPackage ];
   piPersonalFullPackageRefs = piPackageRefs ++ [
     bladebroPackage
     piLitellmProviderPackage
