@@ -237,6 +237,30 @@
         "type": "github"
       }
     },
+    "ezgit": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788164652,
+        "narHash": "sha256-BLu3In6DO1Fj5PXBI6kF0r3tBfqO2DhipuNJ79ixRV8=",
+        "owner": "kirksw",
+        "repo": "ezgit",
+        "rev": "580ad660c80c86569740493419529f6a32a3b432",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kirksw",
+        "ref": "v0.0.18",
+        "repo": "ezgit",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -1430,6 +1454,7 @@
         "deploy-rs": "deploy-rs",
         "determinate": "determinate",
         "disko": "disko",
+        "ezgit": "ezgit",
         "flake-schemas": "flake-schemas",
         "flake-utils": "flake-utils",
         "git-hooks": "git-hooks",

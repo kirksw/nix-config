@@ -46,6 +46,11 @@
     };
 
     nix-agents.url = "github:kirksw/nix-agents/main";
+    ezgit = {
+      url = "github:kirksw/ezgit/v0.0.18";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 
@@ -96,6 +101,7 @@
       flake-schemas,
       flake-utils,
       deploy-rs,
+      ezgit,
       lunar-tools,
       nix-agents,
       git-hooks,
@@ -155,6 +161,7 @@
         let
           raw = import ./flake/hosts/darwin {
             inherit
+              ezgit
               lunar-tools
               nix-agents
               neovim-nightly-overlay

@@ -1,4 +1,5 @@
 {
+  ezgit,
   lunar-tools,
   nix-agents,
   ...
@@ -39,6 +40,9 @@
   overlays = [
     lunar-tools.overlays.default
     nix-agents.overlays.default
+    (final: _prev: {
+      ezgit = ezgit.packages.${final.stdenv.hostPlatform.system}.default;
+    })
   ];
   enableHomebrew = true;
   enableLunar = true;
