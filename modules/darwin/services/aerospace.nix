@@ -19,6 +19,16 @@ let
     default-root-container-layout = "tiles";
     default-root-container-orientation = "auto";
     on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
+    on-window-detected = [
+      {
+        "if".app-id = "com.tinyspeck.slackmacgap";
+        run = "move-node-to-workspace 1";
+      }
+      {
+        "if".app-id = "com.granola.app";
+        run = "move-node-to-workspace 10";
+      }
+    ];
     automatically-unhide-macos-hidden-apps = true;
     key-mapping = {
       preset = "qwerty";
