@@ -115,7 +115,10 @@ in
   services.dbus.implementation = "dbus";
 
   # Open ports in the firewall.
-  networking.firewall.enable = true;
+  networking.firewall = {
+    enable = true;
+    interfaces.tailscale0.allowedTCPPorts = [ 31400 ];
+  };
   #networking.firewall.allowedTCPPorts = [ 6443 ];
   #networking.firewall.allowedUDPPorts = [ 8472 ];
   #networking.firewall.allowedTCPPortRanges = [

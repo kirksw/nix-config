@@ -22,9 +22,10 @@ in
       type = lib.types.enum [
         "router"
         "direct"
+        "litellm"
       ];
       default = "router";
-      description = "Whether this assistant uses the local home-llm-router or direct provider APIs.";
+      description = "Whether this assistant uses the local router, direct providers, or private LiteLLM.";
     };
 
     modelPrimary = lib.mkOption {
@@ -146,6 +147,9 @@ in
           echo "GATEWAY_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/gateway_token)"
           if [ -f ${cfg.sopsDir}/llm_router_api_key ]; then
             echo "LLM_ROUTER_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/llm_router_api_key)"
+          fi
+          if [ -f ${cfg.sopsDir}/litellm_api_key ]; then
+            echo "LITELLM_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/litellm_api_key)"
           fi
           if [ -f ${cfg.sopsDir}/minimax_api_key ]; then
             echo "MINIMAX_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/minimax_api_key)"
@@ -340,7 +344,47 @@ in
           };
         };
         models.providers =
-          if cfg.providerMode == "direct" then
+          if cfg.providerMode == "litellm" then
+            {
+              litellm = {
+                # NodePort is reachable only through the k3s node's tailnet address.
+                baseUrl = "http://nixos-ry6a.tail54de03.ts.net:31400/v1";
+                api = "openai-completions";
+                apiKey = {
+                  source = "env";
+                  provider = "default";
+                  id = "LITELLM_API_KEY";
+                };
+                models = [
+                  {
+                    id = "openai/gpt-5.6-luna";
+                    name = "GPT-5.6 Luna";
+                    contextWindow = 272000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m3";
+                    name = "MiniMax M3";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                  }
+                  {
+                    id = "glm-5.2";
+                    name = "GLM 5.2";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                ];
+              };
+            }
+          else if cfg.providerMode == "direct" then
             {
               openai = {
                 baseUrl = "https://chatgpt.com/backend-api/codex";

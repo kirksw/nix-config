@@ -52,19 +52,16 @@ let
       memoryMB = 8192;
       openclaw = {
         router = "home-llm-router";
-        providerMode = "direct";
-        modelPrimary = "openai/gpt-5.6-luna";
+        providerMode = "litellm";
+        modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
-          "minimax/MiniMax-M3"
-          "zai/glm-5.2"
-          "openai/gpt-5.4"
+          "litellm/minimax-m3"
+          "litellm/glm-5.2"
         ];
         modelAllowlist = [
-          "openai/gpt-5.4"
-          "openai/gpt-5.6-luna"
-          "minimax/MiniMax-M3"
-          "zai/glm-5.2"
-          "zai/glm-4.6v"
+          "litellm/openai/gpt-5.6-luna"
+          "litellm/minimax-m3"
+          "litellm/glm-5.2"
         ];
         thinkingDefault = "medium";
         reasoningDefault = "on";
@@ -73,6 +70,7 @@ let
         sopsSecrets = [
           "telegram_bot_token"
           "gateway_token"
+          "litellm_api_key"
         ];
       };
     }
@@ -85,16 +83,14 @@ let
       memoryMB = 8192;
       openclaw = {
         router = "home-llm-router";
-        providerMode = "direct";
+        providerMode = "litellm";
         modelAllowlist = [
-          "openai/*"
-          "minimax/*"
-          "zai/*"
+          "litellm/*"
         ];
-        modelPrimary = "openai/gpt-5.6-luna";
+        modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
-          "minimax/MiniMax-M3"
-          "zai/glm-5.2"
+          "litellm/minimax-m3"
+          "litellm/glm-5.2"
         ];
         thinkingDefault = "medium";
         reasoningDefault = "on";
@@ -103,6 +99,7 @@ let
         sopsSecrets = [
           "telegram_bot_token"
           "gateway_token"
+          "litellm_api_key"
         ];
       };
     }
@@ -131,9 +128,8 @@ let
   };
 
   # Sops secrets for OpenClaw-enabled assistants.
-  # Per-assistant keys come from secrets/assistants/<name>.yaml; direct-provider
-  # credentials (MINIMAX/ZAI) are reused from secrets/api/default.yaml and mounted
-  # alongside them under /run/secrets/assistants/<name>/.
+  # Per-assistant keys come from secrets/assistants/<name>.yaml. Direct-provider
+  # credentials are mounted only for assistants configured for direct access.
   # Group-readable so the VM's agent user (in keys group) can read via virtiofs.
   mkOpenClawSopsSecrets =
     assistant:
