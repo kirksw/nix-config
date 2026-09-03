@@ -358,10 +358,80 @@ in
                 };
                 models = [
                   {
+                    id = "openai/gpt-5.5";
+                    name = "GPT-5.5";
+                    contextWindow = 272000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
+                    id = "openai/gpt-5.6-sol";
+                    name = "GPT-5.6 Sol";
+                    contextWindow = 272000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
+                    id = "openai/gpt-5.6-terra";
+                    name = "GPT-5.6 Terra";
+                    contextWindow = 272000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
                     id = "openai/gpt-5.6-luna";
                     name = "GPT-5.6 Luna";
                     contextWindow = 272000;
                     maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2";
+                    name = "MiniMax M2";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2.1";
+                    name = "MiniMax M2.1";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2.1-highspeed";
+                    name = "MiniMax M2.1 Highspeed";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2.5";
+                    name = "MiniMax M2.5";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2.5-highspeed";
+                    name = "MiniMax M2.5 Highspeed";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2.7";
+                    name = "MiniMax M2.7";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "minimax-m2.7-highspeed";
+                    name = "MiniMax M2.7 Highspeed";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
                     reasoning = true;
                   }
                   {
@@ -376,8 +446,71 @@ in
                     ];
                   }
                   {
+                    id = "glm-4.5";
+                    name = "GLM 4.5";
+                    contextWindow = 131072;
+                    maxTokens = 98304;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.5-air";
+                    name = "GLM 4.5 Air";
+                    contextWindow = 131072;
+                    maxTokens = 98304;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.6";
+                    name = "GLM 4.6";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-4.7";
+                    name = "GLM 4.7";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-5";
+                    name = "GLM 5";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-5-turbo";
+                    name = "GLM 5 Turbo";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-5.1";
+                    name = "GLM 5.1";
+                    contextWindow = 204800;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
                     id = "glm-5.2";
                     name = "GLM 5.2";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-5.3";
+                    name = "GLM 5.3";
+                    contextWindow = 1000000;
+                    maxTokens = 131072;
+                    reasoning = true;
+                  }
+                  {
+                    id = "glm-5.3-flash";
+                    name = "GLM 5.3 Flash";
                     contextWindow = 1000000;
                     maxTokens = 131072;
                     reasoning = true;

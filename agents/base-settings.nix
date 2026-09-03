@@ -158,7 +158,6 @@ let
     defaultModel = "glm-5.2";
     defaultThinkingLevel = "medium";
     enabledModels = [
-      "litellm/openai/gpt-5.3-codex-spark"
       "litellm/openai/gpt-5.5"
       "litellm/openai/gpt-5.6-sol"
       "litellm/openai/gpt-5.6-terra"
@@ -222,7 +221,6 @@ let
       "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
-      "gpt-5.3-codex-spark"
       "claude-opus-4-8"
       "claude-sonnet-4-6"
       "claude-opus-5"

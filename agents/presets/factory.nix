@@ -88,7 +88,6 @@ _: {
           "minimax/minimax-m3"
         ];
         D = [
-          "openai-codex/gpt-5.3-codex-spark"
           "minimax/minimax-m2.7-highspeed"
           "zai/glm-5-turbo"
         ];
@@ -118,7 +117,7 @@ _: {
           "openai/gpt-5.4"
         ];
         C = [ "openai/gpt-5.4-mini" ];
-        D = [ "openai/gpt-5.3-codex-spark" ];
+        D = [ "openai/gpt-5.4-nano" ];
         E = [
           "anthropic/claude-haiku-4-5-20251001"
           "openai/gpt-5.4-nano"

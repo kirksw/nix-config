@@ -44,9 +44,9 @@ Commands run to validate:
 ./scripts/check-structure.sh
 nix build .#model-bench --no-link
 nix run .#model-bench -- --list-challenges
-nix run .#model-bench -- --dry-run --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.3-codex-spark
+nix run .#model-bench -- --dry-run --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.5
 nix run .#model-bench -- --pi-bin "$tmpdir/fake-pi" --challenge scout-fluss-repo --results-dir "$results" --repo-cache-dir "$cache" --verifier-model judge-model
-nix run .#model-bench -- --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.3-codex-spark --runs 1
+nix run .#model-bench -- --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.5 --runs 1
 nix flake check --no-build
 ```
 

@@ -79,11 +79,7 @@ let
           "litellm/minimax-m3"
           "litellm/glm-5.2"
         ];
-        modelAllowlist = [
-          "litellm/openai/gpt-5.6-luna"
-          "litellm/minimax-m3"
-          "litellm/glm-5.2"
-        ];
+        modelAllowlist = [ "litellm/*" ];
         thinkingDefault = "medium";
         reasoningDefault = "on";
         secretsFile = "sanja";

@@ -26,7 +26,6 @@ Values are snapshots, not guarantees. Provider, region, queue load, caching, con
 | B | `openai-codex/gpt-5.4` | — | — | — | Not separately verified on AA |
 | C | `openai-codex/gpt-5.4-mini` | 40 | $0.75 / $4.50 | 169.7 tok/s | AA model page |
 | C | `minimax/minimax-m3` | 44 | $0.30 / $1.20 | 99.4 tok/s | Provider-dependent speed |
-| D | `openai-codex/gpt-5.3-codex-spark` | 44* | $1.75 / $14* | 127.8 tok/s* | *Proxy: AA's `gpt-5.3-codex` xhigh page |
 | D | `minimax/minimax-m2.7-highspeed` | — | — | — | Not separately verified on AA |
 | D | `zai/glm-5-turbo` | 38 | — | — | AA reports no benchmarked providers |
 | E | `openai-codex/gpt-5.4-nano` | 38 | $0.20 / $1.25 | 151.0 tok/s | AA model page |
@@ -61,7 +60,6 @@ A single Intelligence Index value is an aggregate and does not capture task-spec
 | `openai-codex/gpt-5.4` | — | — | — | — | — | — | — | — | — |
 | `openai-codex/gpt-5.4-mini` | — | — | — | — | — | — | — | — | — |
 | `minimax/minimax-m3` | — | — | — | — | — | — | — | — | — |
-| `openai-codex/gpt-5.3-codex-spark` | — | — | — | — | — | — | — | — | — |
 | `minimax/minimax-m2.7-highspeed` | — | — | — | — | — | — | — | — | — |
 | `zai/glm-5-turbo` | — | — | — | — | — | — | — | — | — |
 | `openai-codex/gpt-5.4-nano` | — | — | — | — | — | — | — | — | — |
@@ -82,7 +80,6 @@ A single Intelligence Index value is an aggregate and does not capture task-spec
 - [GPT-5.6 Luna](https://artificialanalysis.ai/models/gpt-5-6-luna)
 - [GPT-5.4 mini](https://artificialanalysis.ai/models/gpt-5-4-mini)
 - [GPT-5.4 nano](https://artificialanalysis.ai/models/gpt-5-4-nano)
-- [GPT-5.3 Codex](https://artificialanalysis.ai/models/gpt-5-3-codex)
 - [GLM-5.2](https://artificialanalysis.ai/models/glm-5-2)
 - [GLM-5-Turbo](https://artificialanalysis.ai/models/glm-5-turbo)
 - [MiniMax-M3](https://artificialanalysis.ai/models/minimax-m3)

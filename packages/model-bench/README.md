@@ -10,7 +10,7 @@ The benchmark runs one starter challenge per agent role and scores candidate mod
 nix run .#model-bench -- --list-challenges
 nix run .#model-bench -- --dry-run
 nix run .#model-bench -- --models fast=openai-codex/gpt-5.4-mini,ultrafast=minimax/minimax-m2.7-highspeed
-nix run .#model-bench -- --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.3-codex-spark
+nix run .#model-bench -- --tier fast --compare-models minimax/minimax-m2.7-highspeed,openai-codex/gpt-5.4-mini,openai-codex/gpt-5.5
 nix run .#model-bench -- --trend
 ```
 

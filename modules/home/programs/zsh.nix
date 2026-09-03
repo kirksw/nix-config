@@ -103,7 +103,7 @@ in
               export INFOPATH="/opt/homebrew/share/info:$INFOPATH"
             fi
 
-            export PATH="$HOME/.local/bin:$PATH"
+            export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"
 
             # ponytail: cmux disables hooks but still prepends a claude shim; drop only that path.
             if [[ "''${CMUX_CLAUDE_HOOKS_DISABLED:-}" == 1 && -n "''${CMUX_CLAUDE_WRAPPER_SHIM_ROOT:-}" ]]; then

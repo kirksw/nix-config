@@ -4,7 +4,7 @@
 [tiers]
 ultrafast = "minimax/minimax-m2.7-highspeed"
 fast = "openai-codex/gpt-5.4-mini"
-balanced = "openai-codex/gpt-5.3-codex-spark"
+balanced = "openai-codex/gpt-5.5"
 powerful = "openai-codex/gpt-5.5"
 reasoning = "openai-codex/gpt-5.5"
 
