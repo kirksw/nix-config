@@ -7,3 +7,6 @@ validation:
 
 publish:
   strategy: direct_push
+
+merge:
+  mode: auto
