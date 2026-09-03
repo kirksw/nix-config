@@ -68,6 +68,91 @@ let
   piHomeFactoryPackageRefs = piFactoryPackageRefs ++ [ piLitellmProviderPackage ];
   piWorkFactoryPackageRefs = piFactoryPackageRefs ++ [ piAgentJournalPackage ];
 
+  # Rose Pine (main) — matches the Herdr terminal theme (`theme.name = "rose-pine"`).
+  # Palette: https://rosepinetheme.com
+  piRosePineTheme = {
+    "$schema" =
+      "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json";
+    name = "rose-pine";
+    vars = {
+      base = "#191724";
+      surface = "#1f1d2e";
+      overlay = "#26233a";
+      low = "#21202e";
+      med = "#403d52";
+      high = "#524f67";
+      muted = "#6e6a86";
+      subtle = "#908caa";
+      text = "#e0def4";
+      love = "#eb6f92";
+      gold = "#f6c177";
+      rose = "#ebbcba";
+      pine = "#31748f";
+      foam = "#9ccfd8";
+      iris = "#c4a7e7";
+    };
+    colors = {
+      accent = "rose";
+      border = "med";
+      borderAccent = "iris";
+      borderMuted = "low";
+      success = "pine";
+      error = "love";
+      warning = "gold";
+      muted = "subtle";
+      dim = "muted";
+      text = "";
+      thinkingText = "foam";
+      selectedBg = "med";
+      scrollbarThumb = "high";
+      userMessageBg = "surface";
+      userMessageText = "";
+      customMessageBg = "surface";
+      customMessageText = "";
+      customMessageLabel = "rose";
+      toolPendingBg = "low";
+      toolSuccessBg = "surface";
+      toolErrorBg = "overlay";
+      toolTitle = "rose";
+      toolOutput = "";
+      mdHeading = "gold";
+      mdLink = "rose";
+      mdLinkUrl = "iris";
+      mdCode = "foam";
+      mdCodeBlock = "";
+      mdCodeBlockBorder = "high";
+      mdQuote = "subtle";
+      mdQuoteBorder = "iris";
+      mdHr = "high";
+      mdListBullet = "foam";
+      toolDiffAdded = "foam";
+      toolDiffRemoved = "love";
+      toolDiffContext = "subtle";
+      syntaxComment = "muted";
+      syntaxKeyword = "iris";
+      syntaxFunction = "rose";
+      syntaxVariable = "gold";
+      syntaxString = "foam";
+      syntaxNumber = "love";
+      syntaxType = "pine";
+      syntaxOperator = "rose";
+      syntaxPunctuation = "subtle";
+      thinkingOff = "muted";
+      thinkingMinimal = "subtle";
+      thinkingLow = "foam";
+      thinkingMedium = "iris";
+      thinkingHigh = "gold";
+      thinkingXhigh = "rose";
+      thinkingMax = "love";
+      bashMode = "gold";
+    };
+  };
+  piThemeFile = builtins.toFile "rose-pine.json" (builtins.toJSON piRosePineTheme);
+  piThemeSettings = {
+    theme = "rose-pine";
+    themes = [ piThemeFile ];
+  };
+
   piPersonalModelDefaults = {
     defaultProvider = "zai";
     defaultModel = "glm-5.2";
@@ -87,6 +172,7 @@ let
 
   piPersonalSettings = builtins.toJSON (
     piPersonalModelDefaults
+    // piThemeSettings
     // {
       packages = piPersonalPackageRefs;
     }
@@ -94,6 +180,7 @@ let
 
   piPersonalFullSettings = builtins.toJSON (
     piPersonalModelDefaults
+    // piThemeSettings
     // {
       packages = piPersonalFullPackageRefs;
     }
@@ -116,10 +203,13 @@ let
     providers.mlx-dspark = piMlxDsparkProvider;
   };
 
-  piHomeFactorySettings = builtins.toJSON {
-    packages = piHomeFactoryPackageRefs;
-    subagents.disableBuiltins = true;
-  };
+  piHomeFactorySettings = builtins.toJSON (
+    {
+      packages = piHomeFactoryPackageRefs;
+      subagents.disableBuiltins = true;
+    }
+    // piThemeSettings
+  );
 
   piWorkModelDefaults = {
     defaultProvider = "openai";
@@ -146,6 +236,7 @@ let
 
   piWorkSettings = builtins.toJSON (
     piWorkModelDefaults
+    // piThemeSettings
     // {
       packages = piWorkPackageRefs;
       subagents.disableBuiltins = true;
@@ -154,6 +245,7 @@ let
 
   piWorkFullSettings = builtins.toJSON (
     piWorkModelDefaults
+    // piThemeSettings
     // {
       packages = piWorkFullPackageRefs;
       subagents.disableBuiltins = true;
@@ -162,6 +254,7 @@ let
 
   piWorkFactorySettings = builtins.toJSON (
     piWorkModelDefaults
+    // piThemeSettings
     // {
       packages = piWorkFactoryPackageRefs;
       subagents.disableBuiltins = true;
