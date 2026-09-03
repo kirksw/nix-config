@@ -628,6 +628,27 @@
         "url": "https://flakehub.com/f/cachix/git-hooks.nix/0.1.941"
       }
     },
+    "git-land": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788437479,
+        "narHash": "sha256-MRUy7q1MY4cmdJAZaeKZPlXJBWulaJ+sHYKCC1iseTM=",
+        "owner": "kirksw",
+        "repo": "git-land",
+        "rev": "63e373255f331b00f12e7a5bdb2fbf4f36118b29",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kirksw",
+        "ref": "v0.1",
+        "repo": "git-land",
+        "type": "github"
+      }
+    },
     "gitnow": {
       "inputs": {
         "flake-utils": "flake-utils_3",
@@ -1458,6 +1479,7 @@
         "flake-schemas": "flake-schemas",
         "flake-utils": "flake-utils",
         "git-hooks": "git-hooks",
+        "git-land": "git-land",
         "home-manager": "home-manager",
         "homebrew-brew": "homebrew-brew",
         "last30days-skill": "last30days-skill",

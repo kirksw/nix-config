@@ -35,6 +35,7 @@
     ../defs/skills/domain-modeling
     ../defs/skills/homelab
     ../defs/skills/last30days
+    ../defs/skills/land
     ../defs/skills/mmx-cli
     ../defs/skills/fli
     ../defs/skills/activities-search

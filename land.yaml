@@ -1,0 +1,9 @@
+version: 1
+base: main
+
+validation:
+  structure: ./scripts/check-structure.sh
+  flake: nix flake check --no-build --no-eval-cache
+
+publish:
+  strategy: direct_push

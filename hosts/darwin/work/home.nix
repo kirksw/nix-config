@@ -15,6 +15,7 @@
       self.packages.${pkgs.system}.mlx-dspark
       self.packages.${pkgs.system}.pindrop
       self.packages.${pkgs.system}.terminal-browser
+      self.packages.${pkgs.system}.land
     ];
     sessionVariables = {
       LANG = "en_US.UTF-8";

@@ -18,6 +18,8 @@ let
       { backendEngineeringPractices = inputs.backend-engineering-practices; }
     else if name == "swe-pruner-mcp" then
       { inherit inputs; }
+    else if name == "land" then
+      { inherit inputs; }
     else
       { };
 

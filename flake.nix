@@ -51,6 +51,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
+    git-land = {
+      url = "github:kirksw/git-land/v0.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 
