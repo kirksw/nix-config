@@ -158,6 +158,7 @@ let
     defaultModel = "glm-5.2";
     defaultThinkingLevel = "medium";
     enabledModels = [
+      "litellm/openai/gpt-6-astra"
       "litellm/openai/gpt-5.5"
       "litellm/openai/gpt-5.6-sol"
       "litellm/openai/gpt-5.6-terra"
@@ -215,19 +216,18 @@ let
     defaultModel = "gpt-5.6-terra";
     defaultThinkingLevel = "medium";
     enabledModels = [
+      "gpt-6-astra"
       "gpt-5.6-sol"
       "gpt-5.6-terra"
       "gpt-5.6-luna"
       "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
-      "claude-opus-4-8"
-      "claude-sonnet-4-6"
-      "claude-opus-5"
-      "claude-sonnet-5"
-      "amazon-bedrock/eu.anthropic.claude-sonnet-5"
+      "amazon-bedrock/eu.anthropic.claude-fable-5"
       "amazon-bedrock/eu.anthropic.claude-opus-5"
+      "amazon-bedrock/eu.anthropic.claude-sonnet-5"
       "amazon-bedrock/eu.anthropic.claude-opus-4-8"
+      "amazon-bedrock/eu.anthropic.claude-sonnet-4-6"
       "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
     ];
   };
@@ -261,7 +261,46 @@ let
 
   piWorkModels = builtins.toJSON {
     providers = {
-      openai.baseUrl = "https://eu.api.openai.com/v1";
+      openai = {
+        baseUrl = "https://eu.api.openai.com/v1";
+        models = [
+          {
+            id = "gpt-6-astra";
+            name = "GPT-6 Astra";
+            reasoning = true;
+            thinkingLevelMap = {
+              off = null;
+              minimal = null;
+              low = "low";
+              medium = "medium";
+              high = "high";
+              xhigh = "xhigh";
+              max = "max";
+            };
+            input = [
+              "text"
+              "image"
+            ];
+            contextWindow = 1050000;
+            maxTokens = 128000;
+            cost = {
+              input = 10;
+              output = 50;
+              cacheRead = 1;
+              cacheWrite = 12.5;
+              tiers = [
+                {
+                  inputTokensAbove = 272000;
+                  input = 20;
+                  output = 75;
+                  cacheRead = 2;
+                  cacheWrite = 25;
+                }
+              ];
+            };
+          }
+        ];
+      };
       mlx-dspark = piMlxDsparkProvider;
     };
   };
@@ -402,9 +441,6 @@ let
     openai = {
       type = "api_key";
       key = "$OPENAI_API_KEY";
-    };
-    anthropic = {
-      type = "oauth";
     };
   };
 

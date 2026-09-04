@@ -104,22 +104,22 @@ _: {
       tierMapping = {
         S = [
           "openai/gpt-5.6-sol"
-          "anthropic/claude-fable-5"
+          "amazon-bedrock/eu.anthropic.claude-fable-5"
         ];
         A = [
           "openai/gpt-5.6-terra"
-          "anthropic/claude-opus-4-8"
+          "amazon-bedrock/eu.anthropic.claude-opus-4-8"
           "openai/gpt-5.5"
         ];
         B = [
           "openai/gpt-5.6-luna"
-          "anthropic/claude-sonnet-4-6"
+          "amazon-bedrock/eu.anthropic.claude-sonnet-4-6"
           "openai/gpt-5.4"
         ];
         C = [ "openai/gpt-5.4-mini" ];
         D = [ "openai/gpt-5.4-nano" ];
         E = [
-          "anthropic/claude-haiku-4-5-20251001"
+          "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
           "openai/gpt-5.4-nano"
         ];
       };
