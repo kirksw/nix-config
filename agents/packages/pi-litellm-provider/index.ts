@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 
 const DEFAULT_BASE_URL = "https://litellm.cntd.io/v1";
 const PLACEHOLDER_PREFIX = "REPLACE_WITH_";
@@ -21,6 +21,7 @@ export interface LiteLlmProviderModel {
   id: string;
   name: string;
   reasoning: boolean;
+  thinkingLevelMap?: ProviderModelConfig["thinkingLevelMap"];
   input: Array<"text" | "image">;
   cost: {
     input: number;
@@ -47,9 +48,13 @@ function positiveInteger(value: number | null | undefined, fallback: number): nu
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
+function isAstra(id: string): boolean {
+  return /^(?:openai\/)?gpt-6-astra$/i.test(id);
+}
+
 function inferReasoning(id: string, metadata: boolean | null | undefined): boolean {
   if (typeof metadata === "boolean") return metadata;
-  return /^(?:(?:openai\/)?gpt-5|minimax-m|glm-)/i.test(id);
+  return isAstra(id) || /^(?:(?:openai\/)?gpt-5|minimax-m|glm-)/i.test(id);
 }
 
 export function toProviderModels(entries: LiteLlmModelEntry[]): LiteLlmProviderModel[] {
@@ -60,10 +65,23 @@ export function toProviderModels(entries: LiteLlmModelEntry[]): LiteLlmProviderM
     if (!id) continue;
 
     const info = entry.model_info ?? {};
+    const reasoning = inferReasoning(id, info.supports_reasoning);
     models.set(id, {
       id,
       name: id,
-      reasoning: inferReasoning(id, info.supports_reasoning),
+      reasoning,
+      ...(reasoning && isAstra(id) ? {
+        // Astra is always-thinking; max is Responses-only, not Chat Completions.
+        thinkingLevelMap: {
+          off: null,
+          minimal: null,
+          low: "low",
+          medium: "medium",
+          high: "high",
+          xhigh: "xhigh",
+          max: null,
+        },
+      } : {}),
       input: info.supports_vision ? ["text", "image"] : ["text"],
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: positiveInteger(info.max_input_tokens, 128_000),

@@ -49,6 +49,7 @@ test("toProviderModels maps metadata, defaults, and duplicate IDs", () => {
     },
     { id: "openai/gpt-5.6-sol" },
     { id: "openai/gpt-5.6-sol", model_info: { max_input_tokens: 272_000, max_tokens: 32_768 } },
+    { id: "openai/gpt-6-astra" },
     {},
   ]), [
     {
@@ -69,7 +70,82 @@ test("toProviderModels maps metadata, defaults, and duplicate IDs", () => {
       contextWindow: 272_000,
       maxTokens: 32_768,
     },
+    {
+      id: "openai/gpt-6-astra",
+      name: "openai/gpt-6-astra",
+      reasoning: true,
+      thinkingLevelMap: {
+        off: null,
+        minimal: null,
+        low: "low",
+        medium: "medium",
+        high: "high",
+        xhigh: "xhigh",
+        max: null,
+      },
+      input: ["text"],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 128_000,
+      maxTokens: 16_384,
+    },
   ]);
+});
+
+for (const id of ["gpt-6-astra", "openai/gpt-6-astra", "OPENAI/GPT-6-ASTRA"]) {
+  test(`${id} reasoning respects metadata and maps only Chat Completions levels`, () => {
+    for (const supports_reasoning of [undefined, null, true, false]) {
+      const [model] = toProviderModels([{ id, model_info: { supports_reasoning } }]);
+      assert.equal(model.reasoning, supports_reasoning !== false);
+      if (supports_reasoning === false) {
+        assert.equal(Object.hasOwn(model, "thinkingLevelMap"), false);
+      } else {
+        assert.deepEqual(model.thinkingLevelMap, {
+          off: null,
+          minimal: null,
+          low: "low",
+          medium: "medium",
+          high: "high",
+          xhigh: "xhigh",
+          max: null,
+        });
+      }
+    }
+  });
+}
+
+test("other models retain inference and never receive Astra's map", () => {
+  const cases = [
+    ["gpt-5.6-sol", true],
+    ["openai/gpt-5.6-sol", true],
+    ["gpt-5.6-terra", true],
+    ["openai/gpt-5.6-luna", true],
+    ["minimax-m3", true],
+    ["glm-5.2", true],
+    ["gpt-4o", false],
+    ["unknown", false],
+    ["gpt-6", false],
+    ["openai/gpt-6", false],
+    ["gpt-6-other", false],
+    ["openai/gpt-6-other", false],
+    ["gpt-6-astra-preview", false],
+    ["openai/gpt-6-astra-preview", false],
+    ["gpt-6-astral", false],
+    ["other/gpt-6-astra", false],
+  ];
+  for (const [id, inferred] of cases) {
+    for (const supports_reasoning of [undefined, null, true, false]) {
+      const [model] = toProviderModels([{ id, model_info: { supports_reasoning } }]);
+      assert.deepEqual(model, {
+        id,
+        name: id,
+        reasoning: supports_reasoning ?? inferred,
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128_000,
+        maxTokens: 16_384,
+      }, `${id}: supports_reasoning=${supports_reasoning}`);
+    }
+  }
 });
 
 test("placeholder credentials disable discovery", async () => {
@@ -103,7 +179,11 @@ test("discovery falls back to models and registers dual authentication", async (
     if (String(url).endsWith("/model/info")) {
       return new Response("forbidden", { status: 403, statusText: "Forbidden" });
     }
-    return Response.json({ data: [{ id: "gpt-5.6-sol" }] });
+    return Response.json({ data: [
+      { id: "gpt-5.6-sol" },
+      { id: "gpt-6-astra" },
+      { id: "openai/gpt-6-astra" },
+    ] });
   };
 
   try {
@@ -127,9 +207,56 @@ test("discovery falls back to models and registers dual authentication", async (
   assert.equal(requests[0].init.headers.get("CF-Access-Client-Id"), "client-id");
   assert.equal(requests[0].init.headers.get("CF-Access-Client-Secret"), "client-secret");
   assert.equal(registration.name, "litellm");
+  assert.equal(registration.config.api, "openai-completions");
   assert.equal(registration.config.apiKey, "$LITELLM_API_KEY");
   assert.equal(registration.config.headers["CF-Access-Client-Id"], "$LITELLM_CF_ACCESS_CLIENT_ID");
   assert.equal(registration.config.headers["CF-Access-Client-Secret"], "$LITELLM_CF_ACCESS_CLIENT_SECRET");
   assert.equal(registration.config.models[0].id, "gpt-5.6-sol");
   assert.equal(registration.config.models[0].reasoning, true);
+  assert.equal(Object.hasOwn(registration.config.models[0], "thinkingLevelMap"), false);
+  for (const model of registration.config.models.slice(1)) {
+    assert.equal(model.reasoning, true);
+    assert.equal(model.thinkingLevelMap.xhigh, "xhigh");
+    assert.equal(model.thinkingLevelMap.max, null);
+  }
 });
+
+for (const supports_reasoning of [true, false]) {
+  test(`model/info registers Astra with explicit reasoning=${supports_reasoning}`, async () => {
+    const originalFetch = globalThis.fetch;
+    const entries = ["gpt-6-astra", "openai/gpt-6-astra"].map((model_name) => ({
+      model_name,
+      model_info: { supports_reasoning },
+    }));
+    let registration;
+    let fetchCount = 0;
+    globalThis.fetch = async (url) => {
+      fetchCount += 1;
+      assert.ok(String(url).endsWith("/model/info"));
+      return Response.json({ data: entries });
+    };
+    try {
+      await withCredentialEnvironment({
+        LITELLM_API_KEY: "api-key",
+        LITELLM_CF_ACCESS_CLIENT_ID: "client-id",
+        LITELLM_CF_ACCESS_CLIENT_SECRET: "client-secret",
+      }, async () => {
+        await litellmProvider({
+          registerProvider(name, config) {
+            registration = { name, config };
+          },
+        });
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+    assert.equal(fetchCount, 1);
+    assert.equal(registration.name, "litellm");
+    assert.equal(registration.config.api, "openai-completions");
+    assert.deepEqual(registration.config.models, toProviderModels(entries));
+    for (const model of registration.config.models) {
+      assert.equal(model.reasoning, supports_reasoning);
+      assert.equal(Object.hasOwn(model, "thinkingLevelMap"), supports_reasoning);
+    }
+  });
+}
