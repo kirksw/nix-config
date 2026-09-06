@@ -4,6 +4,7 @@ const DEFAULT_BASE_URL = "https://litellm.cntd.io/v1";
 const PLACEHOLDER_PREFIX = "REPLACE_WITH_";
 
 interface LiteLlmModelInfo {
+  context_window?: number | null;
   max_input_tokens?: number | null;
   max_output_tokens?: number | null;
   max_tokens?: number | null;
@@ -84,7 +85,8 @@ export function toProviderModels(entries: LiteLlmModelEntry[]): LiteLlmProviderM
       } : {}),
       input: info.supports_vision ? ["text", "image"] : ["text"],
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      contextWindow: positiveInteger(info.max_input_tokens, 128_000),
+      // The gateway exposes total context separately from input/output limits.
+      contextWindow: positiveInteger(info.context_window, positiveInteger(info.max_input_tokens, 128_000)),
       maxTokens: positiveInteger(info.max_output_tokens ?? info.max_tokens, 16_384),
     });
   }

@@ -91,6 +91,34 @@ test("toProviderModels maps metadata, defaults, and duplicate IDs", () => {
   ]);
 });
 
+// Gateway evidence and Pi field semantics: docs/agents/completed/feat-litellm-context-window.md.
+for (const context_window of [272_000, 1_050_000]) {
+  for (const max_input_tokens of [undefined, context_window - 128_000]) {
+    test(`explicit context ${context_window} wins with input ${max_input_tokens}`, () => {
+      const [model] = toProviderModels([{
+        id: "openai/gpt-6-astra",
+        model_info: { context_window, max_input_tokens, max_output_tokens: 128_000 },
+      }]);
+      assert.equal(model.contextWindow, context_window);
+      assert.equal(model.maxTokens, 128_000);
+    });
+  }
+}
+
+test("invalid or missing context metadata preserves legacy fallbacks", () => {
+  const invalid = [undefined, null, 0, -1, 1.5, NaN, Infinity, "272000"];
+  for (const context_window of invalid) {
+    for (const max_input_tokens of [200_000, ...invalid]) {
+      const [model] = toProviderModels([{
+        id: "example",
+        model_info: { context_window, max_input_tokens, max_output_tokens: 32_000 },
+      }]);
+      assert.equal(model.contextWindow, max_input_tokens === 200_000 ? 200_000 : 128_000);
+      assert.equal(model.maxTokens, 32_000);
+    }
+  }
+});
+
 for (const id of ["gpt-6-astra", "openai/gpt-6-astra", "OPENAI/GPT-6-ASTRA"]) {
   test(`${id} reasoning respects metadata and maps only Chat Completions levels`, () => {
     for (const supports_reasoning of [undefined, null, true, false]) {
@@ -226,7 +254,7 @@ for (const supports_reasoning of [true, false]) {
     const originalFetch = globalThis.fetch;
     const entries = ["gpt-6-astra", "openai/gpt-6-astra"].map((model_name) => ({
       model_name,
-      model_info: { supports_reasoning },
+      model_info: { supports_reasoning, context_window: 272_000, max_output_tokens: 128_000 },
     }));
     let registration;
     let fetchCount = 0;
@@ -255,6 +283,8 @@ for (const supports_reasoning of [true, false]) {
     assert.equal(registration.config.api, "openai-completions");
     assert.deepEqual(registration.config.models, toProviderModels(entries));
     for (const model of registration.config.models) {
+      assert.equal(model.contextWindow, 272_000);
+      assert.equal(model.maxTokens, 128_000);
       assert.equal(model.reasoning, supports_reasoning);
       assert.equal(Object.hasOwn(model, "thinkingLevelMap"), supports_reasoning);
     }
