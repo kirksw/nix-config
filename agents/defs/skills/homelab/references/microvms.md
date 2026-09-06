@@ -56,3 +56,13 @@ The hypervisor host is documented as an 8-core, 32-GB x86_64-linux box. The assi
 
 Prefer declarative `microvm.vms` changes in this repo.
 Only use ad hoc host commands for inspection, emergency recovery, or service control after a declarative deployment.
+
+## Personal Agent Rollout Acceptance
+
+A host deployment alone does not activate a changed VM because `restartIfChanged` is disabled.
+Restart only the intended VM after deployment, then verify its `current` and `booted` runner links match.
+Check the running VM's `personal-agent-profile.service` and compare persistent managed profile assets with the generated source referenced by that service.
+A matching runner is not sufficient: bootstrap-only wrapper sync can leave old persistent model tiers in place.
+Verify the actual `AGENTS.md` tier table and check `systemctl --failed` inside the VM before declaring success.
+The reconciliation service owns only the listed managed assets and backs them up under `/home/agent/.local/state/nix-agents/profile-backups`.
+Credentials, sessions, workspaces, and user settings must remain unchanged.

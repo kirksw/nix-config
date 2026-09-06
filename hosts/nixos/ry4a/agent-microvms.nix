@@ -601,30 +601,46 @@ let
           };
           systemd.services.tailscaled.restartIfChanged = false;
 
-          systemd.services.personal-agent-browser-skills = {
-            description = "Reconcile personal-agent browser skills";
+          systemd.services.personal-agent-profile = {
+            description = "Reconcile personal-agent managed profile assets";
             wantedBy = [ "multi-user.target" ];
             before = [ "multi-user.target" ];
             unitConfig.RequiresMountsFor = [ "/home/agent" ];
             serviceConfig.Type = "oneshot";
             script = ''
-              source=${personalPiProfileMeta."personal-default".storePath}/skills
-              target=/home/agent/.config/nix-agents/pi/bases/personal/profiles/personal-default/skills
+              source=${personalPiProfileMeta."personal-default".storePath}
+              target=/home/agent/.config/nix-agents/pi/bases/personal/profiles/personal-default
 
+              # Validate the complete asset set before changing persistent files.
+              for asset in agents skills extensions prompts AGENTS.md hook-manifest skill-versions.json; do
+                test -e "$source/$asset"
+              done
               ${pkgs.coreutils}/bin/install -d -m 0755 -o agent -g users "$target"
-              ${pkgs.coreutils}/bin/rm -rf "$target/bladebro"
-              for skill in \
-                activities-search-bladebro \
-                agent-browser \
-                google-flights-bladebro \
-                google-hotels \
-                google-hotels-bladebro \
-                travel-search-bladebro
-              do
-                ${pkgs.coreutils}/bin/rm -rf "$target/$skill"
-                ${pkgs.coreutils}/bin/cp -R --no-preserve=mode,ownership "$source/$skill" "$target/$skill"
-                ${pkgs.coreutils}/bin/chown -R agent:users "$target/$skill"
-                ${pkgs.coreutils}/bin/chmod -R u=rwX,go=rX "$target/$skill"
+              backup=/home/agent/.local/state/nix-agents/profile-backups
+              ${pkgs.coreutils}/bin/install -d -m 0700 -o agent -g users "$backup"
+              # Keep one pre-reconciliation snapshot, not a copy on every boot.
+              if [ ! -d "$backup/initial" ]; then
+                snapshot=$(${pkgs.coreutils}/bin/mktemp -d "$backup/initial.XXXXXXXX")
+                ${pkgs.coreutils}/bin/chown agent:users "$snapshot"
+                for asset in agents skills extensions prompts AGENTS.md hook-manifest skill-versions.json; do
+                  if [ -e "$target/$asset" ] || [ -L "$target/$asset" ]; then
+                    ${pkgs.coreutils}/bin/cp -a "$target/$asset" "$snapshot/$asset"
+                  fi
+                done
+                ${pkgs.coreutils}/bin/mv "$snapshot" "$backup/initial"
+              fi
+
+              # Only these assets are managed; settings, credentials, and sessions stay untouched.
+              for asset in agents skills extensions prompts; do
+                if [ -L "$target/$asset" ]; then
+                  ${pkgs.coreutils}/bin/rm "$target/$asset"
+                fi
+                ${pkgs.rsync}/bin/rsync -rlt --delete --chown=agent:users --chmod=Du=rwx,Dgo=rx,Fu=rwX,Fgo=rX \
+                  "$source/$asset/" "$target/$asset/"
+              done
+              for asset in AGENTS.md hook-manifest skill-versions.json; do
+                ${pkgs.coreutils}/bin/rm -f "$target/$asset"
+                ${pkgs.coreutils}/bin/install -m 0644 -o agent -g users "$source/$asset" "$target/$asset"
               done
             '';
           };
