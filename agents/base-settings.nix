@@ -158,6 +158,7 @@ let
     defaultModel = "glm-5.2";
     defaultThinkingLevel = "medium";
     enabledModels = [
+      "litellm/openai/gpt-6-astra"
       "litellm/openai/gpt-5.5"
       "litellm/openai/gpt-5.6-sol"
       "litellm/openai/gpt-5.6-terra"
