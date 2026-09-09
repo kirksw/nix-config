@@ -25,17 +25,30 @@ let
   # Herdr's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.8.2/src/integration/assets/pi/herdr-agent-state.ts";
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.9.0/src/integration/assets/pi/herdr-agent-state.ts";
     hash = "sha256-mxxBzXJSD8Kr5fKirsmVwSqSbM6ETfRyx/1fyuT02/o=";
   };
-  herdrPiIntegrationTargets = [
-    "nix-agents/pi/bases/personal/profiles/personal-default/extensions/herdr-agent-state.ts"
-    "nix-agents/pi/bases/personal-full/profiles/personal-full/extensions/herdr-agent-state.ts"
-    "nix-agents/pi/bases/work/profiles/work-default/extensions/herdr-agent-state.ts"
-    "nix-agents/pi/bases/work-full/profiles/work-full/extensions/herdr-agent-state.ts"
-    "nix-agents/pi/bases/home-factory/profiles/home-factory/extensions/herdr-agent-state.ts"
-    "nix-agents/pi/bases/work-factory/profiles/work-factory/extensions/herdr-agent-state.ts"
-  ];
+  herdrPiIntegrationTargets =
+    lib.concatMap
+      (
+        scope:
+        map
+          (
+            kind:
+            "nix-agents/pi/bases/${
+              if kind == "fallback" then scope else "${scope}-${kind}"
+            }/profiles/${scope}-${kind}/extensions/herdr-agent-state.ts"
+          )
+          [
+            "default"
+            "fallback"
+            "browser"
+          ]
+      )
+      [
+        "personal"
+        "work"
+      ];
   workOpenAIBaseUrl = "https://eu.api.openai.com/v1";
   omnigentVendorPath = lib.makeBinPath [
     self.packages.${system}.claude-code
@@ -157,7 +170,6 @@ let
   # Modules shared across all target builds
   nixAgentsModules = localAgents.defaultModules;
   piAgentsModules = localAgents.piModules;
-  piFactoryAgentsModules = localAgents.piFactoryModules;
 
   minimaxCliPackage = self.packages.${system}.minimax-cli;
   fliPackage = self.packages.${system}.fli;
@@ -390,22 +402,6 @@ let
     src = localAgentsSrc;
   };
 
-  piFactoryAgentSystem = nixAgentsLib.mkAgentSystem {
-    inherit pkgs;
-    target = "pi";
-    inputs = agentInputs;
-    modules = piFactoryAgentsModules;
-    src = localAgentsSrc;
-  };
-
-  piFactoryProfileMeta = nixAgentsLib.mkProfileMeta {
-    inherit pkgs;
-    target = "pi";
-    inputs = agentInputs;
-    modules = piFactoryAgentsModules;
-    src = localAgentsSrc;
-  };
-
   piPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
     inherit pkgs;
     target = "pi";
@@ -413,23 +409,6 @@ let
     agentSystem = piAgentSystem;
     profileMeta = piProfileMeta;
   });
-
-  mkPiFactoryPkg =
-    profile:
-    pkgs.writeShellScriptBin "pi-${profile}" ''
-      exec "${
-        nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
-          inherit pkgs profile;
-          target = "pi";
-          tool = self.packages.${system}.pi;
-          agentSystem = piFactoryAgentSystem;
-          profileMeta = piFactoryProfileMeta;
-        })
-      }/bin/pi" "$@"
-    '';
-
-  piHomeFactoryPkg = mkPiFactoryPkg "home-factory";
-  piWorkFactoryPkg = mkPiFactoryPkg "work-factory";
 
   mkOmnigentServerScript =
     profile: port: envBlock:
@@ -760,8 +739,21 @@ in
       ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         fliPackage
+        pkgs.agent-browser
         (mkCredWrapper "pi" piPkg ''
           _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
+          # Herdr children pass the parent agent directory, not its profile selector.
+          if [ -z "$_pi_session_profile" ]; then
+            for _pi_scope in personal work; do
+              for _pi_kind in default fallback browser; do
+                _pi_base="$_pi_scope-$_pi_kind"
+                [ "$_pi_kind" != fallback ] || _pi_base="$_pi_scope"
+                if [ "''${PI_CODING_AGENT_DIR:-}" = "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_base/profiles/$_pi_scope-$_pi_kind" ]; then
+                  _pi_session_profile="$_pi_scope-$_pi_kind"
+                fi
+              done
+            done
+          fi
           _d="$PWD"
           while [ -z "$_pi_session_profile" ] && [ "$_d" != "/" ] && [ -n "$_d" ]; do
             if [ -f "$_d/.nix-agents-profile" ]; then
@@ -778,15 +770,26 @@ in
             fi
           fi
           case "$_pi_session_profile" in
-            personal-default) _pi_session_base="personal" ;;
-            personal-full) _pi_session_base="personal-full" ;;
-            work-default) _pi_session_base="work" ;;
-            work-full) _pi_session_base="work-full" ;;
+            personal-fallback) _pi_session_base="personal" ;;
+            personal-default|personal-browser) _pi_session_base="$_pi_session_profile" ;;
+            work-fallback) _pi_session_base="work" ;;
+            work-default|work-browser) _pi_session_base="$_pi_session_profile" ;;
             *)
               echo "unknown nix-agents profile: $_pi_session_profile" >&2
               exit 2
               ;;
           esac
+          case "$_pi_session_profile" in
+            personal-browser|work-browser)
+              export AGENT_BROWSER_SESSION="$_pi_session_profile"
+              export AGENT_BROWSER_PROFILE="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/browser/$_pi_session_profile"
+              export AGENT_BROWSER_DOWNLOAD_PATH="$AGENT_BROWSER_PROFILE/downloads"
+              if [ -z "''${AGENT_BROWSER_EXECUTABLE_PATH:-}" ] && [ -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then
+                export AGENT_BROWSER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+              fi
+              ;;
+          esac
+          export NIX_AGENTS_PROFILE="$_pi_session_profile"
           export PI_CODING_AGENT_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile"
           _pi_profile_env="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings/env"
           if [ -f "$_pi_profile_env" ]; then
@@ -794,7 +797,7 @@ in
             . "$_pi_profile_env"
           fi
           case "$_pi_session_profile" in
-            work-default|work-full)
+            work-default|work-fallback|work-browser)
               unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
               export AWS_PROFILE="lw-employee-ai"
               export AWS_REGION="eu-west-1"
@@ -814,7 +817,7 @@ in
 
           _pi_tmp_root="/tmp/personal"
           case "$_pi_session_profile" in
-            work-default|work-full) _pi_tmp_root="/tmp/lunar" ;;
+            work-default|work-fallback|work-browser) _pi_tmp_root="/tmp/lunar" ;;
           esac
 
           mkdir -p "$_pi_tmp_root"
@@ -824,7 +827,7 @@ in
 
 
           case "$_pi_session_profile" in
-            work-default|work-full)
+            work-default|work-fallback|work-browser)
               if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
                 export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
               fi
@@ -843,34 +846,6 @@ in
               ;;
           esac
         '')
-        (mkCredWrapper "pi-home-factory" piHomeFactoryPkg ''
-          ${loadPersonalLitellmCredentials}
-          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/home-factory"
-          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
-
-          if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-            export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
-          fi
-          if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
-            export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
-          fi
-        '')
-        (mkCredWrapper "pi-work-factory" piWorkFactoryPkg ''
-          unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
-          export AWS_PROFILE="lw-employee-ai"
-          export AWS_REGION="eu-west-1"
-          export AWS_SDK_LOAD_CONFIG=1
-          ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
-          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/work-factory"
-          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
-
-          if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-            export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-          fi
-          if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-            export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-          fi
-        '')
         (pkgs.writeShellApplication {
           name = "pix";
           runtimeInputs = [ pkgs.fzf ];
@@ -878,68 +853,68 @@ in
             set -euo pipefail
 
             usage() {
-              printf '%s\n' "usage: pix [--profile default|full|factory] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted" >&2
+              printf '%s\n' "usage: pix list" "       pix [--profile default|fallback|browser] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted"
+            }
+
+            list_profiles() {
+              printf '%-10s %s\n' \
+                default "Everyday engineering with Herdr orchestration (formerly experimental)." \
+                fallback "Lean engineering setup without experimental dependencies." \
+                browser "Browser automation and web/travel research, including Google Hotels."
+              printf '\n%s\n' "All profiles support --scope home|work; omitted scope is inferred from the environment or project."
             }
 
             die() {
               printf 'pix: %s\n' "$1" >&2
-              usage
+              usage >&2
               exit 2
             }
+
+            if [ "''${1:-}" = list ]; then
+              [ "$#" -eq 1 ] || die "list does not accept arguments"
+              list_profiles
+              exit 0
+            fi
 
             profile=""
             scope=""
             pi_args=()
             while [ "$#" -gt 0 ]; do
               case "$1" in
-                --profile)
-                  [ "$#" -ge 2 ] || die "--profile requires a value"
-                  profile="$2"
+                --profile|--scope)
+                  [ "$#" -ge 2 ] || die "$1 requires a value"
+                  [ -n "$2" ] || die "$1 requires a value"
+                  if [ "$1" = --profile ]; then profile="$2"; else scope="$2"; fi
                   shift 2
                   ;;
                 --profile=*)
                   profile="''${1#*=}"
+                  [ -n "$profile" ] || die "--profile requires a value"
                   shift
-                  ;;
-                --scope)
-                  [ "$#" -ge 2 ] || die "--scope requires a value"
-                  scope="$2"
-                  shift 2
                   ;;
                 --scope=*)
                   scope="''${1#*=}"
+                  [ -n "$scope" ] || die "--scope requires a value"
                   shift
                   ;;
-                -h|--help)
-                  usage
-                  exit 0
-                  ;;
-                --)
-                  shift
-                  pi_args=("$@")
-                  break
-                  ;;
-                *)
-                  pi_args=("$@")
-                  break
-                  ;;
+                -h|--help) usage; exit 0 ;;
+                --) shift; pi_args=("$@"); break ;;
+                *) pi_args=("$@"); break ;;
               esac
             done
 
             case "$profile" in
-              ""|default|full|factory) ;;
-              *) die "invalid profile: $profile (expected default, full, or factory)" ;;
+              ""|default|fallback|browser) ;;
+              *) die "invalid profile: $profile (expected default, fallback, or browser)" ;;
             esac
             case "$scope" in
               ""|home|work) ;;
               *) die "invalid scope: $scope (expected home or work)" ;;
             esac
-
             if [ -z "$profile" ]; then
-              profile="$(printf '%s\n' default full factory | fzf --prompt='Pi profile> ' --height=7 --reverse)" || exit 130
+              profile="$(printf '%s\n' default fallback browser | fzf --prompt='Pi profile> ' --height=6 --reverse)" || exit 130
             fi
-
-            if [ "$profile" = "factory" ] && [ -z "$scope" ]; then
+            if [ -z "$scope" ]; then
               _pi_scope_profile="''${NIX_AGENTS_PROFILE:-}"
               _d="$PWD"
               while [ -z "$_pi_scope_profile" ] && [ "$_d" != "/" ] && [ -n "$_d" ]; do
@@ -949,48 +924,21 @@ in
                 _d="''${_d%/*}"
               done
               case "$_pi_scope_profile" in
-                work-default|work-full) scope=work ;;
-                personal-default|personal-full) scope=home ;;
+                work-default|work-fallback|work-browser) scope=work ;;
+                personal-default|personal-fallback|personal-browser) scope=home ;;
               esac
               if [ -z "$scope" ]; then
                 case "$PWD" in
-                  "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunarOS|"$HOME"/git/github.com/kirksw/lunarOS/*)
-                    scope=work
-                    ;;
-                  *)
-                    scope=home
-                    ;;
+                  "$HOME"/git/github.com/lunarway|"$HOME"/git/github.com/lunarway/*|"$HOME"/git/github.com/kirksw/lunarOS|"$HOME"/git/github.com/kirksw/lunarOS/*) scope=work ;;
+                  *) scope=home ;;
                 esac
               fi
             fi
-
-            case "$profile:$scope" in
-              default:)
-                exec pi "''${pi_args[@]}"
-                ;;
-              default:home)
-                export NIX_AGENTS_PROFILE=personal-default
-                exec pi "''${pi_args[@]}"
-                ;;
-              default:work)
-                export NIX_AGENTS_PROFILE=work-default
-                exec pi "''${pi_args[@]}"
-                ;;
-              full:|full:home)
-                export NIX_AGENTS_PROFILE=personal-full
-                exec pi "''${pi_args[@]}"
-                ;;
-              full:work)
-                export NIX_AGENTS_PROFILE=work-full
-                exec pi "''${pi_args[@]}"
-                ;;
-              factory:home)
-                exec pi-home-factory "''${pi_args[@]}"
-                ;;
-              factory:work)
-                exec pi-work-factory "''${pi_args[@]}"
-                ;;
+            case "$scope" in
+              home) export NIX_AGENTS_PROFILE="personal-$profile" ;;
+              work) export NIX_AGENTS_PROFILE="work-$profile" ;;
             esac
+            exec pi "''${pi_args[@]}"
           '';
         })
       ])

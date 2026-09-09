@@ -29,7 +29,7 @@
   - local `mlx-dspark/Qwen3-8B-4bit` at `http://127.0.0.1:18080` when the explicit server is running
 - purpose: preserve the complete personal package, agent, and skill surface as an escape hatch
 
-Use it through `pix --profile full` or `NIX_AGENTS_PROFILE=personal-full pi`.
+This full profile remains available to non-Pi targets only.
 
 Start the local personal model explicitly before selecting it:
 
@@ -67,7 +67,48 @@ The first validated 9.5K-token Pi tool-call session used about 6.4 GiB active ML
 - provider: `work-openai-key`
 - purpose: preserve the complete work package, agent, and skill surface as an escape hatch
 
-Use it through `pix --profile full --scope work` or `NIX_AGENTS_PROFILE=work-full pi`.
+This full profile remains available to non-Pi targets only.
+
+## Pi Profiles
+
+Pi has three choices in each scope, listed by `pix list`:
+
+| Choice | Purpose | Personal profile/base | Work profile/base |
+|---|---|---|---|
+| `default` | Everyday engineering with Herdr orchestration; formerly experimental | `personal-default` / `personal-default` | `work-default` / `work-default` |
+| `fallback` | Previous lean setup without experimental dependencies | `personal-fallback` / `personal` | `work-fallback` / `work` |
+| `browser` | Browser automation and web/travel research | `personal-browser` / `personal-browser` | `work-browser` / `work-browser` |
+
+```sh
+pix list
+pix --profile default --scope home
+pix --profile fallback --scope work
+pix --profile browser --scope home
+```
+
+`pix` without `--profile` opens a menu with `default` first.
+`pi` without an explicit profile selects `personal-default` or `work-default` from the project scope.
+Use `NIX_AGENTS_PROFILE=<profile> pi` or an ancestor `.nix-agents-profile` file for explicit selection.
+Herdr child sessions inherit the parent profile through `PI_CODING_AGENT_DIR` when no explicit environment selector is set.
+`pix --scope` wins over inferred scope; otherwise scope follows `NIX_AGENTS_PROFILE`, an ancestor profile file, then work path matching, falling back to home.
+
+The default profiles use `pi-herdr-agents` instead of `tintinweb/pi-subagents` and require Herdr for delegation.
+They omit `rpiv-btw`, `context-mode`, and `pi-observational-memory` and load `/Users/kisw/git/github.com/kirksw/pi-extensions/main` (currently `pi-context-flow`).
+That checkout and its runtime dependencies must exist on the machine.
+Fallback retains the previous lean package set and does not depend on that checkout or `pi-herdr-agents`.
+
+Browser profiles include `agent-browser`, `google-hotels`, and `system-context` skills.
+They include the web-access package, allow web fetch, and have no configured MCP servers.
+Bladebro travel skills are excluded until their browser-state isolation is verified.
+The launcher uses installed Google Chrome on macOS when available; otherwise run `agent-browser install` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
+The launcher gives agent-browser separate persistent browser profiles and session names for personal and work use.
+Browser skills do not authorize bookings, payments, or other external commitments without user approval.
+
+Full, factory, and experimental are no longer selectable Pi profiles.
+Use `default` instead of experimental, `fallback` for the previous default, or `browser` for web tasks.
+Old runtime directories and sessions are not deleted by sync; removed names fail profile selection.
+Authentication is shared only within the matching personal/work scope, while settings and sessions stay separate.
+Other targets retain the shared default/full profiles described below.
 
 ## Profiles In This Repo
 
@@ -159,5 +200,8 @@ Generated configuration is organized as:
 ~/.config/nix-agents/<target>/bases/<base>/profiles/<profile>/
 ```
 
-Base state is isolated, especially between `personal`, `personal-full`, `work`, and `work-full`.
-Repository files under `agents/` remain the source of truth; generated paths must not be edited directly.
+Pi base state is isolated between default, fallback, and browser, except for authentication links within the same scope.
+Settings live under `~/.config/nix-agents/pi/bases/<base>/settings/`.
+Sessions live under `~/.local/share/nix-agents/pi/sessions/<profile>/`, honoring the corresponding XDG roots.
+Each Pi profile receives the Herdr lifecycle hook at `extensions/herdr-agent-state.ts`.
+Repository files under `agents/` remain the source of truth; do not edit generated paths directly.

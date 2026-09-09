@@ -17,13 +17,13 @@
 }:
 
 let
-  version = "0.8.2";
+  version = "0.9.0";
   src = fetchFromGitHub {
     owner = "ogulcancelik";
     repo = "herdr";
     tag = "v${version}";
     # update-hash: source
-    hash = "sha256-sEGIN3dLZasaHob3EHscWBCIQHflMQVchYmzgsETDk4=";
+    hash = "sha256-SUYF4bbaYwNgoe498VoCUzuLPcjBLQXR0o0DWjjoSnI=";
   };
 in
 herdr.overrideAttrs (old: {
@@ -33,7 +33,7 @@ herdr.overrideAttrs (old: {
     pname = "herdr";
     inherit version src;
     # update-hash: cargo
-    hash = "sha256-4VThqPwYYEsGvaOKjBeL6XAC5bnNWB6oUMWP/uXc/UQ=";
+    hash = "sha256-CW/SF/cAPDv47gS5B7XbVZEE6LC9F1a2I1TLTJ4AWdw=";
   };
 
   zigDeps = zig_0_15.fetchDeps {

@@ -47,9 +47,8 @@
 
     nix-agents.url = "github:kirksw/nix-agents/main";
     ezgit = {
-      url = "github:kirksw/ezgit/v0.0.18";
+      url = "github:kirksw/ezgit/v0.0.19";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
     git-land = {
       url = "github:kirksw/git-land/v0.1";
@@ -276,7 +275,7 @@
               export XDG_CONFIG_HOME="$TMPDIR/config"
 
               settings_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/settings"
-              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-default"
+              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-fallback"
               mkdir -p "$settings_dir" "$profile_dir"
 
               cat > "$settings_dir/mcporter.json" <<'JSON'
@@ -296,6 +295,18 @@
               ${pkgs.jq}/bin/jq -e '.mcpServers | has("google-drive") | not' "$settings_dir/mcporter.json" >/dev/null
               ${pkgs.jq}/bin/jq -e '.mcpServers.linear.url == "https://mcp.linear.app/mcp"' "$settings_dir/mcporter.json" >/dev/null
               test ! -e "$profile_dir/mcp-cache.json"
+              touch $out
+            '';
+
+            pi-experimental-profiles = pkgs.runCommand "pi-experimental-profiles" { } ''
+              export HOME="$TMPDIR/home"
+              export XDG_CONFIG_HOME="$TMPDIR/config"
+              ${appSet.sync-agents.program}
+              ${pkgs.python3}/bin/python3 ${./scripts/check-pi-experimental-profiles.py}
+              mkdir -p "$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/settings"
+              printf '{}\n' > "$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/settings/auth.json"
+              ${appSet.sync-agents.program}
+              ${pkgs.python3}/bin/python3 ${./scripts/check-pi-experimental-profiles.py}
               touch $out
             '';
 
@@ -330,7 +341,7 @@
               export XDG_CONFIG_HOME="$TMPDIR/config"
               ${appSet.sync-agents.program}
 
-              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/profiles/personal-default"
+              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/personal-default/profiles/personal-default"
               test -L "$profile_dir/models.json"
               ${pkgs.jq}/bin/jq -e \
                 '.providers["mlx-dspark"] as $provider
@@ -341,16 +352,13 @@
                    and $provider.models[0].maxTokens == 8192' \
                 "$profile_dir/models.json" >/dev/null
               ${pkgs.jq}/bin/jq -e '.defaultProvider == "zai"' "$profile_dir/settings.json" >/dev/null
-              for work_profile in work/profiles/work-default work-full/profiles/work-full; do
+              for work_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser; do
                 work_profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/$work_profile"
                 ${pkgs.jq}/bin/jq -e \
                   '.providers["mlx-dspark"].models[0].id == "Qwen3-8B-4bit"
                    and .providers.openai.baseUrl == "https://eu.api.openai.com/v1"' \
                   "$work_profile_dir/models.json" >/dev/null
               done
-              ${pkgs.jq}/bin/jq -e \
-                '.providers | has("mlx-dspark") | not' \
-                "$XDG_CONFIG_HOME/nix-agents/pi/bases/work-factory/profiles/work-factory/models.json" >/dev/null
               model_check_dir="$TMPDIR/pi-model-check"
               mkdir -p "$model_check_dir"
               cp "$profile_dir/models.json" "$model_check_dir/models.json"
@@ -380,91 +388,6 @@
               touch $out
             '';
 
-            agentic-factory-profiles =
-              let
-                localAgents = import ./agents { inherit pkgs; };
-                agentInputs = inputs // {
-                  inherit self;
-                };
-                agentsSrc = pkgs.runCommandLocal "nix-config-agents-src" { } ''
-                  mkdir -p "$out"
-                  cp -r ${./agents}/. "$out/"
-                  chmod -R u+w "$out"
-                '';
-                profileMeta = nix-agents.lib.${system}.mkProfileMeta {
-                  inherit pkgs;
-                  target = "pi";
-                  inputs = agentInputs;
-                  modules = localAgents.piFactoryModules;
-                  src = agentsSrc;
-                };
-                agentBaseSettings = import ./agents/base-settings.nix {
-                  inherit self system;
-                  lib = nixpkgs.lib;
-                };
-                expectedHomePackages = builtins.toJSON [
-                  "local:pi-anthropic-communication-policy"
-                  "local:pi-herdr"
-                  "local:pi-mlflow-tracer"
-                  "npm:@tintinweb/pi-subagents@0.14.3"
-                  "npm:pi-permission-system@0.8.0"
-                  "npm:pi-verbosity-control@0.3.0"
-                  "npm:pi-web-access@0.13.0"
-                  "local:pi-litellm-provider"
-                ];
-                expectedWorkPackages = builtins.toJSON (
-                  builtins.filter (package: package != "local:pi-litellm-provider") (
-                    builtins.fromJSON expectedHomePackages
-                  )
-                  ++ [ "local:pi-agent-journal" ]
-                );
-                expectedHomePackagesFile = pkgs.writeText "home-factory-pi-packages.json" expectedHomePackages;
-                expectedWorkPackagesFile = pkgs.writeText "work-factory-pi-packages.json" expectedWorkPackages;
-                homeSettingsFile =
-                  pkgs.writeText "home-factory-settings.json"
-                    agentBaseSettings.targets.pi."home-factory"."settings.json";
-                workSettingsFile =
-                  pkgs.writeText "work-factory-settings.json"
-                    agentBaseSettings.targets.pi."work-factory"."settings.json";
-              in
-              pkgs.runCommand "agentic-factory-profiles"
-                {
-                  nativeBuildInputs = [ pkgs.python3 ];
-                }
-                ''
-                  [ "${profileMeta."home-factory".base}" = "home-factory" ]
-                  [ "${profileMeta."work-factory".base}" = "work-factory" ]
-                  [ -z "$(find ${profileMeta."home-factory".storePath}/agents ${
-                    profileMeta."home-factory".storePath
-                  }/skills -type f -print -quit)" ]
-                  [ -z "$(find ${profileMeta."work-factory".storePath}/agents ${
-                    profileMeta."work-factory".storePath
-                  }/skills -type f -print -quit)" ]
-                  [ -f "${profileMeta."home-factory".storePath}/extensions/minimal-mode/index.ts" ]
-                  [ -f "${profileMeta."work-factory".storePath}/extensions/minimal-mode/index.ts" ]
-                  python3 - "${expectedHomePackagesFile}" "${homeSettingsFile}" "${expectedWorkPackagesFile}" "${workSettingsFile}" <<'PY'
-                  import json, sys
-                  def normalize_package(package):
-                      if package.endswith("/agents/packages/pi-anthropic-communication-policy"):
-                          return "local:pi-anthropic-communication-policy"
-                      if package.endswith("/agents/packages/pi-herdr"):
-                          return "local:pi-herdr"
-                      if package.endswith("/agents/packages/pi-agent-journal"):
-                          return "local:pi-agent-journal"
-                      if "-pi-mlflow-tracer-" in package:
-                          return "local:pi-mlflow-tracer"
-                      if package.endswith("/agents/packages/pi-litellm-provider"):
-                          return "local:pi-litellm-provider"
-                      return package
-
-                  for expected_path, settings_path in zip(sys.argv[1::2], sys.argv[2::2], strict=True):
-                      expected = json.load(open(expected_path))
-                      settings = json.load(open(settings_path))
-                      packages = [normalize_package(package) for package in settings["packages"]]
-                      assert packages == expected, (settings_path, settings["packages"])
-                  PY
-                  touch $out
-                '';
           };
 
           devShells.default = pkgs.mkShell {

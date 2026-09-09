@@ -242,11 +242,7 @@ let
   syncProfileCommands =
     target:
     let
-      profileMeta =
-        if target == "pi" then
-          (profileMetaFor target) // (profileMetaForModules target localAgents.piFactoryModules)
-        else
-          profileMetaFor target;
+      profileMeta = profileMetaFor target;
       targetSpec =
         {
           opencode = {
@@ -317,9 +313,11 @@ let
               target == "pi"
               && builtins.elem profileName [
                 "personal-default"
-                "personal-full"
+                "personal-fallback"
+                "personal-browser"
                 "work-default"
-                "work-full"
+                "work-fallback"
+                "work-browser"
               ]
             then
               ''
@@ -620,46 +618,42 @@ let
     ${allBaseSettingsCommands}
 
     remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
-    remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work-full/settings/mcp.json"
+    seed_mutable_file "${piWorkAuthFile}" "$CONFIG_BASE/pi/bases/work/settings/auth.json" 0600
 
-    seed_mutable_file \
-      "${piWorkAuthFile}" \
-      "$CONFIG_BASE/pi/bases/work/settings/auth.json" \
-      0600
-
-    seed_mutable_file \
-      "${piWorkAuthFile}" \
-      "$CONFIG_BASE/pi/bases/work-full/settings/auth.json" \
-      0600
+    # Share login state only within each scope; settings and sessions stay separate.
+    for scope in personal work; do
+      default_auth="$CONFIG_BASE/pi/bases/$scope/settings/auth.json"
+      if [ ! -f "$default_auth" ]; then
+        default_auth="$CONFIG_BASE/pi/bases/$scope/state/auth.json"
+      fi
+      for kind in default browser; do
+        profile_auth="$CONFIG_BASE/pi/bases/$scope-$kind/settings/auth.json"
+        if [ -L "$profile_auth" ] || [ ! -e "$profile_auth" ]; then
+          run ${pkgs.coreutils}/bin/ln -sfn "$default_auth" "$profile_auth"
+        fi
+      done
+    done
 
     ${allSyncCommands}
 
-    # MCPorter tool caches are derived from mutable server configuration.
-    # Clear them after profile sync so removed servers cannot remain discoverable.
-    run ${pkgs.coreutils}/bin/rm -f \
-      "$CONFIG_BASE/pi/bases/work/profiles/work-default/mcp-cache.json" \
-      "$CONFIG_BASE/pi/bases/work-full/profiles/work-full/mcp-cache.json" \
-      "$CONFIG_BASE/pi/bases/work-factory/profiles/work-factory/mcp-cache.json"
+    for scope in personal work; do
+      for kind in default browser; do
+        run ${pkgs.coreutils}/bin/ln -sfn \
+          "$CONFIG_BASE/pi/bases/$scope-$kind/settings/auth.json" \
+          "$CONFIG_BASE/pi/bases/$scope-$kind/profiles/$scope-$kind/auth.json"
+      done
+      for kind in fallback browser; do
+        base="$scope-$kind"
+        [ "$kind" != fallback ] || base="$scope"
+        seed_mutable_file "${piSubagentsSettingsFile}" \
+          "$CONFIG_BASE/pi/bases/$base/profiles/$scope-$kind/subagents.json" 0600
+      done
+    done
 
-    seed_mutable_file \
-      "${piSubagentsSettingsFile}" \
-      "$CONFIG_BASE/pi/bases/personal/profiles/personal-default/subagents.json" \
-      0600
-
-    seed_mutable_file \
-      "${piSubagentsSettingsFile}" \
-      "$CONFIG_BASE/pi/bases/personal-full/profiles/personal-full/subagents.json" \
-      0600
-
-    seed_mutable_file \
-      "${piSubagentsSettingsFile}" \
-      "$CONFIG_BASE/pi/bases/work/profiles/work-default/subagents.json" \
-      0600
-
-    seed_mutable_file \
-      "${piSubagentsSettingsFile}" \
-      "$CONFIG_BASE/pi/bases/work-full/profiles/work-full/subagents.json" \
-      0600
+    # Derived caches must not retain servers removed from profile configuration.
+    for base_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser; do
+      run ${pkgs.coreutils}/bin/rm -f "$CONFIG_BASE/pi/bases/$base_profile/mcp-cache.json"
+    done
 
     seed_mutable_file \
       "${piSubagentsSettingsFile}" \

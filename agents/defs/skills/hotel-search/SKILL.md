@@ -25,7 +25,8 @@ Search Google Hotels via agent-browser to find hotel prices, ratings, amenities,
 
 ## Session Convention
 
-Always use `--session hotels` for isolation.
+Use scope-prefixed sessions for isolation: `--session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels"`.
+Keep `AGENT_BROWSER_PROFILE` set to the dedicated profile directory; never attach to the user's normal Chrome profile.
 
 ## URL Fast Path (Preferred)
 
@@ -88,22 +89,22 @@ hotel_ts() {
 ts=$(hotel_ts 2026 3 15 2026 3 20 5)
 
 # Step 2: Open with location + dates — results load immediately
-agent-browser --session hotels open "https://www.google.com/travel/search?q=Hotels+in+Bangkok&qs=CAE4AA&ts=${ts}&ap=MAE"
-agent-browser --session hotels wait --load networkidle
-agent-browser --session hotels snapshot -i
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" open "https://www.google.com/travel/search?q=Hotels+in+Bangkok&qs=CAE4AA&ts=${ts}&ap=MAE"
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" wait --load networkidle
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" snapshot -i
 
 # Step 3: Extract results from snapshot, then close
-agent-browser --session hotels close
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" close
 ```
 
 ### Example: Specific Hotel with Dates
 
 ```bash
 ts=$(hotel_ts 2026 3 9 2026 3 12 3)
-agent-browser --session hotels open "https://www.google.com/travel/search?q=Haus+im+Tal+Munich&qs=CAE4AA&ts=${ts}&ap=MAE"
-agent-browser --session hotels wait --load networkidle
-agent-browser --session hotels snapshot -i
-agent-browser --session hotels close
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" open "https://www.google.com/travel/search?q=Haus+im+Tal+Munich&qs=CAE4AA&ts=${ts}&ap=MAE"
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" wait --load networkidle
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" snapshot -i
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" close
 ```
 
 ### Without Dates (Location Only)
@@ -111,9 +112,9 @@ agent-browser --session hotels close
 If the user doesn't specify dates, omit the `ts`, `qs`, and `ap` parameters:
 
 ```bash
-agent-browser --session hotels open "https://www.google.com/travel/search?q=Hotels+in+Bangkok"
-agent-browser --session hotels wait --load networkidle
-agent-browser --session hotels snapshot -i
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" open "https://www.google.com/travel/search?q=Hotels+in+Bangkok"
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" wait --load networkidle
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-hotels" snapshot -i
 ```
 
 Results will show "starting from" prices. Set dates interactively if the user provides them later (see [deep-dive reference](#deep-dive-reference)).
@@ -137,20 +138,20 @@ Present results as a single rich table:
 Only use when the user explicitly asks for a comparison between distinct searches (e.g., "Compare hotels in Shibuya vs Shinjuku").
 
 ```bash
-agent-browser --session shibuya open "https://www.google.com/travel/search?q=Hotels+in+Shibuya+Tokyo" &
-agent-browser --session shinjuku open "https://www.google.com/travel/search?q=Hotels+in+Shinjuku+Tokyo" &
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shibuya" open "https://www.google.com/travel/search?q=Hotels+in+Shibuya+Tokyo" &
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shinjuku" open "https://www.google.com/travel/search?q=Hotels+in+Shinjuku+Tokyo" &
 wait
 
-agent-browser --session shibuya wait --load networkidle &
-agent-browser --session shinjuku wait --load networkidle &
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shibuya" wait --load networkidle &
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shinjuku" wait --load networkidle &
 wait
 
 # Set dates in both sessions, then snapshot both
-agent-browser --session shibuya snapshot -i
-agent-browser --session shinjuku snapshot -i
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shibuya" snapshot -i
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shinjuku" snapshot -i
 
-agent-browser --session shibuya close &
-agent-browser --session shinjuku close &
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shibuya" close &
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-shinjuku" close &
 wait
 ```
 
@@ -198,7 +199,7 @@ After presenting results, **always ask the user** if they'd like you to check fo
 
 ### What to Check
 
-Open the hotel's own website in a **new session** (`--session direct`) and look for:
+Open the hotel's own website in a **new session** (`--session "${AGENT_BROWSER_SESSION:-personal-browser}-direct"`) and look for:
 
 1. **Direct booking price** — often 5-15% cheaper than OTAs (Booking.com, Expedia, etc.)
 2. **Promo codes** — look for banners, pop-ups, or a "offers"/"deals"/"promotions" page
@@ -208,11 +209,11 @@ Open the hotel's own website in a **new session** (`--session direct`) and look 
 
 ```bash
 # After Google Hotels search is done, visit hotel's direct site
-agent-browser --session direct open "https://www.example-hotel.com"
-agent-browser --session direct wait --load networkidle
-agent-browser --session direct snapshot -i
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-direct" open "https://www.example-hotel.com"
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-direct" wait --load networkidle
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-direct" snapshot -i
 # Look for: promo banners, "offers" or "deals" links, booking widget prices
-agent-browser --session direct close
+agent-browser --session "${AGENT_BROWSER_SESSION:-personal-browser}-direct" close
 ```
 
 ### Chain Hotel Loyalty Programs

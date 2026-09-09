@@ -309,6 +309,15 @@ in
       '';
     };
 
+    home.activation.herdrAnnotate = lib.mkIf pkgs.stdenv.isDarwin (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${pkgs.herdr}/bin/herdr plugin link \
+          ${
+            self.packages.${pkgs.stdenv.hostPlatform.system}.herdr-annotate
+          }/share/herdr/plugins/annotate --enabled
+      ''
+    );
+
     xdg.configFile."herdr/config.toml" = {
       force = true;
       text = ''
@@ -380,6 +389,37 @@ in
         close_pane = "prefix+x"
         zoom = "prefix+m"
         resize_mode = "prefix+r"
+
+        # Preserve zoom, notification, and worktree shortcuts.
+        [[keys.command]]
+        key = "prefix+a"
+        type = "plugin_action"
+        command = "annotate.capture"
+        description = "annotate text"
+
+        [[keys.command]]
+        key = "prefix+shift+a"
+        type = "plugin_action"
+        command = "annotate.copy-context"
+        description = "copy annotations as context"
+
+        [[keys.command]]
+        key = "prefix+u"
+        type = "plugin_action"
+        command = "annotate.manage"
+        description = "manage annotations"
+
+        [[keys.command]]
+        key = "prefix+v"
+        type = "plugin_action"
+        command = "annotate.open"
+        description = "review documents"
+
+        [[keys.command]]
+        key = "prefix+shift+v"
+        type = "plugin_action"
+        command = "annotate.last"
+        description = "review agent reply"
 
         [[keys.command]]
         key = "cmd+p"

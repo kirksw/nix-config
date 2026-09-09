@@ -11,7 +11,6 @@ let
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piMlflowTracerPackage = "${self.packages.${system}.pi-mlflow-tracer}";
   piLitellmProviderPackage = "${self}/agents/packages/pi-litellm-provider";
-  bladebroPackage = "npm:bladebro@3.9.0";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
 
   piPackageRefs = [
@@ -48,26 +47,36 @@ let
       package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
     ) piPackageRefs
     ++ [ piLitellmProviderPackage ];
-  piPersonalFullPackageRefs = piPackageRefs ++ [
-    bladebroPackage
-    piLitellmProviderPackage
-  ];
-  piWorkFullPackageRefs = piPackageRefs ++ [ agenticOSPackage ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
-  ) piWorkFullPackageRefs;
-  piFactoryPackageRefs = [
-    piAnthropicCommunicationPolicyPackage
-    piHerdrPackage
-    piMlflowTracerPackage
-    "npm:@tintinweb/pi-subagents@0.14.3"
-    "npm:pi-permission-system@0.8.0"
-    "npm:pi-verbosity-control@0.3.0"
-    "npm:pi-web-access@0.13.0"
-  ];
-  piHomeFactoryPackageRefs = piFactoryPackageRefs ++ [ piLitellmProviderPackage ];
-  piWorkFactoryPackageRefs = piFactoryPackageRefs ++ [ piAgentJournalPackage ];
-
+  ) (piPackageRefs ++ [ agenticOSPackage ]);
+  mkPiExperimentalSettings =
+    defaults:
+    builtins.toJSON (
+      defaults
+      // {
+        packages =
+          map
+            (
+              package:
+              if packageSource package == "npm:@tintinweb/pi-subagents@0.14.3" then
+                "npm:pi-herdr-agents@1.5.1"
+              else
+                package
+            )
+            (
+              builtins.filter (
+                package:
+                !(builtins.elem (packageSource package) [
+                  "npm:@juicesharp/rpiv-btw@1.20.0"
+                  "npm:context-mode@1.0.169"
+                  "npm:pi-observational-memory@3.0.3"
+                ])
+              ) defaults.packages
+            )
+          ++ [ "/Users/kisw/git/github.com/kirksw/pi-extensions/main" ];
+      }
+    );
   # Rose Pine (main) — matches the Herdr terminal theme (`theme.name = "rose-pine"`).
   # Palette: https://rosepinetheme.com
   piRosePineTheme = {
@@ -170,21 +179,13 @@ let
     subagents.disableBuiltins = true;
   };
 
-  piPersonalSettings = builtins.toJSON (
+  piPersonalSettings = builtins.toJSON piPersonalSettingsAttrs;
+  piPersonalSettingsAttrs =
     piPersonalModelDefaults
     // piThemeSettings
     // {
       packages = piPersonalPackageRefs;
-    }
-  );
-
-  piPersonalFullSettings = builtins.toJSON (
-    piPersonalModelDefaults
-    // piThemeSettings
-    // {
-      packages = piPersonalFullPackageRefs;
-    }
-  );
+    };
 
   piMlxDsparkProvider = {
     baseUrl = "http://127.0.0.1:18080";
@@ -203,19 +204,12 @@ let
     providers.mlx-dspark = piMlxDsparkProvider;
   };
 
-  piHomeFactorySettings = builtins.toJSON (
-    {
-      packages = piHomeFactoryPackageRefs;
-      subagents.disableBuiltins = true;
-    }
-    // piThemeSettings
-  );
-
   piWorkModelDefaults = {
     defaultProvider = "openai";
     defaultModel = "gpt-5.6-terra";
     defaultThinkingLevel = "medium";
     enabledModels = [
+      "gpt-6-astra"
       "gpt-5.6-sol"
       "gpt-5.6-terra"
       "gpt-5.6-luna"
@@ -233,42 +227,20 @@ let
     ];
   };
 
-  piWorkSettings = builtins.toJSON (
+  piWorkSettings = builtins.toJSON piWorkSettingsAttrs;
+  piWorkSettingsAttrs =
     piWorkModelDefaults
     // piThemeSettings
     // {
       packages = piWorkPackageRefs;
       subagents.disableBuiltins = true;
-    }
-  );
-
-  piWorkFullSettings = builtins.toJSON (
-    piWorkModelDefaults
-    // piThemeSettings
-    // {
-      packages = piWorkFullPackageRefs;
-      subagents.disableBuiltins = true;
-    }
-  );
-
-  piWorkFactorySettings = builtins.toJSON (
-    piWorkModelDefaults
-    // piThemeSettings
-    // {
-      packages = piWorkFactoryPackageRefs;
-      subagents.disableBuiltins = true;
-    }
-  );
+    };
 
   piWorkModels = builtins.toJSON {
     providers = {
       openai.baseUrl = "https://eu.api.openai.com/v1";
       mlx-dspark = piMlxDsparkProvider;
     };
-  };
-
-  piWorkFactoryModels = builtins.toJSON {
-    providers.openai.baseUrl = "https://eu.api.openai.com/v1";
   };
 
   piPersonalMcpServers = {
@@ -348,7 +320,6 @@ let
   '';
 
   piPersonalEnv = mkPiPersonalEnv "personal";
-  piPersonalFullEnv = mkPiPersonalEnv "personal-full";
 
   mkPiWorkEnv =
     {
@@ -374,31 +345,6 @@ let
     base = "work";
     agenticosToolMode = "lazy";
   };
-  piWorkFullEnv = mkPiWorkEnv {
-    base = "work-full";
-    agenticosToolMode = "eager";
-  };
-
-  piHomeFactoryEnv = ''
-    export PI_CACHE_RETENTION="long"
-    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
-    export MLFLOW_EXPERIMENT_NAME="pi-home-traces"
-    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/home-factory/settings/mcporter.json"
-  '';
-
-  piWorkFactoryEnv = ''
-    export PI_CACHE_RETENTION="long"
-    export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
-    export MLFLOW_EXPERIMENT_NAME="pi-work-traces"
-    export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/work-factory/settings/mcporter.json"
-    if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-      export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-    fi
-    export AWS_PROFILE="lw-employee-ai"
-    export AWS_REGION="eu-west-1"
-    export AWS_SDK_LOAD_CONFIG=1
-  '';
-
   piWorkAuth = builtins.toJSON {
     openai = {
       type = "api_key";
@@ -440,35 +386,46 @@ in
         "mcporter.json" = piPersonalMcporter;
         "env" = piPersonalEnv;
       };
-      personal-full = {
-        "settings.json" = piPersonalFullSettings;
-        "models.json" = piPersonalModels;
-        "mcporter.json" = piPersonalMcporter;
-        "env" = piPersonalFullEnv;
-      };
-      home-factory = {
-        "settings.json" = piHomeFactorySettings;
-        "mcporter.json" = piEmptyMcporter;
-        "env" = piHomeFactoryEnv;
-      };
       work = {
         "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
         "settings.json" = piWorkSettings;
         "env" = piWorkEnv;
       };
-      work-full = {
+      personal-default = {
+        "mcporter.json" = piPersonalMcporter;
+        "models.json" = piPersonalModels;
+        "settings.json" = mkPiExperimentalSettings piPersonalSettingsAttrs;
+        "env" = mkPiPersonalEnv "personal-default";
+      };
+      work-default = {
         "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
-        "settings.json" = piWorkFullSettings;
-        "env" = piWorkFullEnv;
+        "settings.json" = mkPiExperimentalSettings piWorkSettingsAttrs;
+        "env" = mkPiWorkEnv {
+          base = "work-default";
+          agenticosToolMode = "lazy";
+        };
       };
-      work-factory = {
-        "auth.json" = piWorkAuth;
+      personal-browser = {
+        "settings.json" = piPersonalSettings;
+        "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
-        "models.json" = piWorkFactoryModels;
-        "settings.json" = piWorkFactorySettings;
-        "env" = piWorkFactoryEnv;
+        "env" = mkPiPersonalEnv "personal-browser";
+      };
+      work-browser = {
+        "settings.json" = builtins.toJSON (
+          piWorkSettingsAttrs
+          // {
+            packages = builtins.filter (package: packageSource package != agenticOSPackage) piWorkPackageRefs;
+          }
+        );
+        "models.json" = piWorkModels;
+        "mcporter.json" = piEmptyMcporter;
+        "env" = mkPiWorkEnv {
+          base = "work-browser";
+          agenticosToolMode = "lazy";
+        };
       };
     };
   };

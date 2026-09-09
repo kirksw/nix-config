@@ -15,10 +15,25 @@ let
 
   piTargetModules = [
     ./targets/pi/provider-overrides.nix
+    ./targets/pi/experimental-profiles.nix
   ];
 
-  piModules = defaultModules ++ piTargetModules;
-  piFactoryModules = [ ./presets/factory.nix ];
+  piProfiles = import ./presets/profiles.nix { };
+  piProfilesLean = piProfiles // {
+    bases = builtins.removeAttrs piProfiles.bases [
+      "personal-full"
+      "work-full"
+    ];
+    profiles = builtins.removeAttrs piProfiles.profiles [
+      "personal-full"
+      "work-full"
+    ];
+  };
+  piModules = [
+    ./presets/default.nix
+    piProfilesLean
+  ]
+  ++ piTargetModules;
 
   sessionModules =
     if pkgs == null then
@@ -34,7 +49,6 @@ in
     tieredModules
     piTargetModules
     piModules
-    piFactoryModules
     sessionModules
     ;
 
