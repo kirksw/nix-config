@@ -74,7 +74,10 @@ let
                 ])
               ) defaults.packages
             )
-          ++ [ "/Users/kisw/git/github.com/kirksw/pi-extensions/main" ];
+          ++ [
+            "/Users/kisw/git/github.com/kirksw/pi-extensions/main"
+            "npm:@plannotator/pi-extension"
+          ];
       }
     );
   # Rose Pine (main) — matches the Herdr terminal theme (`theme.name = "rose-pine"`).
