@@ -394,6 +394,23 @@ in
                     reasoning = true;
                   }
                   {
+                    id = "deepseek-flash";
+                    name = "DeepSeek Flash";
+                    # The gateway alias currently omits capability metadata.
+                    contextWindow = 128000;
+                    maxTokens = 16384;
+                    reasoning = false;
+                    input = [ "text" ];
+                  }
+                  {
+                    id = "deepseek-v4-pro";
+                    name = "DeepSeek V4 Pro";
+                    contextWindow = 1000000;
+                    maxTokens = 393216;
+                    reasoning = true;
+                    input = [ "text" ];
+                  }
+                  {
                     id = "minimax-m2";
                     name = "MiniMax M2";
                     contextWindow = 204800;

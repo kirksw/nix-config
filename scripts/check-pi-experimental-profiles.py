@@ -26,8 +26,24 @@ for scope in ("personal", "work"):
     expected = baseline | {"packages": [
         new if p == old else p for p in baseline["packages"]
         if (p["source"] if isinstance(p, dict) else p) not in excluded
-    ] + ["/Users/kisw/git/github.com/kirksw/pi-extensions/main"]}
+    ] + [
+        "/Users/kisw/git/github.com/kirksw/pi-extensions/main",
+        "npm:@plannotator/pi-extension",
+    ]}
     assert actual == expected, f"{scope}: unexpected default settings"
+    for profile in (fallback, default, browser):
+        settings = json.loads((profile / "settings.json").read_text())
+        deepseek = {"litellm/deepseek-flash", "litellm/deepseek-v4-pro"}
+        if scope == "personal":
+            assert deepseek <= set(settings["enabledModels"])
+            manifest = (profile / "AGENTS.md").read_text()
+            assert "openai-codex/" not in manifest
+            assert "litellm/openai/gpt-6-astra" in manifest
+            assert "| E | litellm/openai/gpt-5.6-luna |" in manifest
+            for agent in (profile / "agents").glob("*.md"):
+                assert "model: openai-codex/" not in agent.read_text(), agent
+        else:
+            assert not deepseek.intersection(settings["enabledModels"])
     browser_settings = json.loads((browser / "settings.json").read_text())
     assert "npm:pi-web-access@0.13.0" in browser_settings["packages"]
     assert new not in browser_settings["packages"]

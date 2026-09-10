@@ -48,3 +48,11 @@ nix flake show --all-systems 2>/dev/null | rg 'sync'
 ```
 
 This repo exposes `sync-agents` for full generated agent config sync. Lunar backend practice skills are exposed to work profiles through the `lunar-skills` MCP server; `sync-work-skills` remains available only as a legacy/manual overlay helper.
+
+## Pi Extension Dependency Drift
+
+A missing Effect export such as `effect/dist/ByteSize.js` can indicate incompatible prerelease dependencies, not a corrupt install.
+Compare installed transitive versions and peer requirements before reinstalling.
+For coupled prerelease dependencies, use a reviewed lockfile and explicit alignment overrides where needed; pinning the top-level extension alone is insufficient.
+Run a built-output extension-load check through Pi's actual loader after upgrades, such as `nix build .#checks.aarch64-darwin.pi-fast-mode-extension-load --no-link`.
+Keep fixes in repository package definitions rather than generated profile directories.

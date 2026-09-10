@@ -30,7 +30,7 @@ let
     "npm:pi-simplify@0.2.2"
     "npm:pi-verbosity-control@0.3.0"
     "npm:pi-web-access@0.13.0"
-    "npm:@pi-plugins/fast-mode@0.1.8"
+    "${self.packages.${system}.pi-fast-mode}"
     "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
@@ -178,6 +178,8 @@ let
       "litellm/minimax-m3"
       "litellm/glm-5.3"
       "litellm/glm-5.3-flash"
+      "litellm/deepseek-flash"
+      "litellm/deepseek-v4-pro"
     ];
     subagents.disableBuiltins = true;
   };

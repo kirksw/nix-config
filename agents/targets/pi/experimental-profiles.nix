@@ -6,6 +6,17 @@ let
     scope:
     shared.profiles."${scope}-default"
     // {
+      tierMapping = lib.mapAttrs (
+        tier: models:
+        if scope != "personal" then
+          models
+        else if tier == "E" then
+          [ "litellm/openai/gpt-5.6-luna" ]
+        else
+          map (model: lib.replaceStrings [ "openai-codex/" ] [ "litellm/openai/" ] model) (
+            builtins.filter (model: !(lib.hasPrefix "openai-codex/gpt-5.4" model)) models
+          )
+      ) shared.profiles."${scope}-default".tierMapping;
       skills =
         shared.profiles."${scope}-default".skills ++ lib.optional (scope == "personal") "codex-imagegen";
     };

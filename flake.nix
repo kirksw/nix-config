@@ -369,6 +369,21 @@
               touch $out
             '';
 
+            pi-fast-mode-extension-load = pkgs.runCommand "pi-fast-mode-extension-load" { } ''
+              export HOME="$TMPDIR/home"
+              mkdir -p "$HOME"
+              ${pkgs.nodejs_22}/bin/node --input-type=module <<'JS'
+              import { loadExtensions } from '${self.packages.${system}.pi}/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/extensions/loader.js';
+              const result = await loadExtensions([
+                '${self.packages.${system}.pi-fast-mode}/node_modules/@pi-plugins/fast-mode/dist/index.mjs'
+              ], process.cwd());
+              if (result.errors.length || result.extensions.length !== 1) {
+                throw new Error(JSON.stringify(result.errors));
+              }
+              JS
+              touch $out
+            '';
+
             pi-herdr-extension-load = pkgs.runCommand "pi-herdr-extension-load" { } ''
               export HOME="$TMPDIR/home"
               export PI_CODING_AGENT_DIR="$TMPDIR/pi-agent"

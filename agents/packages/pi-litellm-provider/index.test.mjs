@@ -290,3 +290,24 @@ for (const supports_reasoning of [true, false]) {
     }
   });
 }
+
+test("DeepSeek aliases preserve gateway metadata and conservative missing-metadata defaults", () => {
+  const [flash, pro] = toProviderModels([
+    { model_name: "deepseek-flash", model_info: {} },
+    { model_name: "deepseek-v4-pro", model_info: {
+      max_input_tokens: 1_000_000,
+      max_output_tokens: 393_216,
+      supports_reasoning: true,
+      supports_vision: false,
+    } },
+  ]);
+  assert.equal(flash.id, "deepseek-flash");
+  assert.equal(flash.contextWindow, 128_000);
+  assert.equal(flash.maxTokens, 16_384);
+  assert.equal(flash.reasoning, false);
+  assert.equal(pro.id, "deepseek-v4-pro");
+  assert.equal(pro.contextWindow, 1_000_000);
+  assert.equal(pro.maxTokens, 393_216);
+  assert.equal(pro.reasoning, true);
+  assert.deepEqual(pro.input, ["text"]);
+});

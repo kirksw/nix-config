@@ -1,0 +1,17 @@
+{
+  "name": "pi-fast-mode-locked",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "node_modules/@pi-plugins/fast-mode/dist/index.mjs"
+    ]
+  },
+  "dependencies": {
+    "@pi-plugins/fast-mode": "0.1.11"
+  },
+  "overrides": {
+    "@effect/platform-node-shared": "4.0.0-beta.103"
+  }
+}
