@@ -402,13 +402,18 @@ let
     src = localAgentsSrc;
   };
 
-  piPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
-    inherit pkgs;
-    target = "pi";
-    tool = self.packages.${system}.pi;
-    agentSystem = piAgentSystem;
-    profileMeta = piProfileMeta;
-  });
+  # Force the profile already selected by the outer wrapper. Otherwise the
+  # library wrapper repeats cwd detection and can discard an explicit selection.
+  piPkgs = lib.mapAttrs (
+    profile: _:
+    nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
+      inherit pkgs profile;
+      target = "pi";
+      tool = self.packages.${system}.pi;
+      agentSystem = piAgentSystem;
+      profileMeta = piProfileMeta;
+    })
+  ) piProfileMeta;
 
   mkOmnigentServerScript =
     profile: port: envBlock:
@@ -740,7 +745,7 @@ in
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         fliPackage
         pkgs.agent-browser
-        (mkCredWrapper "pi" piPkg ''
+        (mkCredWrapper "pi" piPkgs.personal-default ''
           _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
           # Herdr children pass the parent agent directory, not its profile selector.
           if [ -z "$_pi_session_profile" ]; then
@@ -791,6 +796,13 @@ in
           esac
           export NIX_AGENTS_PROFILE="$_pi_session_profile"
           export PI_CODING_AGENT_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile"
+          case "$_pi_session_profile" in
+            ${lib.concatStringsSep "\n" (
+              lib.mapAttrsToList (
+                profile: package: "${profile}) _nix_agents_exec=(\"${package}/bin/pi\") ;;"
+              ) piPkgs
+            )}
+          esac
           _pi_profile_env="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings/env"
           if [ -f "$_pi_profile_env" ]; then
             # Generated profile environment is trusted Nix configuration.
