@@ -1,0 +1,65 @@
+--- a/dist/runtime/connection-cache.js
++++ b/dist/runtime/connection-cache.js
+@@ -1,3 +1,4 @@
++import { terminateHttpSession } from './terminate-http-session.js';
+ import { closeTransportAndWait } from '../runtime-process-utils.js';
+ import { shouldResetConnection } from './errors.js';
+ import { ReplayTransport } from './replay-transport.js';
+@@ -403,6 +404,7 @@
+         }
+     }
+     async closeContext(context) {
++        await terminateHttpSession(context.transport, this.logger);
+         const propagateReplayCloseErrors = context.transport instanceof ReplayTransport;
+         let closeError;
+         try {
+--- a/dist/runtime/http-transport.js
++++ b/dist/runtime/http-transport.js
+@@ -1,4 +1,5 @@
+ import { SdkErrorCode, SdkHttpError, SSEClientTransport, StreamableHTTPClientTransport, } from '@modelcontextprotocol/client';
++import { terminateHttpSession } from './terminate-http-session.js';
+ import { analyzeConnectionError } from '../error-classifier.js';
+ import { createOAuthSession } from '../oauth.js';
+ import { materializeHeaders } from '../runtime-header-utils.js';
+@@ -111,6 +112,9 @@
+     await oauthSession?.close().catch(() => { });
+ }
+ function shouldAbortSseFallback(error) {
++    const status = extractTransportStatusCode(error) ?? analyzeConnectionError(error).statusCode;
++    if (status >= 500 && status <= 599)
++        return true;
+     if (isPostAuthConnectError(error))
+         return !isLegacySseTransportMismatch(error);
+     return isOAuthFlowError(error) || error instanceof OAuthTimeoutError;
+@@ -128,6 +132,7 @@
+         return (await connectWithAuth(client, transport, oauthSession, logger, connectOptions));
+     }
+     catch (error) {
++        await terminateHttpSession(transport, logger);
+         if (!connectOptions.signal?.aborted) {
+             await closeTransportAndWait(logger, transport).catch(() => { });
+         }
+--- /dev/null
++++ b/dist/runtime/terminate-http-session.js
+@@ -0,0 +1,21 @@
++// Best effort: DELETE must precede close(), which aborts the HTTP transport.
++export async function terminateHttpSession(transport, logger) {
++    if (typeof transport.terminateSession !== 'function')
++        return;
++    let timer;
++    try {
++        await Promise.race([
++            Promise.resolve().then(() => transport.terminateSession()),
++            new Promise((_, reject) => {
++                timer = setTimeout(() => reject(new Error('session termination timed out')), 1000);
++            }),
++        ]);
++    }
++    catch {
++        // Do not mask a tool/connection error or log credential-bearing errors.
++        logger.warn('HTTP MCP session termination failed; closing transport anyway.');
++    }
++    finally {
++        clearTimeout(timer);
++    }
++}

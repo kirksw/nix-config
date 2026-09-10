@@ -1,0 +1,1 @@
+{"name":"nix-config-mcporter-tooling","private":true,"type":"module","dependencies":{"mcporter":"0.13.3"}}

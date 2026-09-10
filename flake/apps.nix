@@ -161,7 +161,14 @@ let
     ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
     trap '${pkgs.coreutils}/bin/rm -f "$temporary"' EXIT
     echo "Generating $server..."
-    ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli "$server" --runtime node --bundle "$temporary" --minify
+    export PATH="${
+      lib.makeBinPath [
+        pkgs.nodejs_24
+        pkgs.patch
+        pkgs.coreutils
+      ]
+    }:$PATH"
+    bash scripts/mcporter/run.sh --config "$config" generate-cli "$server" --runtime node --bundle "$temporary" --minify
     if [ "$server" = affine ]; then
       ${pkgs.nodejs_22}/bin/node -e '
         const fs = require("node:fs");

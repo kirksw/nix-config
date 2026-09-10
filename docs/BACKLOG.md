@@ -20,6 +20,7 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P3 XS Tune `affine-mcp` HTTP session limits (`AFFINE_MCP_HTTP_MAX_SESSIONS`, default 32, and `AFFINE_MCP_HTTP_SESSION_IDLE_TIMEOUT_MS`, default 30 min) in the deployment manifests if idle-capacity exhaustion recurs from clients that do not send session DELETE (feat-mcporter-session-cleanup)
 - P2 S Add a safe retirement path for legacy Pi work-experimental, work-factory, and work-full settings directories, preserving session and auth data; these unsynced directories retain bare Claude model entries (feat-work-claude-bedrock-only)
 
 - P2 M Make generated-profile synchronization race-safe with shared advisory locking, staged replacement, and bounded cleanup retries; document that concurrent wrappers can race with `sync-agents` (feat-mcporter-migration)
@@ -50,6 +51,8 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 ## Done
 
 _Move items here when completed, with date._
+
+- 2026-09-10 P2 XS Track `scripts/mcporter/` tooling in git and commit the regenerated `agents/defs/skills/affine/generated/affine.cjs` (feat-mcporter-session-cleanup)
 
 - 2026-07-09 P2 XS Confirm `sync-agents` flake app exists and remove the stale missing-app item (repository hygiene)
 - 2026-07-09 P2 XS Confirm the flake input points to `nix-agents/main` and remove the stale branch-merge item (repository hygiene)
