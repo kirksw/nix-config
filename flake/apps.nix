@@ -142,7 +142,9 @@ let
       affine)
         config="$HOME/.config/nix-agents/pi/bases/personal-browser/settings/mcporter.json"
         output_dir="agents/defs/skills/affine/generated"
-        AFFINE_MCP_HTTP_TOKEN="$(${pkgs.sops}/bin/sops --decrypt --extract '["token"]' secrets/assistants/affine-mcp.yaml)"
+        if [ -z "''${AFFINE_MCP_HTTP_TOKEN:-}" ]; then
+          AFFINE_MCP_HTTP_TOKEN="$(${pkgs.sops}/bin/sops --decrypt --extract '["token"]' secrets/assistants/affine-mcp.yaml)"
+        fi
         export AFFINE_MCP_HTTP_TOKEN
         ;;
       *) echo "Usage: update-home-mcp-skills [xcode|affine]" >&2; exit 1 ;;

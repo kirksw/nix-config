@@ -572,6 +572,13 @@ in
 
     # --- sops secrets (shared across all ai tools) ---
     sops.secrets = lib.mkMerge [
+      (lib.mkIf config.homeModules.piCodingAgent.enable {
+        "api/affine/mcp-token" = {
+          sopsFile = "${self}/secrets/assistants/affine-mcp.yaml";
+          key = "token";
+          mode = "0400";
+        };
+      })
       (lib.mkIf
         (
           config.homeModules.opencode.enable
@@ -849,6 +856,12 @@ in
               ;;
             *)
               ${loadPersonalLitellmCredentials}
+              if [ "$_pi_session_profile" = "personal-browser" ]; then
+                AFFINE_MCP_TOKEN_PATH="${config.sops.secrets."api/affine/mcp-token".path}"
+                if [ -f "$AFFINE_MCP_TOKEN_PATH" ]; then
+                  export AFFINE_MCP_HTTP_TOKEN="$(tr -d '[:space:]' < "$AFFINE_MCP_TOKEN_PATH")"
+                fi
+              fi
               if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
                 export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
               fi
