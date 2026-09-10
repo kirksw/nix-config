@@ -20,7 +20,6 @@ let
       autoload = false;
     }
     "npm:pi-cost@0.1.1"
-    "npm:pi-dynamic-workflows@1.0.1"
     "npm:@llblab/pi-telegram@0.26.16"
     piAnthropicCommunicationPolicyPackage
     piHerdrPackage
