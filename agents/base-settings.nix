@@ -219,10 +219,6 @@ let
       "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
-      "claude-opus-4-8"
-      "claude-sonnet-4-6"
-      "claude-opus-5"
-      "claude-sonnet-5"
       "amazon-bedrock/eu.anthropic.claude-sonnet-5"
       "amazon-bedrock/eu.anthropic.claude-opus-5"
       "amazon-bedrock/eu.anthropic.claude-opus-4-8"
@@ -352,9 +348,6 @@ let
     openai = {
       type = "api_key";
       key = "$OPENAI_API_KEY";
-    };
-    anthropic = {
-      type = "oauth";
     };
   };
 
