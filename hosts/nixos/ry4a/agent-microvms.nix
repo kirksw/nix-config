@@ -268,7 +268,16 @@ let
         else
           { };
     in
-    sopsKeys // directSopsKeys;
+    sopsKeys
+    // directSopsKeys
+    // {
+      "assistants/${sf}/affine_mcp_token" = {
+        sopsFile = "${self}/secrets/assistants/affine-mcp.yaml";
+        key = "token";
+        mode = "0440";
+        group = "keys";
+      };
+    };
 
   mkVm =
     assistant:

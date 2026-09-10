@@ -145,6 +145,7 @@ in
         {
           echo "TELEGRAM_BOT_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/telegram_bot_token)"
           echo "GATEWAY_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/gateway_token)"
+          echo "AFFINE_MCP_HTTP_TOKEN=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/affine_mcp_token)"
           if [ -f ${cfg.sopsDir}/llm_router_api_key ]; then
             echo "LLM_ROUTER_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/llm_router_api_key)"
           fi
@@ -236,6 +237,13 @@ in
               waitForBootSync = false;
             };
           };
+        };
+        mcp.servers.affine = {
+          url = "http://nixos-ry6a.tail54de03.ts.net:31410/mcp";
+          transport = "streamable-http";
+          headers.Authorization = "Bearer \${AFFINE_MCP_HTTP_TOKEN}";
+          supportsParallelToolCalls = false;
+          timeout = 60;
         };
         plugins.entries.memory-core = {
           enabled = true;

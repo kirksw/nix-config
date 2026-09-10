@@ -406,8 +406,17 @@ in
       personal-browser = {
         "settings.json" = piPersonalSettings;
         "models.json" = piPersonalModels;
-        "mcporter.json" = piEmptyMcporter;
-        "env" = mkPiPersonalEnv "personal-browser";
+        "mcporter.json" = builtins.toJSON {
+          imports = [ ];
+          mcpServers.affine = {
+            url = "http://nixos-ry6a.tail54de03.ts.net:31410/mcp";
+            headers.Authorization = "Bearer \${AFFINE_MCP_HTTP_TOKEN}";
+            lifecycle = "ephemeral";
+          };
+        };
+        "env" = mkPiPersonalEnv "personal-browser" + ''
+          export AFFINE_MCP_SOPS_FILE="${self}/secrets/assistants/affine-mcp.yaml"
+        '';
       };
       work-browser = {
         "settings.json" = builtins.toJSON (

@@ -29,6 +29,10 @@ let
         "agent-browser"
         "google-hotels"
         "system-context"
+      ]
+      ++ lib.optionals (scope == "personal") [
+        "home-mcp"
+        "affine"
       ];
       permissions = {
         edit = null;
@@ -39,6 +43,7 @@ let
     };
 in
 {
+  imports = [ ../../defs/skills/affine ];
   bases = {
     personal = {
       pathPrefixes = lib.mkForce [ ];

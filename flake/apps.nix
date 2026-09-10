@@ -133,9 +133,21 @@ let
 
     repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel)"
     cd "$repo_root"
-    config="$HOME/.config/nix-agents/pi/bases/personal/settings/mcporter.json"
-    output_dir="agents/defs/skills/home-mcp/generated"
-    target="$output_dir/xcode.cjs"
+    server="''${1:-xcode}"
+    case "$server" in
+      xcode)
+        config="$HOME/.config/nix-agents/pi/bases/personal/settings/mcporter.json"
+        output_dir="agents/defs/skills/home-mcp/generated"
+        ;;
+      affine)
+        config="$HOME/.config/nix-agents/pi/bases/personal-browser/settings/mcporter.json"
+        output_dir="agents/defs/skills/affine/generated"
+        AFFINE_MCP_HTTP_TOKEN="$(${pkgs.sops}/bin/sops --decrypt --extract '["token"]' secrets/assistants/affine-mcp.yaml)"
+        export AFFINE_MCP_HTTP_TOKEN
+        ;;
+      *) echo "Usage: update-home-mcp-skills [xcode|affine]" >&2; exit 1 ;;
+    esac
+    target="$output_dir/$server.cjs"
     temporary="$target.tmp"
 
     if [ ! -r "$config" ]; then
@@ -145,18 +157,24 @@ let
     fi
 
     ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
-    ${pkgs.coreutils}/bin/rm -f "$temporary"
-    echo "Generating xcode..."
-    if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli xcode --runtime node --bundle "$temporary" --minify; then
-      ${pkgs.coreutils}/bin/mv "$temporary" "$target"
-      ${pkgs.perl}/bin/perl -pi -e 's/\t/  /g; s/[ \t]+$//' "$target"
-    else
-      ${pkgs.coreutils}/bin/rm -f "$temporary"
-      echo "Could not generate the Xcode MCP CLI wrapper." >&2
-      exit 1
+    trap '${pkgs.coreutils}/bin/rm -f "$temporary"' EXIT
+    echo "Generating $server..."
+    ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli "$server" --runtime node --bundle "$temporary" --minify
+    if [ "$server" = affine ]; then
+      ${pkgs.nodejs_22}/bin/node -e '
+        const fs = require("node:fs");
+        const bundle = fs.readFileSync(process.argv[1], "utf8");
+        if (bundle.includes(process.env.AFFINE_MCP_HTTP_TOKEN)) {
+          throw new Error("Refusing to save a wrapper containing the AFFiNE token");
+        }
+        if (!bundle.includes("$" + "{AFFINE_MCP_HTTP_TOKEN}")) {
+          throw new Error("Generated wrapper lost its runtime token placeholder");
+        }
+      ' "$temporary"
     fi
-
-    echo "Generated complete Xcode MCP CLI wrapper at $target."
+    ${pkgs.coreutils}/bin/mv "$temporary" "$target"
+    ${pkgs.perl}/bin/perl -pi -e 's/\t/  /g; s/[ \t]+$//' "$target"
+    echo "Generated complete $server MCP CLI wrapper at $target."
   '';
 
   localAgents = import ../agents { inherit pkgs; };

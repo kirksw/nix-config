@@ -31,7 +31,20 @@ for scope in ("personal", "work"):
     browser_settings = json.loads((browser / "settings.json").read_text())
     assert "npm:pi-web-access@0.13.0" in browser_settings["packages"]
     assert new not in browser_settings["packages"]
-    assert json.loads((browser / "mcporter.json").read_text())["mcpServers"] == {}
+    servers = json.loads((browser / "mcporter.json").read_text())["mcpServers"]
+    if scope == "personal":
+        assert set(servers) == {"affine"}
+        assert servers["affine"]["url"] == "http://nixos-ry6a.tail54de03.ts.net:31410/mcp"
+        assert servers["affine"]["headers"] == {"Authorization": "Bearer ${AFFINE_MCP_HTTP_TOKEN}"}
+        assert servers["affine"]["lifecycle"] == "ephemeral"
+        for skill in ("home-mcp", "affine"):
+            assert (browser / "skills" / skill / "SKILL.md").is_file()
+    else:
+        assert servers == {}
+        assert not (browser / "skills/affine").exists()
+    for profile in (fallback, default):
+        assert not (profile / "skills/affine").exists()
+        assert "affine" not in json.loads((profile / "mcporter.json").read_text())["mcpServers"]
     for skill in ("agent-browser", "google-hotels", "system-context"):
         assert (browser / "skills" / skill / "SKILL.md").is_file(), (scope, skill)
     for name in ("models.json", "mcporter.json"):
