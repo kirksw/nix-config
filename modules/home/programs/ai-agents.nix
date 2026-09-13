@@ -402,6 +402,16 @@ let
     src = localAgentsSrc;
   };
 
+  # The library wrapper assigns its profile directory before invoking Pi.
+  # Restore the outer wrapper's explicit override at the final executable boundary.
+  piOverrideTool = pkgs.writeShellScriptBin "pi" ''
+    if [ -n "''${NIX_AGENTS_PI_CONFIG_OVERRIDE:-}" ]; then
+      export PI_CODING_AGENT_DIR="$NIX_AGENTS_PI_CONFIG_OVERRIDE"
+    fi
+    unset NIX_AGENTS_PI_CONFIG_OVERRIDE
+    exec ${self.packages.${system}.pi}/bin/pi "$@"
+  '';
+
   # Force the profile already selected by the outer wrapper. Otherwise the
   # library wrapper repeats cwd detection and can discard an explicit selection.
   piPkgs = lib.mapAttrs (
@@ -409,7 +419,7 @@ let
     nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
       inherit pkgs profile;
       target = "pi";
-      tool = self.packages.${system}.pi;
+      tool = piOverrideTool;
       agentSystem = piAgentSystem;
       profileMeta = piProfileMeta;
     })
@@ -753,6 +763,7 @@ in
         fliPackage
         pkgs.agent-browser
         (mkCredWrapper "pi" piPkgs.personal-default ''
+          export NIX_AGENTS_PI_CONFIG_OVERRIDE="''${PI_CODING_AGENT_DIR:-}"
           _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
           # Herdr children pass the parent agent directory, not its profile selector.
           if [ -z "$_pi_session_profile" ]; then
@@ -802,7 +813,7 @@ in
               ;;
           esac
           export NIX_AGENTS_PROFILE="$_pi_session_profile"
-          export PI_CODING_AGENT_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile"
+          export PI_CODING_AGENT_DIR="''${PI_CODING_AGENT_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile}"
           case "$_pi_session_profile" in
             ${lib.concatStringsSep "\n" (
               lib.mapAttrsToList (
@@ -831,7 +842,7 @@ in
               "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile/npm/node_modules/pi-cmux/extensions/index.ts"
             )
           fi
-          export PI_CODING_AGENT_SESSION_DIR="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile"
+          export PI_CODING_AGENT_SESSION_DIR="''${PI_CODING_AGENT_SESSION_DIR:-''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile}"
           mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
           _pi_tmp_root="/tmp/personal"
@@ -963,6 +974,7 @@ in
               home) export NIX_AGENTS_PROFILE="personal-$profile" ;;
               work) export NIX_AGENTS_PROFILE="work-$profile" ;;
             esac
+            unset PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR
             exec pi "''${pi_args[@]}"
           '';
         })

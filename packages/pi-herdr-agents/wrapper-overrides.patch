@@ -1,0 +1,20 @@
+--- a/pi-extension/subagents/launch.ts
++++ b/pi-extension/subagents/launch.ts
+@@ -645 +645 @@
+-	const env: string[] = [];
++	const env: string[] = wrapperEnvironment();
+@@ -779,0 +780 @@
++			...wrapperEnvironment(),
+@@ -879,0 +881,6 @@
++}
++
++// Herdr panes start in a separate shell, not as children of this process.
++function wrapperEnvironment(): string[] {
++	return ["NIX_AGENTS_PROFILE", "PI_CODING_AGENT_SESSION_DIR"]
++		.flatMap((key) => process.env[key] ? [`${key}=${shellQuote(process.env[key]!)}`] : []);
+@@ -884 +891,4 @@
+-	const sessionDir = join(agentDir, "sessions", safePath);
++	const override = process.env.PI_CODING_AGENT_SESSION_DIR;
++	const sessionDir = override
++		? override.replace(/^~(?=\/|$)/, homedir())
++		: join(agentDir, "sessions", safePath);

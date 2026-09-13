@@ -14,7 +14,9 @@ let
   );
   packageArgs =
     name:
-    if name == "lunar-skills-mcp" then
+    if name == "pi-herdr-agents" then
+      { pi = packages.pi; }
+    else if name == "lunar-skills-mcp" then
       { backendEngineeringPractices = inputs.backend-engineering-practices; }
     else if name == "swe-pruner-mcp" then
       { inherit inputs; }

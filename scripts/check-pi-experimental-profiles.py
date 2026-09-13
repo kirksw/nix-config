@@ -8,7 +8,7 @@ from pathlib import Path
 root = Path(os.environ["XDG_CONFIG_HOME"]) / "nix-agents"
 bases = root / "pi/bases"
 old = "npm:@tintinweb/pi-subagents@0.14.3"
-new = "npm:pi-herdr-agents@1.5.1"
+
 
 for scope in ("personal", "work"):
     fallback = bases / scope / "profiles" / f"{scope}-fallback"
@@ -16,6 +16,9 @@ for scope in ("personal", "work"):
     browser = bases / f"{scope}-browser/profiles/{scope}-browser"
     baseline = json.loads((fallback / "settings.json").read_text())
     actual = json.loads((default / "settings.json").read_text())
+    patched = [p for p in actual["packages"] if isinstance(p, str) and p.endswith("-pi-herdr-agents-1.7.0-local.1")]
+    assert len(patched) == 1, f"{scope}: missing patched Herdr package"
+    new = patched[0]
     assert baseline["packages"].count(old) == 1
     assert new not in baseline["packages"]
     excluded = {

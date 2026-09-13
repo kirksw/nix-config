@@ -384,6 +384,24 @@
               touch $out
             '';
 
+            pi-herdr-agents-extension-load = pkgs.runCommand "pi-herdr-agents-extension-load" { } ''
+              export HOME="$TMPDIR/home"
+              export PI_CODING_AGENT_DIR="$TMPDIR/pi-agent"
+              export PI_OFFLINE=1
+              mkdir -p "$HOME" "$PI_CODING_AGENT_DIR"
+              printf '%s\n' '{"type":"get_state"}' \
+                | ${self.packages.${system}.pi}/bin/pi \
+                  --mode rpc --no-session --no-extensions \
+                  --extension ${self.packages.${system}.pi-herdr-agents}/pi-extension/subagents/index.ts \
+                  > "$TMPDIR/response.jsonl" 2> "$TMPDIR/stderr"
+              cat "$TMPDIR/stderr"
+              ! grep -q 'Failed to load extension' "$TMPDIR/stderr"
+              ${pkgs.jq}/bin/jq -s -e \
+                'any(.[]; .type == "response" and .command == "get_state" and .success == true)' \
+                "$TMPDIR/response.jsonl" >/dev/null
+              touch $out
+            '';
+
             pi-herdr-extension-load = pkgs.runCommand "pi-herdr-extension-load" { } ''
               export HOME="$TMPDIR/home"
               export PI_CODING_AGENT_DIR="$TMPDIR/pi-agent"

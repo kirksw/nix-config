@@ -54,7 +54,7 @@ let
             (
               package:
               if packageSource package == "npm:@tintinweb/pi-subagents@0.14.3" then
-                "npm:pi-herdr-agents@1.5.1"
+                "${self.packages.${system}.pi-herdr-agents}"
               else
                 package
             )
