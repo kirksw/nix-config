@@ -5,7 +5,6 @@
 }:
 
 let
-  piAnthropicCommunicationPolicyPackage = "${self}/agents/packages/pi-anthropic-communication-policy";
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
@@ -20,17 +19,13 @@ let
       autoload = false;
     }
     "npm:pi-cost@0.1.1"
-    "npm:@llblab/pi-telegram@0.26.16"
-    piAnthropicCommunicationPolicyPackage
     piHerdrPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-observational-memory@3.0.3"
     "npm:pi-permission-system@0.8.0"
-    "npm:pi-simplify@0.2.2"
     "npm:pi-verbosity-control@0.3.0"
     "npm:pi-web-access@0.13.0"
     "${self.packages.${system}.pi-fast-mode}"
-    "npm:@juicesharp/rpiv-ask-user-question@1.20.0"
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
     piAgentJournalPackage
