@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>EDGE / Observatory</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="masthead">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span> OBSERVATORY <span class="edition">/ EDGE 01</span></div>
+      <div class="demo-label"><span class="dot"></span> LOCAL DASHBOARD</div>
+      <div class="local-label">LOCAL ONLY <span>↗</span></div>
+    </header>
+    <section class="agents panel" aria-labelledby="agents-title">
+      <div class="section-head"><h1 id="agents-title">In motion<span class="count">00</span></h1><span class="eyebrow">HERDR / LIVE</span></div>
+      <div class="agent-list" aria-live="polite"></div>
+      <div class="activity-footer" id="agent-health">Connecting to Herdr...</div>
+    </section>
+    <section class="agenda panel" aria-labelledby="agenda-title">
+      <div class="section-head"><h1 id="agenda-title">On the horizon</h1><span class="eyebrow">GOOGLE CALENDAR</span></div>
+      <article class="next-event"><div class="eyebrow">GOOGLE CALENDAR</div><h2>Not connected</h2><p>Connecting through Apple Calendar.</p></article>
+      <p class="source-note">Read-only access planned. No sample events are shown.</p>
+    </section>
+    <aside class="glance panel" aria-label="Clock and display status">
+      <div class="section-head"><span class="eyebrow">RIGHT HERE, RIGHT NOW</span><span class="clock-dot"></span></div>
+      <div class="clock-block"><time id="clock" class="clock">--:--</time><div id="date" class="date">LOCAL TIME</div><div id="timezone" class="timezone"></div></div>
+      <div class="system-card"><div class="eyebrow">YOUR DISPLAY</div><h2>XENEON <em>EDGE</em></h2><div class="system-row"><span>Workspace</span><strong>dashboard</strong></div><div class="system-row"><span>Target canvas</span><strong>2560 × 720</strong></div><div class="system-row"><span>Data mode</span><strong class="sample-value">Live / read-only</strong></div></div>
+      <div class="quiet-note"><span aria-hidden="true">✳</span><p>Less switching.<br>More focus.</p></div>
+    </aside>
+    <footer class="page-footer"><span>OBSERVATORY / A PLACE TO KEEP AN EYE ON THINGS</span><span>Live clock & Herdr · Calendar via macOS</span></footer>
+  </main>
+</body>
+</html>

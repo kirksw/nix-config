@@ -1,0 +1,53 @@
+--- a/src/main.m
++++ b/src/main.m
+@@ -389,7 +389 @@
+-    NSString *value = NSProcessInfo.processInfo.environment[@"XENEON_SEIZE_TOUCH_DEVICE"];
+-    if (value.length == 0) {
+-        return YES;
+-    }
+-
+-    NSString *folded = value.uppercaseString;
+-    return !([folded isEqualToString:@"0"] || [folded isEqualToString:@"NO"] || [folded isEqualToString:@"FALSE"]);
++    return NO;
+@@ -1039,0 +1034,6 @@
++    self.takeoverActive = NO;
++    self.takeoverPending = NO;
++    self.takeoverHasWarped = NO;
++    self.suppressNativeMouseUntil = 0;
++    self.hasTouchX = NO;
++    self.hasTouchY = NO;
+@@ -1049 +1049,3 @@
+-        BOOL isMatch = matchesConfiguredID || matchesName;
++        BOOL isMatch = [screenName isEqualToString:@"XENEON EDGE"];
++        (void)matchesConfiguredID;
++        (void)matchesName;
+@@ -1072,8 +1073,0 @@
+-    if (self.targetScreen == nil && externalScreens.count == 1) {
+-        NSScreen *fallbackScreen = externalScreens.firstObject;
+-        self.targetScreen = fallbackScreen;
+-        self.targetDisplayID = DisplayIDForScreen(fallbackScreen);
+-        NSLog(@"No display matched by name. Falling back to the only external display: %@ id=%u",
+-              fallbackScreen.localizedName,
+-              self.targetDisplayID);
+-    }
+@@ -1164 +1158,2 @@
+-    BOOL isMatch = matchesConfiguredIDs || matchesHints;
++    BOOL isMatch = matchesConfiguredIDs;
++    (void)matchesHints;
+@@ -1199,0 +1195,6 @@
++    self.takeoverActive = NO;
++    self.takeoverPending = NO;
++    self.takeoverHasWarped = NO;
++    self.suppressNativeMouseUntil = 0;
++    self.hasTouchX = NO;
++    self.hasTouchY = NO;
+@@ -1267,6 +1268,3 @@
+-    if (self.takeoverActive && now > self.suppressNativeMouseUntil) {
+-        NSLog(@"Resetting stale takeover state after native mouse suppression window elapsed.");
+-        self.takeoverActive = NO;
+-        self.takeoverHasWarped = NO;
+-        self.takeoverPending = NO;
+-        self.suppressNativeMouseUntil = 0;
++    // Repeated pressed reports belong to the current touch, not a new click.
++    if (isPrimaryPress && (self.takeoverActive || self.takeoverPending)) {
++        return;

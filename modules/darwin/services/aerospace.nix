@@ -18,6 +18,18 @@ let
     accordion-padding = 50;
     default-root-container-layout = "tiles";
     default-root-container-orientation = "auto";
+    persistent-workspaces = [ "dashboard" ];
+    workspace-to-monitor-force-assignment =
+      lib.genAttrs (map toString (lib.range 1 10)) (_: [
+        "^ROG PG279QM$"
+        "main"
+      ])
+      // {
+        dashboard = [
+          "^XENEON EDGE$"
+          "main"
+        ];
+      };
     on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
     on-window-detected = [
       {
