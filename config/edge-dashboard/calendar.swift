@@ -37,17 +37,17 @@ func refresh() {
         return
     }
     let now = Date()
-    let end = Calendar.current.date(byAdding: .day, value: 1,
+    let end = Calendar.current.date(byAdding: .day, value: 2,
         to: Calendar.current.startOfDay(for: now))!
     let predicate = store.predicateForEvents(withStart: now, end: end, calendars: calendars)
     let events = store.events(matching: predicate)
         .filter { $0.endDate > now && $0.status != .canceled }
         .sorted { $0.startDate < $1.startDate }
-        .prefix(8).map { event -> [String: Any] in
+        .prefix(32).map { event -> [String: Any] in
             ["title": event.title ?? "Untitled event", "start": formatter.string(from: event.startDate),
              "end": formatter.string(from: event.endDate), "allDay": event.isAllDay]
         }
-    publish("connected", "Apple Calendar / remaining today", events: events)
+    publish("connected", "Apple Calendar / today and tomorrow", events: events)
 }
 
 let app = NSApplication.shared

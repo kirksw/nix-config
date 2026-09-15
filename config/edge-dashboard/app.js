@@ -86,7 +86,11 @@ async function refreshCalendar() {
       calendarHealth.textContent = data.status.toUpperCase().replaceAll('_', ' ');
       return;
     }
-    data.events.forEach((event, index) => {
+    const tomorrow = new Date();
+    tomorrow.setHours(24, 0, 0, 0);
+    const todayEvents = data.events.filter(event => new Date(event.start) < tomorrow);
+    const tomorrowEvents = data.events.filter(event => new Date(event.start) >= tomorrow);
+    todayEvents.forEach((event, index) => {
       const card = element('article', index === 0 ? 'next-event' : 'agenda-row', '');
       const label = event.allDay ? 'All day' : `${timeFormat.format(new Date(event.start))} - ${timeFormat.format(new Date(event.end))}`;
       const body = element('div', '', '');
@@ -96,7 +100,26 @@ async function refreshCalendar() {
       card.append(body);
       calendarContent.append(card);
     });
-    if (!data.events.length) calendarContent.append(element('h2', '', 'No more events today'));
+    if (!todayEvents.length) calendarContent.append(element('h2', '', 'No more events today'));
+    // Keep today's agenda intact; tomorrow only uses the remaining panel height.
+    if (tomorrowEvents.length) {
+      const preview = element('section', 'tomorrow-preview', '');
+      preview.append(element('h3', 'eyebrow', 'TOMORROW'));
+      calendarContent.append(preview);
+      let shown = 0;
+      for (const event of tomorrowEvents) {
+        const row = element('article', 'agenda-row', '');
+        const label = event.allDay ? 'All day' : timeFormat.format(new Date(event.start));
+        row.append(element('time', '', label), element('h2', '', event.title));
+        preview.append(row);
+        if (calendarContent.scrollHeight > calendarContent.clientHeight) {
+          row.remove();
+          break;
+        }
+        shown++;
+      }
+      if (!shown) preview.remove();
+    }
     calendarHealth.textContent = `Apple Calendar / Updated ${timeFormat.format(new Date(data.updatedAt))}`;
   } catch {
     calendarContent.replaceChildren();
