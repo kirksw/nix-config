@@ -1,6 +1,8 @@
 # EDGE dashboard
 
 A local, read-only dashboard for the XENEON EDGE's 2560 x 720 canvas.
+The approved migration is implemented in `packages/edge-observatory/` as one Swift macOS app with a bundled WKWebView, direct EventKit access, bounded Herdr queries, and no HTTP server.
+The existing Python/Chrome stack remains the default until physical acceptance tests pass.
 The clock and Herdr agent roster are live.
 Calendar availability depends on macOS permission and the selected calendar being synced.
 The display summary is static configuration, not hardware telemetry.
@@ -68,16 +70,16 @@ Run transition tests with `python3 -m unittest discover -s config/edge-dashboard
 
 ## Single-service startup
 
-`darwinModules.edgeDashboard.enable` enables one launchd service owning the HTTP server, calendar helper, touch helper, and dedicated Chrome process.
+`darwinModules.edgeDashboard.enable` enables one launchd service.
+Its default `mode = "legacy"` keeps the currently working Python/Chrome stack unchanged.
+The opt-in `mode = "observatory"` runs `~/Applications/EDGE Observatory.app` as the sole app process and does not start the old HTTP server, Chrome, calendar helper, or separate touch app.
 The supervisor opens Chrome only while an exact `XENEON EDGE` display is reported by AeroSpace.
 It closes its browser process on disconnection and reopens on reconnection.
 Helpers restart if they exit; stopping the supervisor terminates its child processes.
 AeroSpace itself remains an independent prerequisite.
 
-The currently permission-approved calendar and touch app bundles in `~/Applications` are prerequisites, not rebuilt by this service.
-Google Chrome must be installed in `/Applications`.
-Before initial activation, stop the old manually started HTTP service and quit the dedicated dashboard Chrome, EDGE Calendar, and XE helper so the supervisor has exclusive ownership.
-Do not use the manual launch scripts while the service is active.
+The currently permission-approved calendar and touch app bundles in `~/Applications` remain prerequisites for legacy mode and are not rebuilt or stopped by this change.
+Google Chrome must be installed in `/Applications` for legacy mode.
+Do not activate Observatory mode or launch its touch runtime until physical acceptance is approved.
 New untracked source files must be added to Git before the normal Git-flake switch wrapper can include them.
-Build validation used `path:.` to include these files without staging unrelated changes.
-Login, unplug/replug, and native fullscreen behavior still require physical acceptance testing after activation.
+Login and unplug/replug behavior still require physical acceptance testing after activation.

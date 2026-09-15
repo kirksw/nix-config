@@ -15,6 +15,7 @@
   # modules
   darwinModules.aerospace.enable = true;
   darwinModules.edgeDashboard.enable = true;
+  darwinModules.edgeDashboard.mode = "observatory";
   darwinModules.dock.enable = true;
   darwinModules.tailscale.enable = true;
   darwinModules.jankyborders.enable = true;
