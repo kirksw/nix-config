@@ -217,6 +217,7 @@ _: {
         "system-context"
         "work-mcp"
         "land"
+        "lavish"
         "1password"
         "granola"
         "grafana"
