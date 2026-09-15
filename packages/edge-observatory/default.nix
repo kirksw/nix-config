@@ -30,7 +30,7 @@ stdenv.mkDerivation (finalAttrs: {
       -framework AppKit -framework ApplicationServices -framework IOKit -framework Foundation
     swiftc EdgeObservatory.swift UnreadTracker.swift ProcessRunner.swift SnapshotModel.swift TouchRuntime.o \
       -o 'build/EDGE Observatory.app/Contents/MacOS/EDGE Observatory' \
-      -framework AppKit -framework EventKit -framework WebKit
+      -framework AppKit -framework EventKit -framework CoreLocation -framework WebKit
     cp index.html style.css app.js TOUCH-LICENSE 'build/EDGE Observatory.app/Contents/Resources/'
     cp Info.plist 'build/EDGE Observatory.app/Contents/Info.plist'
     runHook postBuild

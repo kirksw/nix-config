@@ -24,13 +24,19 @@ enum JSONValue: Codable {
 struct RawWorkspace: Codable { let workspaceID: String; let label: String
     enum CodingKeys: String, CodingKey { case workspaceID = "workspace_id"; case label }
 }
+struct PiSessionReference: Codable {
+    let kind: String?
+    let source: String?
+    let value: String?
+}
+
 struct RawAgent: Codable {
     let paneID: String
     let agent: String?
     let agentStatus: String?
     let workspaceID: String?
     let focused: Bool?
-    let agentSession: JSONValue?
+    let agentSession: PiSessionReference?
     enum CodingKeys: String, CodingKey {
         case paneID = "pane_id", agent, agentStatus = "agent_status", workspaceID = "workspace_id"
         case focused, agentSession = "agent_session"

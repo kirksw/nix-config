@@ -12,6 +12,7 @@
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
   <key>NSMainMenuItem</key><string>EDGE Observatory</string>
+  <key>NSLocationWhenInUseUsageDescription</key><string>Show local weather from this Mac's approximate location on the EDGE dashboard.</string>
   <key>NSCalendarsFullAccessUsageDescription</key><string>Display titles and times from your selected calendar on the local EDGE dashboard. No events are modified.</string>
 </dict>
 </plist>

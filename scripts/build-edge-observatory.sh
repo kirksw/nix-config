@@ -13,9 +13,9 @@ trap 'rm -rf "$tmp_root"' EXIT
 mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
 clang -fobjc-arc -Wall -Wextra -Wpedantic -c "$root/packages/edge-observatory/TouchRuntime.m" -o "$tmp_root/TouchRuntime.o" \
   -framework AppKit -framework ApplicationServices -framework IOKit -framework Foundation
-xcrun swiftc "$root/packages/edge-observatory/EdgeObservatory.swift" \
+xcrun swiftc "$root/packages/edge-observatory/EdgeObservatory.swift" "$root/packages/edge-observatory/XeneonDdc.swift" "$root/packages/edge-observatory/XeneonGamma.swift" \
   "$root/packages/edge-observatory/UnreadTracker.swift" "$root/packages/edge-observatory/ProcessRunner.swift" "$root/packages/edge-observatory/SnapshotModel.swift" "$tmp_root/TouchRuntime.o" \
-  -o "$bundle/Contents/MacOS/EDGE Observatory" -framework AppKit -framework EventKit -framework WebKit
+  -o "$bundle/Contents/MacOS/EDGE Observatory" -framework AppKit -framework EventKit -framework CoreLocation -framework WebKit
 cp "$root/packages/edge-observatory/Info.plist" "$bundle/Contents/Info.plist"
 cp "$root/packages/edge-observatory/"{index.html,style.css,app.js,TOUCH-LICENSE} "$bundle/Contents/Resources/"
 codesign --force --deep --sign - "$bundle"

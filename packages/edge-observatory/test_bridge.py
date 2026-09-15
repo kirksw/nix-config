@@ -10,7 +10,9 @@ ROOT = pathlib.Path(__file__).parent
 class BridgeSourceTests(unittest.TestCase):
     def test_bridge_has_no_network_server_or_focus_command(self):
         source = (ROOT / 'EdgeObservatory.swift').read_text()
-        self.assertNotIn('URLSession', source)
+        # Weather uses Open-Meteo; the app itself exposes no local network server.
+        self.assertNotIn('NWListener', source)
+        self.assertNotIn('URLRequest(', source)
         self.assertNotIn('focusAgent', source)
         self.assertIn('url.isFileURL', source)
         self.assertIn('decisionHandler(.cancel)', source)
