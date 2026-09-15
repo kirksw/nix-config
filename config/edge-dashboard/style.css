@@ -18,3 +18,5 @@
 .agent-card .status{font-size:10px}
 .agent-body p{font:11px var(--mono);margin-top:12px}
 .tomorrow-preview{margin-top:24px}.tomorrow-preview .agenda-row{padding:14px 0}.tomorrow-preview h3{margin:0}
+.calendar-event{cursor:pointer;touch-action:manipulation;min-height:48px}.calendar-event:focus-visible{outline:2px solid var(--amber);outline-offset:-3px}.calendar-event:hover{filter:brightness(1.08)}
+.event-dialog{color:var(--text);background:linear-gradient(135deg,#263a38,#182528);border:1px solid var(--line);border-radius:12px;width:min(620px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:28px;overflow:auto;box-shadow:0 24px 100px #0008}.event-dialog::backdrop{background:#081112bb}.event-close{display:block;margin-left:auto;min-width:88px;min-height:48px;background:var(--mint);color:#233323;border:0;border-radius:6px;font:inherit;cursor:pointer}.event-close:focus-visible{outline:2px solid var(--amber);outline-offset:3px}.event-detail-body h2{font-size:28px;margin:18px 0 24px;overflow-wrap:anywhere}.event-detail-body p{margin-top:12px;line-height:1.6}.event-detail-body .eyebrow{margin-top:18px}

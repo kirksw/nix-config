@@ -72,7 +72,61 @@ agenda.querySelector('.next-event').remove();
 agenda.querySelector('.source-note').remove();
 agenda.append(calendarContent, calendarHealth);
 
+const eventDialog = element('dialog', 'event-dialog', '');
+eventDialog.setAttribute('aria-labelledby', 'event-detail-title');
+const closeEvent = element('button', 'event-close', 'Close');
+closeEvent.type = 'button';
+closeEvent.addEventListener('click', () => eventDialog.close());
+const eventDetail = element('div', 'event-detail-body', '');
+eventDialog.append(closeEvent, eventDetail);
+document.body.append(eventDialog);
+eventDialog.addEventListener('click', event => {
+  const bounds = eventDialog.getBoundingClientRect();
+  if (event.target === eventDialog && (event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom)) eventDialog.close();
+});
+
+function makeEventInteractive(card, event) {
+  card.classList.add('calendar-event');
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+  card.setAttribute('aria-haspopup', 'dialog');
+  card.setAttribute('aria-label', `Event details: ${event.title}`);
+  const open = () => {
+    const title = element('h2', '', event.title);
+    title.id = 'event-detail-title';
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    const format = new Intl.DateTimeFormat(undefined, {
+      weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+      ...(event.allDay ? {} : {hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}),
+    });
+    eventDetail.replaceChildren(element('div', 'eyebrow', 'CALENDAR / READ ONLY'), title);
+    eventDetail.append(element('p', '', `${event.allDay ? 'All day from' : 'Starts'}: ${format.format(start)}`));
+    eventDetail.append(element('p', '', `${event.allDay ? 'Until (exclusive)' : 'Ends'}: ${format.format(end)}`));
+    if (!event.allDay) {
+      const minutes = Math.max(0, Math.round((end - start) / 60000));
+      eventDetail.append(element('p', '', `Duration: ${minutes} minutes`));
+    }
+    eventDetail.append(element('p', 'source-note', `Times: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`));
+    eventDialog.showModal();
+    closeEvent.focus();
+  };
+  card.addEventListener('click', open);
+  card.addEventListener('keydown', key => {
+    if (key.key === 'Enter' || key.key === ' ') {
+      key.preventDefault();
+      open();
+    }
+  });
+}
+
 async function refreshCalendar() {
+  // Preserve the tapped event and keyboard focus while its detail view is open.
+  if (eventDialog.open || calendarContent.contains(document.activeElement)) {
+    setTimeout(refreshCalendar, 15000);
+    return;
+  }
   try {
     const response = await fetch('/api/calendar', {signal: AbortSignal.timeout(6000)});
     if (!response.ok) throw new Error('Calendar service unavailable');
@@ -98,6 +152,7 @@ async function refreshCalendar() {
       if (index === 0) card.append(element('div', 'eyebrow', 'REMAINING TODAY'), element('div', 'event-time', label));
       else card.append(element('time', '', label));
       card.append(body);
+      makeEventInteractive(card, event);
       calendarContent.append(card);
     });
     if (!todayEvents.length) calendarContent.append(element('h2', '', 'No more events today'));
@@ -111,6 +166,7 @@ async function refreshCalendar() {
         const row = element('article', 'agenda-row', '');
         const label = event.allDay ? 'All day' : timeFormat.format(new Date(event.start));
         row.append(element('time', '', label), element('h2', '', event.title));
+        makeEventInteractive(row, event);
         preview.append(row);
         if (calendarContent.scrollHeight > calendarContent.clientHeight) {
           row.remove();
