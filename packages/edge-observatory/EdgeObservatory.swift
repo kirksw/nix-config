@@ -409,6 +409,7 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
     private var touchRuntime: UnsafeMutableRawPointer?
     private var quitItem: NSMenuItem?
     private var fullscreenTransition = false
+    private var fullscreenRetries = 0
 
     func start() {
         NSApp.mainMenu = makeMenu()
@@ -451,15 +452,36 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
         }
         guard let window else { return }
         if !window.styleMask.contains(.fullScreen) && !fullscreenTransition {
+            NSApp.activate(ignoringOtherApps: true)
             window.setFrame(screen.frame, display: true)
             window.makeKeyAndOrderFront(nil)
             fullscreenTransition = true
             window.toggleFullScreen(nil)
         }
+        scheduleFullscreenCheck()
     }
-    func windowDidEnterFullScreen(_ notification: Notification) { fullscreenTransition = false }
+    // A launchd-started app can toggle fullscreen before the session grants focus,
+    // which fails silently. Retry a bounded number of times until it sticks.
+    private func scheduleFullscreenCheck() {
+        guard fullscreenRetries < 6 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, let window = self.window else { return }
+            if window.styleMask.contains(.fullScreen) { self.fullscreenRetries = 0; return }
+            guard NSScreen.screens.contains(where: { $0.localizedName == targetDisplayName }) else { return }
+            if !self.fullscreenTransition {
+                self.fullscreenRetries += 1
+                self.fullscreenTransition = true
+                NSApp.activate(ignoringOtherApps: true)
+                window.makeKeyAndOrderFront(nil)
+                window.toggleFullScreen(nil)
+                NSLog("EDGE Observatory fullscreen retry \(self.fullscreenRetries), current mask: \(window.styleMask.contains(.fullScreen))")
+            }
+            self.scheduleFullscreenCheck()
+        }
+    }
+    func windowDidEnterFullScreen(_ notification: Notification) { fullscreenTransition = false; fullscreenRetries = 0 }
     func windowDidExitFullScreen(_ notification: Notification) { fullscreenTransition = false }
-    func windowDidFailToEnterFullScreen(_ window: NSWindow) { fullscreenTransition = false }
+    func windowDidFailToEnterFullScreen(_ window: NSWindow) { fullscreenTransition = false; scheduleFullscreenCheck() }
     func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
         var options = proposedOptions
         options.remove(.hideMenuBar)

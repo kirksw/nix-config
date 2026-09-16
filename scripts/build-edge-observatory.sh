@@ -18,7 +18,13 @@ xcrun swiftc "$root/packages/edge-observatory/EdgeObservatory.swift" "$root/pack
   -o "$bundle/Contents/MacOS/EDGE Observatory" -framework AppKit -framework EventKit -framework CoreLocation -framework WebKit
 cp "$root/packages/edge-observatory/Info.plist" "$bundle/Contents/Info.plist"
 cp "$root/packages/edge-observatory/"{index.html,style.css,app.js,TOUCH-LICENSE} "$bundle/Contents/Resources/"
-codesign --force --deep --sign - "$bundle"
+# Sign with the stable self-signed identity so macOS TCC grants (Input Monitoring,
+# Accessibility) survive rebuilds. Fall back to ad-hoc only if the identity is gone.
+sign_identity="EDGE Observatory Development"
+if ! security find-identity -v -p codesigning | grep -q "EDGE Observatory Development"; then
+  sign_identity="-"
+fi
+codesign --force --deep --sign "$sign_identity" "$bundle"
 mkdir -p "$HOME/Applications"
 if [[ -e "$app" ]]; then mv "$app" "$backup"; fi
 if ! mv "$bundle" "$app"; then
