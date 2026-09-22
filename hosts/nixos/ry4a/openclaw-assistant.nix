@@ -218,26 +218,7 @@ in
           noSandbox = true;
           extraArgs = [ "--disable-dev-shm-usage" ];
         };
-        memory = {
-          backend = "qmd";
-          citations = "auto";
-          qmd = {
-            command = "${pkgs.qmd}/bin/qmd";
-            includeDefaultMemory = true;
-            sessions = {
-              enabled = true;
-              exportDir = "/var/lib/openclaw/session-memory";
-              retentionDays = 90;
-            };
-            update = {
-              onBoot = true;
-              startup = "idle";
-              interval = "10m";
-              embedInterval = "30m";
-              waitForBootSync = false;
-            };
-          };
-        };
+        memory.citations = "auto";
         mcp.servers.affine = {
           url = "http://nixos-ry6a.tail54de03.ts.net:31410/mcp";
           transport = "streamable-http";

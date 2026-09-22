@@ -45,7 +45,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-agents.url = "github:kirksw/nix-agents/main";
     ezgit = {
       url = "github:kirksw/ezgit/v0.0.19";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -54,7 +53,6 @@
       url = "github:kirksw/git-land/v0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    swe-pruner-mcp.url = "github:kirksw/swe-pruner-mcp";
     deploy-rs.url = "github:serokell/deploy-rs";
 
     microvm = {
@@ -86,11 +84,6 @@
       flake = false;
     };
 
-    minimax-cli-skill = {
-      url = "github:MiniMax-AI/cli?rev=3615170a2e26ec6003c4550cd1324b55ec8ad677";
-      flake = false;
-    };
-
     lavish-axi = {
       url = "github:kunchenguid/lavish-axi?rev=50b0facb61b5fc36cb1737e33b20d2894a64323b";
       flake = false;
@@ -106,7 +99,6 @@
       deploy-rs,
       ezgit,
       lunar-tools,
-      nix-agents,
       git-hooks,
       neovim-nightly-overlay,
       nix-openclaw,
@@ -166,7 +158,6 @@
             inherit
               ezgit
               lunar-tools
-              nix-agents
               neovim-nightly-overlay
               ;
           };

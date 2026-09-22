@@ -12,16 +12,16 @@ The primary source repo for this machine's concrete agent configuration is:
 
 When behavior changes should apply to generated agent configs, make the change in the repo:
 
-- `agents/defs/` for agents, skills, MCP servers, and hooks
-- `agents/presets/` for import bundles and profile/base setup
-- `agents/targets/` for tool-specific bundled assets such as Pi extensions and prompts
+- `agents/defs/skills/` for skill definitions
+- `agents/pi-profiles.nix` for bases, providers, profiles, and tier mappings
+- `agents/pi-assets.nix` for skill loading and per-profile packaging
+- `agents/targets/pi/` for Pi extensions and prompts
 - `modules/home/programs/ai-agents.nix` for Home Manager wrapper wiring
 
 Then rebuild or sync rather than hand-editing generated output.
 
-The external `nix-agents` flake is the reusable engine: module schema, evaluation, wrappers,
-generators, schemas, and templates. Change that repo only when the framework itself needs to
-change, not for local agent roster/profile policy.
+Pi is the only configured target and this repository owns the whole pipeline: profile data,
+packaging, wrapper, and sync. There is no external generator input.
 
 ## For Broader System Configuration
 
@@ -36,13 +36,13 @@ Use the same repo when the requested change is about broader system setup rather
 - system services
 - Home Manager or nix-darwin style user/system configuration
 
-If a request touches both agent behavior and machine setup, keep concrete configuration in `nix-config` and only change upstream `nix-agents` for reusable engine behavior.
+If a request touches both agent behavior and machine setup, keep concrete configuration in `nix-config`.
 
 ## Generated Output
 
 Treat these as generated artifacts, not the primary place to make lasting edits:
 
-- `~/.config/nix-agents/<tool>/bases/<base>/profiles/<profile>/...`
+- `~/.config/nix-agents/pi/bases/<base>/profiles/<profile>/...`
 
 Those directories are populated by generated configs and sync logic. If you change files there manually, the next sync or rebuild can overwrite them.
 
@@ -51,10 +51,10 @@ Those directories are populated by generated configs and sync logic. If you chan
 If the question is:
 
 - "How should this tool behave?" -> change Nix source
-- "Which agents/skills/profiles should be active?" -> change Nix source
+- "Which skills/profiles should be active?" -> change Nix source
 - "How should this machine be configured?" -> change `/Users/kisw/git/github.com/kirksw/nix-config`
 - "Where does this generated file live right now?" -> inspect generated output
-- "Why is the active config resolving this way?" -> inspect bases, profiles, path prefixes, and `.nix-agents-profile`
+- "Why is the active config resolving this way?" -> inspect `agents/pi-profiles.nix`, the wrapper routing, and `.nix-agents-profile`
 
 ## For Non-Agent Persistent Setup
 

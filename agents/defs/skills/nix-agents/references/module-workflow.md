@@ -1,33 +1,22 @@
-# Nix-Agents Module Workflow
+# Pi Module Workflow
+
+Pi is the only configured target. There is no external generator input; this repository owns the schema, the profile data, and the packaging.
 
 ## Repository Layout
 
-| Directory | What goes here |
-|-----------|----------------|
-| `agents/defs/agents/` | Local agent definitions as `agents.<name> = …` |
-| `agents/defs/skills/` | Local skill definitions as `skills.<name> = …` |
-| `agents/defs/mcps/` | Local MCP server defs as `mcpServers.<name> = …` |
-| `agents/defs/hooks/` | Local hook definitions taking `{ pkgs }:` |
-| `agents/presets/` | Local curated import bundles and profiles |
-| upstream `nix-agents/modules/` | Reusable option declarations |
-| upstream `nix-agents/lib/generators/` | Reusable per-tool config generators |
-| upstream `nix-agents/lib/schemas/` | Reusable JSON schemas for generated outputs |
+| Path | What goes here |
+|------|----------------|
+| `agents/pi-profiles.nix` | Bases, provider credential mapping, profiles, skill selection, tier mappings |
+| `agents/pi-assets.nix` | Skill loading and the per-profile asset build |
+| `agents/defs/skills/` | Skill definitions as `skills.<name> = …` |
+| `agents/targets/pi/extensions/` | Pi extensions copied into every profile |
+| `agents/targets/pi/prompts/` | Pi prompt templates copied into every profile |
+| `agents/base-settings.nix` | Per-base `settings.json`, `models.json`, `mcporter.json`, and `env` |
+| `modules/home/programs/ai-agents.nix` | The `pi` wrapper and `pix` launcher |
 
-## Skill Type Shape
+## Adding A Skill
 
-```nix
-# defs/skills/my-skill.nix
-{
-  skills.my-skill = {
-    description = "One line trigger description.";
-    content = "# My Skill\n\nMarkdown body loaded when the skill triggers.";
-    resources = { };
-    src = null;
-  };
-}
-```
-
-Directory-backed shape:
+Create the definition, then select it in a profile.
 
 ```nix
 # defs/skills/my-skill/default.nix
@@ -40,97 +29,68 @@ Directory-backed shape:
 }
 ```
 
-## Agent Type Shape
+Inline skills use `content` instead of `src`:
 
 ```nix
-# defs/agents/my-agent.nix
 {
-  agents.my-agent = {
-    description = "…";
-    model = "balanced";
-    mode = "subagent";
-    temperature = 0.2;
-    prompt = "Implement the task.";
-    delegatesTo = [ "other-agent" ];
-    skills = [ "skill-name" ];
-    mcpServers = [ "server-name" ];
-    permissions = {
-      edit = "allow";
-      bash = "deny";
-      task = { default = "deny"; rules = { "other-agent" = "allow"; }; };
-      webfetch = "allow";
-    };
+  skills.my-skill = {
+    description = "One line trigger description.";
+    content = "# My Skill\n\nMarkdown body loaded when the skill triggers.";
+    version = "1.0.0";
   };
 }
 ```
 
-## MCP Server Type Shape
+Add the file to `skillFiles` in `agents/pi-assets.nix`, then add the skill name to the
+target profile's `skills` list in `agents/pi-profiles.nix`. A profile with `skills = [ ]`
+selects every defined skill.
+
+## Adding Or Changing A Profile
+
+Profiles and bases live in `agents/pi-profiles.nix`.
 
 ```nix
-# defs/mcps/my-server.nix
-{
-  mcpServers.my-server = {
-    type = "local";
-    command = [ "my-bin" "mcp" ];
-    package = null;
-    url = null;
-    environment = { };
+profiles.<name> = {
+  base = "<base>";
+  skills = [ "skill-a" "skill-b" ];
+  tierMapping = {
+    A = [ "litellm/openai/gpt-5.6-sol" "zai/glm-5.2" ];
   };
-}
+};
 ```
 
-## Adding A New Definition
-
-1. Create `agents/defs/<type>/<name>.nix` or a directory-backed module when that structure is clearer.
-2. Import it from the relevant preset in `agents/presets/`.
-3. If an agent references the new skill or MCP server, add it to the agent's `skills` or `mcpServers` list.
-4. Run `nix flake check --no-build` (full-build checks are unsupported on the macOS work host; see [`flake-ops.md`](flake-ops.md)).
-
-## Validation Checks
-
-`modules/system.nix` validates:
-
-- `delegatesTo` targets exist in `config.agents`
-- `skills` entries resolve to defined skills
-- `mcpServers` entries resolve to defined MCP servers
-- `task.rules` keys are valid agent names
-- profile `agents`, `skills`, and `mcpServers` lists resolve to existing definitions
-
-## Preset Pattern
+A base owns providers and commit identity:
 
 ```nix
-# presets/my-preset.nix
-{ ... }:
-{
-  imports = [
-    ../defs/agents/my-agent.nix
-    ../defs/skills/my-skill.nix
-    ../defs/mcps/my-server.nix
-  ];
-}
-```
-
-Directory-backed skills can be imported directly:
-
-```nix
-imports = [
-  ../defs/skills/my-skill
-];
-```
-
-## Profile Pattern
-
-```nix
-# presets/profiles.nix
-{ ... }:
-{
-  profiles.work = {
-    pathPrefixes = [ "~/work/" ];
-    agents = [ "code-monkey" "explore" ];
-    skills = [ "swe-pruner-mcp" ];
-    mcpServers = [ "swe-pruner" ];
-    tierMapping = { powerful = "anthropic/claude-sonnet-4-6"; };
-    permissions = { webfetch = "deny"; edit = null; bash = null; task = null; };
+bases.<name> = {
+  providers = [ "personal-zai-key" ];
+  git = {
+    userName = "…";
+    userEmail = "…";
+    signingKey = "/path/to/key";
   };
-}
+};
 ```
+
+The `pi` wrapper maps each base provider to its `envVar` and exports the base commit
+identity at launch, so a new provider needs no wrapper change.
+
+Profiles are addressed as `bases/<base>/profiles/<profile>`. The launcher maps profile
+names to bases; update both `modules/home/programs/ai-agents.nix` and
+`scripts/check-pi-experimental-launchers.py` when a profile moves to a new base.
+
+## Validation
+
+```bash
+./scripts/check-structure.sh
+nixfmt --check <changed files>
+nix build .#checks.aarch64-darwin.pi-experimental-profiles --no-link
+nix run .#sync-agents
+PI_OFFLINE=1 pi list
+```
+
+## Existing Names
+
+- Skills: `add-module`, `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-agents`, `secrets-management`, `session-heuristics`, `skill-creator`, `system-context`, `xcode`
+- Profiles: `personal-default`, `personal-fallback`, `personal-browser`, `work-default`, `work-fallback`, `work-browser`
+- Providers: `personal-zai-key`, `personal-minimax-key`, `personal-litellm-api-key`, `personal-litellm-cf-client-id`, `personal-litellm-cf-client-secret`, `work-openai-key`

@@ -9,19 +9,56 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
-  nixAgentsLib = inputs.nix-agents.lib.${system};
-  mkWrappedToolArgs =
-    args:
-    if (builtins.functionArgs nixAgentsLib.mkWrappedTool) ? syncMode then
-      args // { syncMode = "bootstrap"; }
-    else
-      args;
-  localAgents = import ../../../agents { inherit pkgs; };
-  localAgentsSrc = pkgs.runCommandLocal "nix-config-agents-src" { } ''
-    mkdir -p "$out"
-    cp -r ${../../../agents}/. "$out/"
-    chmod -R u+w "$out"
-  '';
+  localAgents = import ../../../agents { inherit pkgs inputs; };
+
+  # Shell case arms generated from agents/pi-profiles.nix so credential mapping
+  # and commit identity stay defined in one place.
+  piCredentialArms = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (
+      base: cfg:
+      let
+        exports = lib.concatMapStrings (
+          name:
+          let
+            provider = localAgents.providers.${name};
+          in
+          ''
+            [ -n "''${${provider.credentialRef}:-}" ] && export ${provider.envVar}="''${${provider.credentialRef}}"
+          ''
+        ) cfg.providers;
+      in
+      ''
+        ${base})
+        ${exports}
+          ;;
+      ''
+    ) localAgents.bases
+  );
+
+  piGitArms = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (
+      base: cfg:
+      let
+        git = cfg.git;
+      in
+      ''
+        ${base})
+          export GIT_AUTHOR_NAME=${lib.escapeShellArg git.userName}
+          export GIT_AUTHOR_EMAIL=${lib.escapeShellArg git.userEmail}
+          export GIT_COMMITTER_NAME=${lib.escapeShellArg git.userName}
+          export GIT_COMMITTER_EMAIL=${lib.escapeShellArg git.userEmail}
+          export GIT_AUTHOR_SIGNINGKEY=${lib.escapeShellArg git.signingKey}
+          export GIT_COMMITTER_SIGNINGKEY=${lib.escapeShellArg git.signingKey}
+          ;;
+      ''
+    ) localAgents.bases
+  );
+
+  piProfileAssets = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (
+      profile: meta: "${profile}) _pi_assets=${meta.storePath} ;;"
+    ) localAgents.profileMeta
+  );
   # Herdr's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
@@ -55,9 +92,6 @@ let
     self.packages.${system}.codex
     self.packages.${system}.pi
   ];
-  agentInputs = inputs // {
-    inherit self;
-  };
   homeDir = config.home.homeDirectory;
   xdgConfigHome = "${homeDir}/.config";
   xdgDataHome = "${homeDir}/.local/share";
@@ -73,15 +107,6 @@ let
       (allow ${access}
         (subpath "${path}"))
     '') paths;
-  claudePersonalSandboxProfile = pkgs.writeText "claude-personal.sb" ''
-    (version 1)
-    (allow default)
-
-    (deny file-read*
-      (subpath "/Library/Application Support/ClaudeCode/"))
-    (deny file-write*
-      (subpath "/Library/Application Support/ClaudeCode/"))
-  '';
   mkPiSandboxProfile =
     {
       name,
@@ -166,10 +191,6 @@ let
     tempRoot = "/tmp/personal";
     repoRoots = [ "${homeDir}/git/github.com/kirksw" ];
   };
-
-  # Modules shared across all target builds
-  nixAgentsModules = localAgents.defaultModules;
-  piAgentsModules = localAgents.piModules;
 
   minimaxCliPackage = self.packages.${system}.minimax-cli;
   fliPackage = self.packages.${system}.fli;
@@ -325,106 +346,6 @@ let
       exec "''${_nix_agents_exec[@]}" "''${_nix_agents_extra_args[@]}" "$@"
     '';
 
-  # Build the nix-agents wrapped tool for each target
-  opencodePkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
-    inherit pkgs;
-    target = "opencode";
-    tool = self.packages.${system}.opencode;
-    agentSystem = nixAgentsLib.mkAgentSystem {
-      inherit pkgs;
-      target = "opencode";
-      inputs = agentInputs;
-      modules = nixAgentsModules;
-      src = localAgentsSrc;
-    };
-    profileMeta = nixAgentsLib.mkProfileMeta {
-      inherit pkgs;
-      target = "opencode";
-      inputs = agentInputs;
-      modules = nixAgentsModules;
-      src = localAgentsSrc;
-    };
-  });
-
-  claudePkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
-    inherit pkgs;
-    target = "claude";
-    tool = self.packages.${system}.claude-code;
-    agentSystem = nixAgentsLib.mkAgentSystem {
-      inherit pkgs;
-      target = "claude";
-      inputs = agentInputs;
-      modules = nixAgentsModules;
-      src = localAgentsSrc;
-    };
-    profileMeta = nixAgentsLib.mkProfileMeta {
-      inherit pkgs;
-      target = "claude";
-      inputs = agentInputs;
-      modules = nixAgentsModules;
-      src = localAgentsSrc;
-    };
-  });
-
-  codexPkg = nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
-    inherit pkgs;
-    target = "codex";
-    tool = self.packages.${system}.codex;
-    agentSystem = nixAgentsLib.mkAgentSystem {
-      inherit pkgs;
-      target = "codex";
-      inputs = agentInputs;
-      modules = nixAgentsModules;
-      src = localAgentsSrc;
-    };
-    profileMeta = nixAgentsLib.mkProfileMeta {
-      inherit pkgs;
-      target = "codex";
-      inputs = agentInputs;
-      modules = nixAgentsModules;
-      src = localAgentsSrc;
-    };
-  });
-
-  piAgentSystem = nixAgentsLib.mkAgentSystem {
-    inherit pkgs;
-    target = "pi";
-    inputs = agentInputs;
-    modules = piAgentsModules;
-    src = localAgentsSrc;
-  };
-
-  piProfileMeta = nixAgentsLib.mkProfileMeta {
-    inherit pkgs;
-    target = "pi";
-    inputs = agentInputs;
-    modules = piAgentsModules;
-    src = localAgentsSrc;
-  };
-
-  # The library wrapper assigns its profile directory before invoking Pi.
-  # Restore the outer wrapper's explicit override at the final executable boundary.
-  piOverrideTool = pkgs.writeShellScriptBin "pi" ''
-    if [ -n "''${NIX_AGENTS_PI_CONFIG_OVERRIDE:-}" ]; then
-      export PI_CODING_AGENT_DIR="$NIX_AGENTS_PI_CONFIG_OVERRIDE"
-    fi
-    unset NIX_AGENTS_PI_CONFIG_OVERRIDE
-    exec ${self.packages.${system}.pi}/bin/pi "$@"
-  '';
-
-  # Force the profile already selected by the outer wrapper. Otherwise the
-  # library wrapper repeats cwd detection and can discard an explicit selection.
-  piPkgs = lib.mapAttrs (
-    profile: _:
-    nixAgentsLib.mkWrappedTool (mkWrappedToolArgs {
-      inherit pkgs profile;
-      target = "pi";
-      tool = piOverrideTool;
-      agentSystem = piAgentSystem;
-      profileMeta = piProfileMeta;
-    })
-  ) piProfileMeta;
-
   mkOmnigentServerScript =
     profile: port: envBlock:
     pkgs.writeShellScript "omnigent-${profile}-server" ''
@@ -564,9 +485,6 @@ let
 in
 {
   options = {
-    homeModules.claudeCode.enable = lib.mkEnableOption "enables claude code";
-    homeModules.opencode.enable = lib.mkEnableOption "enables opencode";
-    homeModules.codex.enable = lib.mkEnableOption "enables codex";
     homeModules.piCodingAgent.enable = lib.mkEnableOption "enables pi-coding-agent";
     homeModules.omnigent.enable = lib.mkEnableOption "enables omnigent";
     homeModules.openshell.enable = lib.mkEnableOption "enables openshell";
@@ -589,24 +507,16 @@ in
           mode = "0400";
         };
       })
+      (lib.mkIf (config.homeModules.piCodingAgent.enable || config.homeModules.omnigent.enable) {
+        "zai" = {
+          sopsFile = "${self}/secrets/api/default.yaml";
+          key = "zai";
+          mode = "0400";
+        };
+      })
       (lib.mkIf
         (
-          config.homeModules.opencode.enable
-          || config.homeModules.piCodingAgent.enable
-          || config.homeModules.omnigent.enable
-        )
-        {
-          "zai" = {
-            sopsFile = "${self}/secrets/api/default.yaml";
-            key = "zai";
-            mode = "0400";
-          };
-        }
-      )
-      (lib.mkIf
-        (
-          config.homeModules.opencode.enable
-          || config.homeModules.piCodingAgent.enable
+          config.homeModules.piCodingAgent.enable
           || config.homeModules.omnigent.enable
           || config.homeModules.minimaxCli.enable
         )
@@ -618,28 +528,19 @@ in
           };
         }
       )
-      (lib.mkIf
-        (
-          config.homeModules.claudeCode.enable
-          || config.homeModules.opencode.enable
-          || config.homeModules.piCodingAgent.enable
-          || config.homeModules.codex.enable
-          || config.homeModules.omnigent.enable
-        )
-        {
-          "api/lunar/openai" = {
-            sopsFile = "${self}/secrets/api/lunar.yaml";
-            key = "openai";
-            mode = "0400";
-          };
-          "api/lunar/anthropic" = {
-            sopsFile = "${self}/secrets/api/lunar.yaml";
-            key = "anthropic";
-            mode = "0400";
-          };
-        }
-      )
-      (lib.mkIf config.homeModules.codex.enable {
+      (lib.mkIf (config.homeModules.piCodingAgent.enable || config.homeModules.omnigent.enable) {
+        "api/lunar/openai" = {
+          sopsFile = "${self}/secrets/api/lunar.yaml";
+          key = "openai";
+          mode = "0400";
+        };
+        "api/lunar/anthropic" = {
+          sopsFile = "${self}/secrets/api/lunar.yaml";
+          key = "anthropic";
+          mode = "0400";
+        };
+      })
+      (lib.mkIf (config.homeModules.piCodingAgent.enable || config.homeModules.omnigent.enable) {
         "git/pat" = {
           sopsFile = "${self}/secrets/git/pat.yaml";
           key = "pat";
@@ -721,166 +622,153 @@ in
     # --- install packages ---
     home.packages = lib.mkMerge [
       (lib.mkIf config.homeModules.minimaxCli.enable [ minimaxCli ])
-      (lib.mkIf config.homeModules.opencode.enable [
-        (mkCredWrapper "opencode" opencodePkg ''
-          if is_lunar_project; then
-            if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-              export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-            fi
-            if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-              export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-            fi
-          else
-            if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-              export zai_token="$PERSONAL_ZAI_API_KEY"
-            fi
-            if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
-              export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
-            fi
-          fi
-        '')
-      ])
-      (lib.mkIf config.homeModules.claudeCode.enable [
-        (mkCredWrapper "claude" claudePkg ''
-          if ! is_lunar_project; then
-            _nix_agents_exec=(
-              /usr/bin/sandbox-exec
-              -f
-              "${claudePersonalSandboxProfile}"
-              "${claudePkg}/bin/claude"
-            )
-          fi
-        '')
-      ])
-      (lib.mkIf config.homeModules.codex.enable [
-        (mkCredWrapper "codex" codexPkg ''
-          if is_lunar_project && [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-            export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-          fi
-        '')
-      ])
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         fliPackage
         pkgs.agent-browser
-        (mkCredWrapper "pi" piPkgs.personal-default ''
-          export NIX_AGENTS_PI_CONFIG_OVERRIDE="''${PI_CODING_AGENT_DIR:-}"
-          _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
-          # Herdr children pass the parent agent directory, not its profile selector.
-          if [ -z "$_pi_session_profile" ]; then
-            for _pi_scope in personal work; do
-              for _pi_kind in default fallback browser; do
-                _pi_base="$_pi_scope-$_pi_kind"
-                [ "$_pi_kind" != fallback ] || _pi_base="$_pi_scope"
-                if [ "''${PI_CODING_AGENT_DIR:-}" = "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_base/profiles/$_pi_scope-$_pi_kind" ]; then
-                  _pi_session_profile="$_pi_scope-$_pi_kind"
-                fi
-              done
-            done
-          fi
-          _d="$PWD"
-          while [ -z "$_pi_session_profile" ] && [ "$_d" != "/" ] && [ -n "$_d" ]; do
-            if [ -f "$_d/.nix-agents-profile" ]; then
-              _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
-              break
-            fi
-            _d="''${_d%/*}"
-          done
-          if [ -z "$_pi_session_profile" ]; then
-            if is_lunar_project; then
-              _pi_session_profile="work-default"
-            else
-              _pi_session_profile="personal-default"
-            fi
-          fi
-          case "$_pi_session_profile" in
-            personal-fallback) _pi_session_base="personal" ;;
-            personal-default|personal-browser) _pi_session_base="$_pi_session_profile" ;;
-            work-fallback) _pi_session_base="work" ;;
-            work-default|work-browser) _pi_session_base="$_pi_session_profile" ;;
-            *)
-              echo "unknown nix-agents profile: $_pi_session_profile" >&2
-              exit 2
-              ;;
-          esac
-          case "$_pi_session_profile" in
-            personal-browser|work-browser)
-              export AGENT_BROWSER_SESSION="$_pi_session_profile"
-              export AGENT_BROWSER_PROFILE="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/browser/$_pi_session_profile"
-              export AGENT_BROWSER_DOWNLOAD_PATH="$AGENT_BROWSER_PROFILE/downloads"
-              if [ -z "''${AGENT_BROWSER_EXECUTABLE_PATH:-}" ] && [ -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then
-                export AGENT_BROWSER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-              fi
-              ;;
-          esac
-          export NIX_AGENTS_PROFILE="$_pi_session_profile"
-          export PI_CODING_AGENT_DIR="''${PI_CODING_AGENT_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile}"
-          case "$_pi_session_profile" in
-            ${lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (
-                profile: package: "${profile}) _nix_agents_exec=(\"${package}/bin/pi\") ;;"
-              ) piPkgs
-            )}
-          esac
-          _pi_profile_env="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings/env"
-          if [ -f "$_pi_profile_env" ]; then
-            # Generated profile environment is trusted Nix configuration.
-            . "$_pi_profile_env"
-          fi
-          case "$_pi_session_profile" in
-            work-default|work-fallback|work-browser)
-              unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
-              export AWS_PROFILE="lw-employee-ai"
-              export AWS_REGION="eu-west-1"
-              export AWS_SDK_LOAD_CONFIG=1
-              ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
-              ;;
-          esac
-          # pi-cmux is installed for regular profiles but only loaded in cmux.
-          if [ -n "''${CMUX_WORKSPACE_ID:-}" ]; then
-            _nix_agents_extra_args+=(
-              --extension
-              "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile/npm/node_modules/pi-cmux/extensions/index.ts"
-            )
-          fi
-          export PI_CODING_AGENT_SESSION_DIR="''${PI_CODING_AGENT_SESSION_DIR:-''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile}"
-          mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
+        (mkCredWrapper "pi" self.packages.${system}.pi ''
+                    _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
+                    # Herdr children pass the parent agent directory, not its profile selector.
+                    if [ -z "$_pi_session_profile" ]; then
+                      for _pi_scope in personal work; do
+                        for _pi_kind in default fallback browser; do
+                          _pi_base="$_pi_scope-$_pi_kind"
+                          [ "$_pi_kind" != fallback ] || _pi_base="$_pi_scope"
+                          if [ "''${PI_CODING_AGENT_DIR:-}" = "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_base/profiles/$_pi_scope-$_pi_kind" ]; then
+                            _pi_session_profile="$_pi_scope-$_pi_kind"
+                          fi
+                        done
+                      done
+                    fi
+                    _d="$PWD"
+                    while [ -z "$_pi_session_profile" ] && [ "$_d" != "/" ] && [ -n "$_d" ]; do
+                      if [ -f "$_d/.nix-agents-profile" ]; then
+                        _pi_session_profile="$(cat "$_d/.nix-agents-profile")"
+                        break
+                      fi
+                      _d="''${_d%/*}"
+                    done
+                    if [ -z "$_pi_session_profile" ]; then
+                      if is_lunar_project; then
+                        _pi_session_profile="work-default"
+                      else
+                        _pi_session_profile="personal-default"
+                      fi
+                    fi
+                    case "$_pi_session_profile" in
+                      personal-fallback) _pi_session_base="personal" ;;
+                      personal-default|personal-browser) _pi_session_base="$_pi_session_profile" ;;
+                      work-fallback) _pi_session_base="work" ;;
+                      work-default|work-browser) _pi_session_base="$_pi_session_profile" ;;
+                      *)
+                        echo "unknown nix-agents profile: $_pi_session_profile" >&2
+                        exit 2
+                        ;;
+                    esac
+                    case "$_pi_session_profile" in
+                      personal-browser|work-browser)
+                        export AGENT_BROWSER_SESSION="$_pi_session_profile"
+                        export AGENT_BROWSER_PROFILE="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/browser/$_pi_session_profile"
+                        export AGENT_BROWSER_DOWNLOAD_PATH="$AGENT_BROWSER_PROFILE/downloads"
+                        if [ -z "''${AGENT_BROWSER_EXECUTABLE_PATH:-}" ] && [ -x "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ]; then
+                          export AGENT_BROWSER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+                        fi
+                        ;;
+                    esac
+                    export NIX_AGENTS_PROFILE="$_pi_session_profile"
+                    export PI_CODING_AGENT_DIR="''${PI_CODING_AGENT_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile}"
+                    mkdir -p "$PI_CODING_AGENT_DIR"
+                    # Load personal secrets before mapping them to Pi provider variables.
+                    case "$_pi_session_base" in
+                      personal|personal-default|personal-browser)
+                        ${loadPersonalLitellmCredentials}
+                        ;;
+                    esac
+                    # Map SOPS-injected env vars to the provider env vars Pi reads.
+                    case "$_pi_session_base" in
+          ${piCredentialArms}          esac
+                    # Commit identity and signing key for the active base.
+                    case "$_pi_session_base" in
+          ${piGitArms}          esac
+                    # Bootstrap missing generated assets so a fresh profile directory works
+                    # before `sync-agents` runs. Existing files are left untouched.
+                    _pi_assets=""
+                    case "$_pi_session_profile" in
+                      ${piProfileAssets}
+                    esac
+                    for _pi_asset in skills extensions prompts AGENTS.md hook-manifest skill-versions.json; do
+                      if [ -n "$_pi_assets" ] && [ ! -e "$PI_CODING_AGENT_DIR/$_pi_asset" ] && [ -e "$_pi_assets/$_pi_asset" ]; then
+                        cp -R "$_pi_assets/$_pi_asset" "$PI_CODING_AGENT_DIR/$_pi_asset"
+                      fi
+                    done
+                    # Link base-scoped settings into the profile directory.
+                    _pi_settings_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings"
+                    if [ -d "$_pi_settings_dir" ]; then
+                      for _pi_setting in "$_pi_settings_dir"/*; do
+                        [ -f "$_pi_setting" ] || continue
+                        _pi_setting_name="''${_pi_setting##*/}"
+                        [ "$_pi_setting_name" = "env" ] && continue
+                        case "$_pi_setting_name" in .*|*.backup|*.hm-symlink) continue ;; esac
+                        ln -sfn "$_pi_setting" "$PI_CODING_AGENT_DIR/$_pi_setting_name" 2>/dev/null || true
+                      done
+                    fi
+                    _pi_profile_env="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/settings/env"
+                    if [ -f "$_pi_profile_env" ]; then
+                      # Generated profile environment is trusted Nix configuration.
+                      . "$_pi_profile_env"
+                    fi
+                    case "$_pi_session_profile" in
+                      work-default|work-fallback|work-browser)
+                        unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
+                        export AWS_PROFILE="lw-employee-ai"
+                        export AWS_REGION="eu-west-1"
+                        export AWS_SDK_LOAD_CONFIG=1
+                        ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
+                        ;;
+                    esac
+                    # pi-cmux is installed for regular profiles but only loaded in cmux.
+                    if [ -n "''${CMUX_WORKSPACE_ID:-}" ]; then
+                      _nix_agents_extra_args+=(
+                        --extension
+                        "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_session_base/profiles/$_pi_session_profile/npm/node_modules/pi-cmux/extensions/index.ts"
+                      )
+                    fi
+                    export PI_CODING_AGENT_SESSION_DIR="''${PI_CODING_AGENT_SESSION_DIR:-''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile}"
+                    mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
-          _pi_tmp_root="/tmp/personal"
-          case "$_pi_session_profile" in
-            work-default|work-fallback|work-browser) _pi_tmp_root="/tmp/lunar" ;;
-          esac
+                    _pi_tmp_root="/tmp/personal"
+                    case "$_pi_session_profile" in
+                      work-default|work-fallback|work-browser) _pi_tmp_root="/tmp/lunar" ;;
+                    esac
 
-          mkdir -p "$_pi_tmp_root"
-          export TMPDIR="$_pi_tmp_root"
-          export TMP="$_pi_tmp_root"
-          export TEMP="$_pi_tmp_root"
+                    mkdir -p "$_pi_tmp_root"
+                    export TMPDIR="$_pi_tmp_root"
+                    export TMP="$_pi_tmp_root"
+                    export TEMP="$_pi_tmp_root"
 
 
-          case "$_pi_session_profile" in
-            work-default|work-fallback|work-browser)
-              if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-                export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-              fi
-              if [ -n "''${LUNAR_ANTHROPIC_API_KEY:-}" ]; then
-                export ANTHROPIC_API_KEY="$LUNAR_ANTHROPIC_API_KEY"
-              fi
-              ;;
-            *)
-              ${loadPersonalLitellmCredentials}
-              if [ "$_pi_session_profile" = "personal-browser" ]; then
-                AFFINE_MCP_TOKEN_PATH="${config.sops.secrets."api/affine/mcp-token".path}"
-                if [ -f "$AFFINE_MCP_TOKEN_PATH" ]; then
-                  export AFFINE_MCP_HTTP_TOKEN="$(tr -d '[:space:]' < "$AFFINE_MCP_TOKEN_PATH")"
-                fi
-              fi
-              if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-                export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
-              fi
-              if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
-                export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
-              fi
-              ;;
-          esac
+                    # Pi uses Bedrock for Claude, not direct Anthropic credentials.
+                    unset ANTHROPIC_API_KEY ANTHROPIC_OAUTH_TOKEN LUNAR_ANTHROPIC_API_KEY
+                    case "$_pi_session_profile" in
+                      work-default|work-fallback|work-browser)
+                        if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
+                          export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
+                        fi
+                        ;;
+                      *)
+                        if [ "$_pi_session_profile" = "personal-browser" ]; then
+                          AFFINE_MCP_TOKEN_PATH="${config.sops.secrets."api/affine/mcp-token".path}"
+                          if [ -f "$AFFINE_MCP_TOKEN_PATH" ]; then
+                            export AFFINE_MCP_HTTP_TOKEN="$(tr -d '[:space:]' < "$AFFINE_MCP_TOKEN_PATH")"
+                          fi
+                        fi
+                        if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
+                          export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
+                        fi
+                        if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
+                          export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
+                        fi
+                        ;;
+                    esac
         '')
         (pkgs.writeShellApplication {
           name = "pix";
@@ -895,7 +783,7 @@ in
             list_profiles() {
               printf '%-10s %s\n' \
                 default "Everyday engineering with Herdr orchestration (formerly experimental)." \
-                fallback "Lean engineering setup without experimental dependencies." \
+                fallback "Minimal setup: web access, verbosity control, and LiteLLM models." \
                 browser "Browser automation and web/travel research, including Google Hotels."
               printf '\n%s\n' "All profiles support --scope home|work; omitted scope is inferred from the environment or project."
             }
@@ -1147,7 +1035,7 @@ in
         '')
       ])
       (lib.mkIf config.homeModules.openshell.enable [
-        inputs.nix-agents.packages.${system}.openshell
+        pkgs.openshell
       ])
     ];
 

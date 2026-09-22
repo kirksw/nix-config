@@ -2,31 +2,16 @@
 
 ## Wiring
 
-For agents, skills, and MCP servers, add the new module under `agents/defs/`, then add its path to the relevant preset import list, usually `agents/presets/default.nix`:
+A skill is wired in two edits:
 
-```nix
-imports = [
-  ../defs/<type>/<name>.nix
-];
-```
+1. Add the definition file to `agents/defs/skills/`.
+2. Add its path to `skillFiles` in `agents/pi-assets.nix`.
 
-Directory-backed skills can be imported by directory path instead:
+Then select it in a profile by adding its name to that profile's `skills` list in
+`agents/pi-profiles.nix`. A profile with `skills = [ ]` selects every defined skill.
 
-```nix
-imports = [
-  ../defs/skills/<name>
-];
-```
-
-If an agent references a new skill or MCP server, also update that agent's `skills` or `mcpServers` list.
-
-Hooks are different. Expose them through `agents/default.nix`, not a preset:
-
-```nix
-sessionModules = [ (import ./defs/hooks/<name>.nix { inherit pkgs; }) ];
-```
-
-Profiles are added directly inside `agents/presets/profiles.nix`.
+A profile needs no import list: `agents/pi-profiles.nix` is read directly by
+`agents/pi-assets.nix`.
 
 ## Validation
 
@@ -34,15 +19,17 @@ After creating and wiring the module:
 
 ```bash
 ./scripts/check-structure.sh
-nix flake check --no-build
+nixfmt --check <changed files>
+nix build .#checks.aarch64-darwin.pi-experimental-profiles --no-link
+nix run .#sync-agents
+PI_OFFLINE=1 pi list
 ```
 
-If a build fails with missing references such as undefined skills or delegate targets, check the names in the new module against existing definitions.
+If a build fails with a missing skill name, check the name against the skill definitions and
+against `skillFiles` in `agents/pi-assets.nix`.
 
 ## Existing Names
 
-- Agents: `code-monkey`, `explore`, `10xBEAST`, `the-architect`, `bottleneck`, `chaos-demon`, `code-red`, `scribe`
-- Skills: `nix-agents`, `system-context`, `secrets-management`, `skill-creator`, `session-resume`, `swe-pruner-mcp`, `add-module`, `parallel-reviews`
-- MCP servers: `swe-pruner`
-- Hooks: `session-write`
-- Presets: `default`, `minimal`, `security`, `profiles`
+- Skills: `add-module`, `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-agents`, `secrets-management`, `session-heuristics`, `skill-creator`, `system-context`, `xcode`
+- Profiles: `personal-default`, `personal-fallback`, `personal-browser`, `work-default`, `work-fallback`, `work-browser`
+- Providers: `personal-zai-key`, `personal-minimax-key`, `personal-litellm-api-key`, `personal-litellm-cf-client-id`, `personal-litellm-cf-client-secret`, `work-openai-key`

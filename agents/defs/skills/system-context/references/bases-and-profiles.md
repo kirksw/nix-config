@@ -2,34 +2,51 @@
 
 ## Mental Model
 
-- A base is an environment boundary with shared runtime state such as credentials, authentication, and sessions.
-- A profile is a configuration overlay inside a base.
-- Canonical profile names use `<base>-<profile>` in `NIX_AGENTS_PROFILE`, such as `personal-default` and `work-default`.
+- A base is an environment boundary with shared runtime state such as credentials, authentication, sessions, and settings.
+- A profile is a configuration overlay inside a base that selects skills and model tiers.
+- Canonical profile names use `<scope>-<profile>` in `NIX_AGENTS_PROFILE`, such as `personal-default` and `work-default`.
+- Pi is the only configured target. There is no external generator input.
 
 ## Bases On This Machine
 
 ### `personal`
 
-- path prefixes:
-  - `~/src/`
-  - `~/projects/`
-- default profile: `personal-default`
+- own path prefixes: none
+- hosts the `personal-fallback` profile
 - providers:
   - `personal-zai-key`
   - `personal-minimax-key`
+  - `personal-litellm-api-key`
+  - `personal-litellm-cf-client-id`
+  - `personal-litellm-cf-client-secret`
   - local `mlx-dspark/Qwen3-8B-4bit` at `http://127.0.0.1:18080` when the explicit server is running
 
-### `personal-full`
+### `personal-default`
 
-- no automatic path prefixes
-- explicit profile: `personal-full`
-- providers:
-  - `personal-zai-key`
-  - `personal-minimax-key`
-  - local `mlx-dspark/Qwen3-8B-4bit` at `http://127.0.0.1:18080` when the explicit server is running
-- purpose: preserve the complete personal package, agent, and skill surface as an escape hatch
+- same providers and commit identity as `personal`
+- hosts the `personal-default` profile
 
-This full profile remains available to non-Pi targets only.
+### `personal-browser`
+
+- same providers and commit identity as `personal`
+- hosts the `personal-browser` profile
+
+### `work`
+
+- own path prefixes: none
+- hosts the `work-fallback` profile
+- provider: `work-openai-key`
+- commits use the Lunar work identity and signing key
+
+### `work-default`
+
+- same providers and commit identity as `work`
+- hosts the `work-default` profile
+
+### `work-browser`
+
+- same providers and commit identity as `work`
+- hosts the `work-browser` profile
 
 Start the local personal model explicitly before selecting it:
 
@@ -48,26 +65,6 @@ pi --provider mlx-dspark --model Qwen3-8B-4bit
 The model and drafter download into `~/.cache/huggingface/hub/` on first use.
 Check readiness and runtime memory with `curl http://127.0.0.1:18080/health` and `curl http://127.0.0.1:18080/metrics`.
 Use `Ctrl-C` in the foreground server terminal to stop it and release model memory.
-An interrupted first download resumes automatically; inspect or remove partial model directories under `~/.cache/huggingface/hub/models--mlx-community--Qwen3-8B-4bit` and `~/.cache/huggingface/hub/models--deepseek-ai--dspark_qwen3_8b_block7` when cleanup is intentional.
-The 128K value is a maximum context, not an 8 GiB memory guarantee; memory grows as the KV cache fills.
-The first validated 9.5K-token Pi tool-call session used about 6.4 GiB active MLX memory, with a 9.95 GiB one-time loading/calibration peak reported by `/metrics`.
-
-### `work`
-
-- path prefixes:
-  - `~/git/github.com/lunarway/`
-  - `~/git/github.com/kirksw/lunarOS/`
-- default profile: `work-default`
-- provider: `work-openai-key`
-
-### `work-full`
-
-- no automatic path prefixes
-- explicit profile: `work-full`
-- provider: `work-openai-key`
-- purpose: preserve the complete work package, agent, and skill surface as an escape hatch
-
-This full profile remains available to non-Pi targets only.
 
 ## Pi Profiles
 
@@ -75,8 +72,8 @@ Pi has three choices in each scope, listed by `pix list`:
 
 | Choice | Purpose | Personal profile/base | Work profile/base |
 |---|---|---|---|
-| `default` | Everyday engineering with Herdr orchestration; formerly experimental | `personal-default` / `personal-default` | `work-default` / `work-default` |
-| `fallback` | Previous lean setup without experimental dependencies | `personal-fallback` / `personal` | `work-fallback` / `work` |
+| `default` | Everyday engineering with Herdr orchestration | `personal-default` / `personal-default` | `work-default` / `work-default` |
+| `fallback` | Minimal setup: web access, verbosity control, and LiteLLM models only | `personal-fallback` / `personal` | `work-fallback` / `work` |
 | `browser` | Browser automation and web/travel research | `personal-browser` / `personal-browser` | `work-browser` / `work-browser` |
 
 ```sh
@@ -92,94 +89,67 @@ Use `NIX_AGENTS_PROFILE=<profile> pi` or an ancestor `.nix-agents-profile` file 
 Herdr child sessions inherit the parent profile through `PI_CODING_AGENT_DIR` when no explicit environment selector is set.
 `pix --scope` wins over inferred scope; otherwise scope follows `NIX_AGENTS_PROFILE`, an ancestor profile file, then work path matching, falling back to home.
 
-The default profiles use `pi-herdr-agents` instead of `tintinweb/pi-subagents` and require Herdr for delegation.
+The `default` and `browser` profiles use `pi-herdr-agents` instead of `tintinweb/pi-subagents` and require Herdr for delegation.
 They omit `rpiv-btw`, `context-mode`, and `pi-observational-memory` and load `/Users/kisw/git/github.com/kirksw/pi-extensions/main` (currently `pi-context-flow`).
 That checkout and its runtime dependencies must exist on the machine.
-Fallback retains the previous lean package set and does not depend on that checkout or `pi-herdr-agents`.
+`fallback` is minimal: `pi-web-access`, `pi-verbosity-control`, and `pi-litellm-provider` only.
+It has no subagents, MCP tooling, tracing, to-do tracking, or permission enforcement, and it does not depend on that checkout or `pi-herdr-agents`.
 
 Browser profiles include `agent-browser`, `google-hotels`, and `system-context` skills.
-They include the web-access package, allow web fetch, and have no configured MCP servers.
-Bladebro travel skills are excluded until their browser-state isolation is verified.
+The personal browser profile also includes `affine` and `home-mcp`.
+Browser profiles include the web-access package and have no configured MCP servers.
 The launcher uses installed Google Chrome on macOS when available; otherwise run `agent-browser install` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
 The launcher gives agent-browser separate persistent browser profiles and session names for personal and work use.
 Browser skills do not authorize bookings, payments, or other external commitments without user approval.
 
-Full, factory, and experimental are no longer selectable Pi profiles.
-Use `default` instead of experimental, `fallback` for the previous default, or `browser` for web tasks.
-Old runtime directories and sessions are not deleted by sync; removed names fail profile selection.
-Authentication is shared only within the matching personal/work scope, while settings and sessions stay separate.
-Other targets retain the shared default/full profiles described below.
-
 ## Profiles In This Repo
+
+Every profile selects skills only. The repository defines no custom agents.
 
 ### `personal-default`
 
+- base: `personal-default`
+- purpose: everyday personal engineering with Herdr orchestration
+- skills: `add-module`, `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-agents`, `secrets-management`, `session-heuristics`, `skill-creator`, `system-context`, `xcode`
+- package surface: the lean set with the `pi-herdr-agents` replacement
+
+### `personal-fallback`
+
 - base: `personal`
-- purpose: lean default with common engineering capabilities
-- agents:
-  - `the-architect`
-  - `code-monkey`
-  - `explore`
-  - `scout`
-  - `bottleneck`
-- skills:
-  - `add-module`
-  - `domain-modeling`
-  - `lavish`
-  - `nix-agents`
-  - `secrets-management`
-  - `session-heuristics`
-  - `skill-creator`
-  - `system-context`
-- direct MCP tools: none; integrations are exposed through generated CLI skills when selected
-- package surface excludes Context Mode, agent journal, and Bladebro
+- purpose: minimal personal setup
+- skills: the same fourteen skills as `personal-default`
+- package surface: `pi-web-access`, `pi-verbosity-control`, `pi-litellm-provider`
 
-### `personal-full`
+### `personal-browser`
 
-- base: `personal-full`
-- agents: all repository-defined agents
-- skills: all repository-defined skills
-- direct MCP tools: none; integrations are exposed through generated CLI skills
-- package surface includes Context Mode, agent journal, and Bladebro
+- base: `personal-browser`
+- purpose: browser automation and web/travel research
+- skills: `affine`, `agent-browser`, `google-hotels`, `home-mcp`, `system-context`
+- MCP: the AFFiNE HTTP server, used by the generated AFFiNE CLI skill
 
 ### `work-default`
 
+- base: `work-default`
+- purpose: everyday work engineering with Herdr orchestration
+- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `land`, `lavish`, `linear`, `lunar-skills`, `nix-agents`, `slack`, `sourcegraph`, `system-context`, `work-mcp`
+- package surface: the lean set with the `pi-herdr-agents` replacement and `agenticos`
+
+### `work-fallback`
+
 - base: `work`
-- purpose: lean default with dedicated work integrations
-- agents:
-  - `10xBEAST`
-  - `the-architect`
-  - `code-monkey`
-  - `explore`
-  - `scout`
-  - `bottleneck`
-- skills:
-  - `nix-agents`
-  - `system-context`
-  - `work-mcp`
-  - `1password`
-  - `granola`
-  - `grafana`
-  - `hubble-mcp`
-  - `linear`
-  - `lunar-skills`
-  - `slack`
-  - `sourcegraph`
-  - `swe-pruner`
-- direct MCP tools: none; work integrations are exposed through generated CLI skills
-- package surface excludes Context Mode and agent journal while retaining `agenticos`
-- `agenticos` starts with only `agenticos_enable_tools` active; its domain tools load on demand or when attached work context is restored
-- web fetch is denied by default
+- purpose: minimal work setup
+- skills: the same thirteen skills as `work-default`
+- package surface: `pi-web-access`, `pi-verbosity-control`, `pi-litellm-provider`
 
-### `work-full`
+### `work-browser`
 
-- base: `work-full`
-- agents: the previous complete nine-agent work set
-- skills: the previous complete 23-skill work set
-- direct MCP tools: none; work integrations are exposed through generated CLI skills
-- package surface includes Context Mode, agent journal, and `agenticos`
-- all `agenticos` domain tools are active eagerly
-- web fetch is denied by default
+- base: `work-browser`
+- purpose: browser automation and web/travel research
+- skills: `agent-browser`, `google-hotels`, `system-context`
+
+Full and factory profiles no longer exist for any target.
+Old runtime directories and sessions are not deleted by sync; removed profile names fail selection.
+Authentication is shared only within the matching personal/work scope, while settings and sessions stay separate.
 
 ## Resolution Rules
 
@@ -187,8 +157,8 @@ Profile selection prefers, in order:
 
 1. `NIX_AGENTS_PROFILE` when explicitly set
 2. a `.nix-agents-profile` file in the current directory or one of its parents
-3. path-prefix matching against configured bases
-4. `personal-default` as the fallback
+3. an inherited `PI_CODING_AGENT_DIR` from a parent Herdr session
+4. `work-default` for a Lunar project path, otherwise `personal-default`
 
 Unknown explicit profile values fail instead of silently falling back.
 
@@ -197,10 +167,9 @@ Unknown explicit profile values fail instead of silently falling back.
 Generated configuration is organized as:
 
 ```text
-~/.config/nix-agents/<target>/bases/<base>/profiles/<profile>/
+~/.config/nix-agents/pi/bases/<base>/profiles/<profile>/
 ```
 
-Pi base state is isolated between default, fallback, and browser, except for authentication links within the same scope.
 Settings live under `~/.config/nix-agents/pi/bases/<base>/settings/`.
 Sessions live under `~/.local/share/nix-agents/pi/sessions/<profile>/`, honoring the corresponding XDG roots.
 Each Pi profile receives the Herdr lifecycle hook at `extensions/herdr-agent-state.ts`.

@@ -62,23 +62,19 @@ nix build .#darwinConfigurations.lunar.config.system.build.toplevel --no-link
 
 Use `apps/aarch64-darwin/build lunar` for build-only checks, then `sudo apps/aarch64-darwin/switch lunar` when activation behavior matters. The wrapper is required because it performs YubiKey/SOPS preflight before switching. In noninteractive tool sessions, sudo may hang; ask the user to run the switch from their terminal when needed.
 
-## Using `nix-agents` In Your Own Flake
+## Generating Pi Profile Assets
 
-```nix
-inputs.nix-agents.url = "github:kirksw/nix-agents";
-
-packages.my-config = nix-agents.lib.${system}.mkAgentSystem {
-  inherit pkgs;
-  modules = [ ./agents/presets/default.nix ./agents/presets/profiles.nix ];
-  target = "opencode";
-};
-```
-
-## Initialize From Template
+`agents/pi-assets.nix` builds one store path per profile. It contains skills, `AGENTS.md`
+with the generated model-tier manifest, `hook-manifest`, `skill-versions.json`, Pi
+extensions, and Pi prompts.
 
 ```bash
-nix flake init -t github:kirksw/nix-agents
+nix build .#checks.aarch64-darwin.pi-experimental-profiles --no-link
+nix run .#sync-agents
 ```
+
+There is no external generator input. `agents/pi-profiles.nix` holds the bases, providers,
+profiles, and tier mappings; `agents/pi-assets.nix` packages them.
 
 ## Other Repository Commands
 

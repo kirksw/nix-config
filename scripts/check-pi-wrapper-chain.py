@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Check built pix -> Pi routing -> library wrapper without credentials/model calls.
+"""Check built pix -> Pi routing -> launch target without credentials/model calls.
 
 Usage: check-pi-wrapper-chain.py /nix/store/...-pi/bin/pi /nix/store/...-pix/bin/pix
-The outer wrapper's credential/SSO setup is excluded. The complete inner wrapper
-runs with an isolated HOME and a probe in place of the model executable.
+The wrapper's credential/SSO setup is excluded. The routing block runs with an
+isolated HOME and a probe in place of the Pi executable.
 """
 
 import os
@@ -21,36 +21,21 @@ routing = outer[start:end]
 session_start = outer.index('export PI_CODING_AGENT_SESSION_DIR=', end)
 session_end = outer.index('\n', session_start)
 routing += '\n' + outer[session_start:session_end] + '\n'
-inner_paths = set(re.findall(r'/nix/store/[^"\s]+/bin/pi', routing))
-assert inner_paths, 'No library wrapper found'
 
 with tempfile.TemporaryDirectory() as directory:
     root = Path(directory).resolve()
     probe = root / 'probe'
     probe.write_text('#!/bin/sh\nprintf "%s\\n" "$NIX_AGENTS_PROFILE" "$PI_CODING_AGENT_DIR" "$PI_CODING_AGENT_SESSION_DIR" "$@"\n')
     probe.chmod(0o755)
-    def instrument_bridge(match):
-        original = re.search(r'"([^"]+)"', match[0]).group(1)
-        bridge = Path(original).read_text()
-        if 'NIX_AGENTS_PI_CONFIG_OVERRIDE' not in bridge:
-            return match[1] + f'"{probe}"'
-        bridge = re.sub(r'exec /nix/store/[^\s]+/bin/pi', f'exec "{probe}"', bridge)
-        target = root / 'override-bridge'
-        target.write_text(bridge)
-        target.chmod(0o755)
-        return match[1] + f'"{target}"'
 
-    for index, path in enumerate(sorted(inner_paths)):
-        inner = Path(path).read_text()
-        instrumented, count = re.subn(
-            r'(_nax_exec_tool )"/nix/store/[^"\n]+/bin/pi"',
-            lambda match: instrument_bridge(match), inner,
-        )
-        assert count, f'No final Pi invocation in {path}'
-        copy = root / f'inner-{index}'
-        copy.write_text(instrumented)
-        copy.chmod(0o755)
-        routing = routing.replace(path, str(copy))
+    # Replace the Pi launch target with the probe so no model call happens.
+    routing, count = re.subn(
+        r'_nix_agents_exec=\("/nix/store/[^"]+/bin/pi"\)',
+        f'_nix_agents_exec=("{probe}")',
+        routing,
+    )
+    assert count == 1, 'No Pi launch target found in the wrapper'
+
     wrapper = root / 'pi'
     wrapper.write_text(
         '#!/usr/bin/env bash\nset -euo pipefail\n'

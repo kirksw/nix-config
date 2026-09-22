@@ -1,6 +1,6 @@
 {
   skills.add-module = {
-    description = "Interactively add any nix-agents module type - agent, skill, MCP server, hook, preset, or profile. Use when the user wants to create a new definition, understand what each module type does, or get step-by-step guidance wiring a new module into the build.";
+    description = "Interactively add a skill or profile to the local Pi agent configuration. Use when the user wants to create a new skill or profile, understand what each definition does, or get step-by-step guidance wiring it into the build.";
     src = ./.;
     version = "1.0.0";
   };

@@ -65,20 +65,17 @@ let
       exit 0
     fi
 
-    # nix-agents wrappers now use bases/<base>/profiles/<profile>/ layout
-    # The wrappers copy config at runtime, but work-specific skill overlays
-    # need to be available in the profile dirs after sync-agents runs.
+    # Pi wrappers use bases/<base>/profiles/<profile>/ layout.
+    # Work-specific skill overlays need to be available in the profile dirs after sync-agents runs.
     echo "Syncing backend-engineering-practices skills to work profiles..."
     CONFIG_BASE="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents"
 
-    for target in opencode claude codex pi; do
-      for base_profile in work/work-default work-full/work-full; do
-        target_dir="$CONFIG_BASE/$target/bases/$base_profile/skills"
-        if [ -d "$target_dir" ]; then
-          ${pkgs.coreutils}/bin/cp -R "$source_skills"/. "$target_dir/"
-          echo "  -> $target_dir"
-        fi
-      done
+    for base_profile in work/work-default work/work-fallback; do
+      target_dir="$CONFIG_BASE/pi/bases/$base_profile/skills"
+      if [ -d "$target_dir" ]; then
+        ${pkgs.coreutils}/bin/cp -R "$source_skills"/. "$target_dir/"
+        echo "  -> $target_dir"
+      fi
     done
 
     echo "Done!"
@@ -91,7 +88,7 @@ let
     cd "$repo_root"
     config="$HOME/.config/nix-agents/pi/bases/work/settings/mcporter.json"
     output_dir="agents/defs/skills/work-mcp/generated"
-    servers="1password granola grafana linear lunar-skills swe-pruner hubble-mcp sourcegraph slack"
+    servers="1password granola grafana linear lunar-skills hubble-mcp sourcegraph slack"
 
     if [ ! -r "$config" ]; then
       echo "Missing generated work MCPorter configuration: $config" >&2
@@ -186,16 +183,7 @@ let
     echo "Generated complete $server MCP CLI wrapper at $target."
   '';
 
-  localAgents = import ../agents { inherit pkgs; };
-  localAgentsSrc = pkgs.runCommandLocal "nix-config-agents-src" { } ''
-    mkdir -p "$out"
-    cp -r ${../agents}/. "$out/"
-    chmod -R u+w "$out"
-  '';
-  piCommonChainsSrc = ../agents/targets/pi/chains/common;
-  agentInputs = inputs // {
-    inherit self;
-  };
+  localAgents = import ../agents { inherit pkgs inputs; };
   agentBaseSettings = import ../agents/base-settings.nix {
     inherit
       self
@@ -204,9 +192,6 @@ let
       ;
   };
   agentBaseSettingsTargets = agentBaseSettings.targets;
-  nixAgentsLib = inputs.nix-agents.lib.${system};
-  agentModulesFor =
-    target: if target == "pi" then localAgents.piModules else localAgents.defaultModules;
 
   settingsDirFor =
     target: baseName: files:
@@ -256,59 +241,12 @@ let
     in
     lib.concatStringsSep "\n" (lib.mapAttrsToList syncBase baseSettings);
 
-  profileMetaForModules =
-    target: modules:
-    nixAgentsLib.mkProfileMeta {
-      inherit pkgs target modules;
-      inputs = agentInputs;
-      src = localAgentsSrc;
-    };
-
-  profileMetaFor = target: profileMetaForModules target (agentModulesFor target);
-
   syncProfileCommands =
     target:
     let
-      profileMeta = profileMetaFor target;
+      profileMeta = localAgents.profileMeta;
       targetSpec =
         {
-          opencode = {
-            dirs = [
-              "agents"
-              "skills"
-            ];
-            files = [
-              "hook-manifest"
-              "skill-versions.json"
-              "AGENTS.md"
-              "opencode.json"
-            ];
-          };
-          claude = {
-            dirs = [
-              "agents"
-              "skills"
-            ];
-            files = [
-              "hook-manifest"
-              "skill-versions.json"
-              "CLAUDE.md"
-              "settings.json"
-              ".mcp.json"
-            ];
-          };
-          codex = {
-            dirs = [
-              "agents"
-              "skills"
-            ];
-            files = [
-              "hook-manifest"
-              "skill-versions.json"
-              "AGENTS.md"
-              "mcp.nix.toml"
-            ];
-          };
           pi = {
             dirs = [
               "agents"
@@ -335,63 +273,20 @@ let
           fileCommands = lib.concatMapStringsSep "\n" (file: ''
             sync_file "${meta.storePath}/${file}" "${profileDir}/${file}"
           '') targetSpec.files;
-          extraDirCommands =
-            if
-              target == "pi"
-              && builtins.elem profileName [
-                "personal-default"
-                "personal-fallback"
-                "personal-browser"
-                "work-default"
-                "work-fallback"
-                "work-browser"
-              ]
-            then
-              ''
-                sync_tree "${piCommonChainsSrc}" "${profileDir}/chains"
-              ''
-            else
-              "";
-          postCommands =
-            if target == "codex" then
-              ''
-                link_base_settings_except_config_toml "${settingsDir}" "${profileDir}"
-                append_file "${profileDir}/AGENTS.md" "${codexImageGuidanceFile}"
-                merge_codex_config "${settingsDir}/config.toml" "${profileDir}/mcp.nix.toml" "${profileDir}/config.toml"
-              ''
-            else
-              ''
-                link_base_settings "${settingsDir}" "${profileDir}"
-              '';
         in
         ''
           echo "Syncing ${target}/${meta.base}/${profileName}"
           mkdir_p "${profileDir}"
           ${dirCommands}
           ${fileCommands}
-          ${extraDirCommands}
-          ${postCommands}
+          link_base_settings "${settingsDir}" "${profileDir}"
         '';
     in
     lib.concatStringsSep "\n" (lib.mapAttrsToList syncProfile profileMeta);
 
-  allSyncCommands = lib.concatStringsSep "\n" (
-    map syncProfileCommands [
-      "opencode"
-      "claude"
-      "codex"
-      "pi"
-    ]
-  );
+  allSyncCommands = syncProfileCommands "pi";
 
-  allBaseSettingsCommands = lib.concatStringsSep "\n" (
-    map syncBaseSettingsCommands [
-      "opencode"
-      "claude"
-      "codex"
-      "pi"
-    ]
-  );
+  allBaseSettingsCommands = syncBaseSettingsCommands "pi";
 
   piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
   piSubagentsSettingsFile = pkgs.writeText "pi-subagents-settings.json" ''
@@ -401,15 +296,6 @@ let
         "disableBuiltins": true
       }
     }
-  '';
-  codexImageGuidanceFile = pkgs.writeText "codex-image-guidance.md" ''
-    ## Image generation
-
-    Use Codex built-in image generation (`$imagegen` / `image_gen.imagegen`) as the default for all requested raster image generation or image editing: cats, stickers, mockups, photos, illustrations, textures, sprites, product shots, and other bitmap assets.
-
-    Do not satisfy image-generation requests by drawing with Python/PIL, SVG, canvas, shell scripts, or placeholder code unless the user explicitly asks for code-native output.
-
-    Use Mermaid, Graphviz, SVG, HTML/CSS/canvas, or another deterministic format when the user explicitly asks for that format, or when the requested diagram is clearly better as code-native structured output than as a generated bitmap.
   '';
   syncAgents = pkgs.writeShellScriptBin "sync-agents" ''
     set -euo pipefail
@@ -583,65 +469,6 @@ let
       fi
     }
 
-    link_base_settings_except_config_toml() {
-      settings_dir="$1"
-      profile_dir="$2"
-      remove_stale_base_setting_links "$profile_dir"
-      if [ -d "$settings_dir" ]; then
-        for f in "$settings_dir"/*; do
-          [ -f "$f" ] || continue
-          name="''${f##*/}"
-          [ "$name" = "env" ] && continue
-          [ "$name" = "config.toml" ] && continue
-          case "$name" in
-            .*|*.backup|*.hm-symlink)
-              continue
-              ;;
-          esac
-          run ${pkgs.coreutils}/bin/ln -sfn "$f" "$profile_dir/$name" 2>/dev/null || true
-        done
-      fi
-    }
-
-    append_file() {
-      target_file="$1"
-      source_file="$2"
-      if [ "$DRY_RUN" -eq 1 ]; then
-        echo "DRY-RUN append_file $source_file -> $target_file"
-        return 0
-      fi
-      if [ -f "$target_file" ] && [ -f "$source_file" ]; then
-        printf '\n' >> "$target_file"
-        cat "$source_file" >> "$target_file"
-        chmod u+w "$target_file"
-      fi
-    }
-
-    merge_codex_config() {
-      user_config="$1"
-      nix_mcp_config="$2"
-      target_config="$3"
-
-      if [ "$DRY_RUN" -eq 1 ]; then
-        echo "DRY-RUN merge_codex_config $user_config $nix_mcp_config $target_config"
-        return 0
-      fi
-
-      rm -f "$target_config"
-      if [ -f "$user_config" ]; then
-        cat "$user_config" >> "$target_config"
-      fi
-      if [ -s "$nix_mcp_config" ]; then
-        if [ -s "$target_config" ]; then
-          printf '\n' >> "$target_config"
-        fi
-        cat "$nix_mcp_config" >> "$target_config"
-      fi
-      if [ -e "$target_config" ]; then
-        chmod u+w "$target_config"
-      fi
-    }
-
     ${allBaseSettingsCommands}
 
     remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
@@ -686,10 +513,6 @@ let
       "${piSubagentsSettingsFile}" \
       "$HOME/.pi/agent/subagents.json" \
       0600
-
-    run ${pkgs.coreutils}/bin/rm -f \
-      "$CONFIG_BASE/codex/bases/personal/profiles/personal-default/rules/default.rules" \
-      "$CONFIG_BASE/codex/bases/work/profiles/work-default/rules/default.rules"
 
     if [ "$DRY_RUN" -eq 1 ]; then
       echo "Dry run complete. No files were changed."

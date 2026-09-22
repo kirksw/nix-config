@@ -19,15 +19,15 @@ deadnix --fail .
 
 ## Module Pattern For `defs/`
 
-Agent, skill, and MCP defs are plain attrsets. Do not add `{ config, lib, ... }:` boilerplate unless the file actually needs special args.
+Skill definitions are plain attrsets, or functions when they need `pkgs` or `inputs`. Do not add `{ config, lib, ... }:` boilerplate.
 
 ```nix
-# defs/agents/my-agent.nix
+# defs/skills/my-skill/default.nix
 {
-  agents.my-agent = {
+  skills.my-skill = {
     description = "…";
-    model = "balanced";
-    prompt = "Implement the task.";
+    src = ./.;
+    version = "1.0.0";
   };
 }
 ```

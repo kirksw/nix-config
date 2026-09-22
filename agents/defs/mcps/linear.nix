@@ -1,6 +1,0 @@
-{
-  mcpServers.linear = {
-    type = "remote";
-    url = "https://mcp.linear.app/mcp";
-  };
-}

@@ -16,7 +16,6 @@
   ./programs/qemu.nix
   ./programs/sketchybar.nix
   ./programs/sops.nix
-  ./programs/swe-pruner-mcp.nix
   ./programs/tmux.nix
   ./programs/treekanga.nix
   ./programs/vscode.nix

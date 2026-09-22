@@ -1,54 +1,56 @@
 # Layout
 
-## Main Repo
+## Repository Source
 
-Primary repo for this machine's concrete configuration:
+- `agents/pi-profiles.nix`: bases, providers, profiles, and tier mappings
+- `agents/pi-assets.nix`: skill loading and the per-profile asset build
+- `agents/defs/skills/`: skill definitions
+- `agents/targets/pi/extensions/`: Pi extensions
+- `agents/targets/pi/prompts/`: Pi prompt templates
+- `agents/base-settings.nix`: per-base `settings.json`, `models.json`, `mcporter.json`, and `env`
+- `modules/home/programs/ai-agents.nix`: the `pi` wrapper, `pix` launcher, and profile routing
 
-- `/Users/kisw/git/github.com/kirksw/nix-config`
+Pi is the only configured target. There is no external generator input.
 
-Important areas in that repo:
+## Generated Profile Tree
 
-- `agents/defs/agents/`
-- `agents/defs/skills/`
-- `agents/defs/mcps/`
-- `agents/defs/hooks/`
-- `agents/presets/`
-- `agents/targets/`
-- `modules/home/programs/ai-agents.nix`
-- `packages/`
+Every profile is generated at:
 
-The external `nix-agents` repo provides the reusable generator/wrapper engine and templates.
+```text
+~/.config/nix-agents/pi/bases/<base>/profiles/<profile>/
+```
 
-## Generated Config Root
+| Path | Contents |
+|------|----------|
+| `skills/` | Selected skills for the profile |
+| `AGENTS.md` | `agents/AGENTS.md` plus the generated model-tier manifest |
+| `hook-manifest` | Hook manifest; empty because no hooks are configured |
+| `skill-versions.json` | Skill name to version map |
+| `extensions/` | Pi extensions |
+| `prompts/` | Pi prompt templates |
+| `settings.json` | Linked from the base settings directory |
+| `models.json` | Linked from the base settings directory |
+| `mcporter.json` | Linked from the base settings directory |
+| `auth.json` | Linked within the scope so personal and work do not share login state |
+| `npm/`, `sessions/`, `tmp/` | Runtime state created by Pi |
 
-Generated tool configs live under:
+Base-scoped settings live at:
 
-- `~/.config/nix-agents/<tool>/bases/<base>/profiles/<profile>/`
+```text
+~/.config/nix-agents/pi/bases/<base>/settings/
+```
 
-Examples:
+Sessions live at:
 
-- `~/.config/nix-agents/codex/bases/personal/profiles/personal-default/`
-- `~/.config/nix-agents/claude/bases/work/profiles/work-default/`
+```text
+~/.local/share/nix-agents/pi/sessions/<profile>/<project>/
+```
 
-## Tool-Specific Notes
+## Sync
 
-- Codex, Claude, and OpenCode consume generated assets from the `~/.config/nix-agents/...` tree.
-- Pi also has base-scoped shared state under `~/.config/nix-agents/pi/bases/<base>/state/`.
+`nix run .#sync-agents` copies the generated store paths into the profile tree and links base
+settings. The `pi` wrapper bootstraps any missing asset on launch, so a fresh profile
+directory works before the first sync.
 
-## Session Data
-
-Session files are written under:
-
-- `~/.local/share/nix-agents/sessions/<profile>/<project>/`
-
-There is also transient wrapper state under:
-
-- `~/.local/share/nix-agents/state/<wrapper-pid>/`
-
-## Current Personal Codex Skill Location
-
-An example of the currently synced personal Codex profile tree is:
-
-- `~/.config/nix-agents/codex/bases/personal/profiles/personal-default/`
-
-That is useful for inspection, but lasting changes should normally be made in the repo and re-synced.
+Removed profiles leave their directories in place. Sync never deletes session, authentication,
+or settings data.

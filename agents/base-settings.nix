@@ -44,7 +44,23 @@ let
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
   ) (piPackageRefs ++ [ agenticOSPackage ]);
-  mkPiExperimentalSettings =
+  # Minimal profile package set: web access, output verbosity, and LiteLLM models.
+  # The fallback profiles use this set and deliberately omit subagents, MCP
+  # tooling, tracing, permission enforcement, and to-do tracking.
+  piMinimalPackageRefs = [
+    "npm:pi-web-access@0.13.0"
+    "npm:pi-verbosity-control@0.3.0"
+    piLitellmProviderPackage
+  ];
+  mkPiMinimalSettings =
+    defaults:
+    builtins.toJSON (
+      (builtins.removeAttrs defaults [ "subagents" ])
+      // {
+        packages = piMinimalPackageRefs;
+      }
+    );
+  mkPiHerdrSettings =
     defaults:
     builtins.toJSON (
       defaults
@@ -166,9 +182,9 @@ let
     enabledModels = [
       "litellm/openai/gpt-6-astra"
       "litellm/openai/gpt-5.5"
-      "litellm/openai/gpt-5.6-sol"
+      "litellm/openai/gpt-6-sol"
       "litellm/openai/gpt-5.6-terra"
-      "litellm/openai/gpt-5.6-luna"
+      "litellm/openai/gpt-6-luna"
       "litellm/minimax-m3"
       "litellm/glm-5.3"
       "litellm/glm-5.3-flash"
@@ -178,7 +194,6 @@ let
     subagents.disableBuiltins = true;
   };
 
-  piPersonalSettings = builtins.toJSON piPersonalSettingsAttrs;
   piPersonalSettingsAttrs =
     piPersonalModelDefaults
     // piThemeSettings
@@ -209,20 +224,20 @@ let
     defaultThinkingLevel = "medium";
     enabledModels = [
       "gpt-6-astra"
-      "gpt-5.6-sol"
+      "gpt-6-sol"
       "gpt-5.6-terra"
-      "gpt-5.6-luna"
+      "gpt-6-luna"
       "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
       "amazon-bedrock/eu.anthropic.claude-sonnet-5"
+      "amazon-bedrock/eu.anthropic.claude-opus-5-5"
       "amazon-bedrock/eu.anthropic.claude-opus-5"
       "amazon-bedrock/eu.anthropic.claude-opus-4-8"
       "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
     ];
   };
 
-  piWorkSettings = builtins.toJSON piWorkSettingsAttrs;
   piWorkSettingsAttrs =
     piWorkModelDefaults
     // piThemeSettings
@@ -267,10 +282,6 @@ let
     };
     lunar-skills = {
       command = "${self.packages.${system}.lunar-skills-mcp}/bin/lunar-skills-mcp";
-      lifecycle = "lazy";
-    };
-    swe-pruner = {
-      command = "${self.packages.${system}.swe-pruner-mcp}/bin/swe-pruner-mcp";
       lifecycle = "lazy";
     };
     hubble-mcp = {
@@ -347,33 +358,14 @@ let
     };
   };
 
-  codexPersonalSettings = ''
-    approvals_reviewer = "guardian_subagent"
-    suppress_unstable_features_warning = true
-  '';
-
-  codexWorkSettings = ''
-    openai_base_url = "https://eu.api.openai.com/v1"
-    approvals_reviewer = "guardian_subagent"
-    suppress_unstable_features_warning = true
-  '';
 in
 {
   inherit piPersonalPackageRefs piWorkAuth;
 
   targets = {
-    codex = {
-      personal = {
-        "config.toml" = codexPersonalSettings;
-      };
-      work = {
-        "config.toml" = codexWorkSettings;
-      };
-    };
-
     pi = {
       personal = {
-        "settings.json" = piPersonalSettings;
+        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs;
         "models.json" = piPersonalModels;
         "mcporter.json" = piPersonalMcporter;
         "env" = piPersonalEnv;
@@ -381,26 +373,26 @@ in
       work = {
         "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
-        "settings.json" = piWorkSettings;
+        "settings.json" = mkPiMinimalSettings piWorkSettingsAttrs;
         "env" = piWorkEnv;
       };
       personal-default = {
         "mcporter.json" = piPersonalMcporter;
         "models.json" = piPersonalModels;
-        "settings.json" = mkPiExperimentalSettings piPersonalSettingsAttrs;
+        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
         "env" = mkPiPersonalEnv "personal-default";
       };
       work-default = {
         "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
-        "settings.json" = mkPiExperimentalSettings piWorkSettingsAttrs;
+        "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
         "env" = mkPiWorkEnv {
           base = "work-default";
           agenticosToolMode = "lazy";
         };
       };
       personal-browser = {
-        "settings.json" = piPersonalSettings;
+        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
         "models.json" = piPersonalModels;
         "mcporter.json" = builtins.toJSON {
           imports = [ ];
@@ -415,7 +407,7 @@ in
         '';
       };
       work-browser = {
-        "settings.json" = builtins.toJSON (
+        "settings.json" = mkPiHerdrSettings (
           piWorkSettingsAttrs
           // {
             packages = builtins.filter (package: packageSource package != agenticOSPackage) piWorkPackageRefs;

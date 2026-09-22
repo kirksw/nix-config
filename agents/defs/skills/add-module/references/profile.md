@@ -1,30 +1,40 @@
 # Profile Wizard
 
-Profiles live in `presets/profiles.nix` under the `profiles` attrset.
+Profiles live in `agents/pi-profiles.nix` under the `profiles` attrset.
 
 Ask for:
 
 1. `name`
-2. `pathPrefixes`
-3. `agents`
-4. `skills`
-5. `mcpServers`
-6. optional `tierMapping`
-7. optional `permissions`
-
-Explain that empty lists mean "all" for `agents`, `skills`, and `mcpServers`.
+2. `base`: which base owns credentials, authentication, sessions, and settings
+3. `skills`: skill names, or an empty list for every defined skill
+4. optional `tierMapping`: ordered model chains per tier
 
 Emit this block:
 
 ```nix
 profiles.<name> = {
-  pathPrefixes = [ <pathPrefixes> ];
-  agents = [ <agents> ];
+  base = "<base>";
   skills = [ <skills> ];
-  mcpServers = [ <mcpServers> ];
   tierMapping = { <tierMapping> };
-  permissions = { <permissions> };
 };
 ```
 
-No additional import is needed because `presets/profiles.nix` is already part of the default module set.
+Explain that the `base` field decides three things: which `settings.json`, `models.json`,
+`mcporter.json`, and `env` the profile links, which provider credentials the `pi` wrapper
+exports, and which commit identity it sets.
+
+Bases are defined in the same file:
+
+```nix
+bases.<name> = {
+  providers = [ <provider-name> ];
+  git = { userName = "…"; userEmail = "…"; signingKey = "…"; };
+};
+```
+
+Providers are defined in the `providers` attrset, which maps a `credentialRef` environment
+variable to the `envVar` that Pi reads.
+
+A new profile needs one wrapper change: add its name to the profile-to-base `case` in
+`modules/home/programs/ai-agents.nix` and to the matching assertion in
+`scripts/check-pi-experimental-launchers.py`.

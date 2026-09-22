@@ -135,8 +135,7 @@ let
     url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.9.0/src/integration/assets/pi/herdr-agent-state.ts";
     hash = "sha256-mxxBzXJSD8Kr5fKirsmVwSqSbM6ETfRyx/1fyuT02/o=";
   };
-  localAgents = import ../../../agents { inherit pkgs; };
-  localAgentsSrc = ../../../agents;
+  localAgents = import ../../../agents { inherit pkgs inputs; };
   agentBaseSettings = import ../../../agents/base-settings.nix {
     inherit self lib;
     system = pkgs.system;
@@ -144,26 +143,8 @@ let
   personalPiPackageSettings = pkgs.writeText "personal-agent-pi-packages.json" (
     builtins.toJSON { packages = agentBaseSettings.piPersonalPackageRefs; }
   );
-  nixAgentsLib = inputs.nix-agents.lib.${pkgs.system};
-  agentInputs = inputs // {
-    inherit self;
-  };
-  personalPiAgentSystem = nixAgentsLib.mkAgentSystem {
-    inherit pkgs;
-    target = "pi";
-    inputs = agentInputs;
-    modules = localAgents.piModules;
-    src = localAgentsSrc;
-  };
-  personalPiBaseProfileMeta = nixAgentsLib.mkProfileMeta {
-    inherit pkgs;
-    target = "pi";
-    inputs = agentInputs;
-    modules = localAgents.piModules;
-    src = localAgentsSrc;
-  };
-  personalPiProfile = personalPiBaseProfileMeta."personal-default";
-  personalPiProfileMeta = personalPiBaseProfileMeta // {
+  personalPiProfile = localAgents.profileMeta."personal-default";
+  personalPiProfileMeta = localAgents.profileMeta // {
     "personal-default" = personalPiProfile // {
       storePath = pkgs.runCommandLocal "nix-config-personal-agent-profile" { } ''
         cp -r ${personalPiProfile.storePath} "$out"
@@ -173,19 +154,57 @@ let
       '';
     };
   };
-  personalPi = nixAgentsLib.mkWrappedTool (
-    {
-      inherit pkgs;
-      target = "pi";
-      tool = self.packages.${pkgs.system}.pi;
-      agentSystem = personalPiAgentSystem;
-      profileMeta = personalPiProfileMeta;
-      profile = "personal-default";
-    }
-    // lib.optionalAttrs ((builtins.functionArgs nixAgentsLib.mkWrappedTool) ? syncMode) {
-      syncMode = "bootstrap";
-    }
-  );
+  # Provider credential mapping for the personal base, generated from
+  # agents/pi-profiles.nix so it matches the workstation wrapper.
+  personalPiCredentialArms = lib.concatMapStrings (
+    name:
+    let
+      provider = localAgents.providers.${name};
+    in
+    ''
+      [ -n "''${${provider.credentialRef}:-}" ] && export ${provider.envVar}="''${${provider.credentialRef}}"
+    ''
+  ) localAgents.bases.personal.providers;
+  personalPiGit = localAgents.bases.personal.git;
+  personalPi = pkgs.writeShellScriptBin "pi" ''
+    set -euo pipefail
+    _config="''${XDG_CONFIG_HOME:-$HOME/.config}"
+    _base="personal"
+    _profile="personal-default"
+    _assets=${personalPiProfileMeta."personal-default".storePath}
+    _profile_dir="$_config/nix-agents/pi/bases/$_base/profiles/$_profile"
+    _state_dir="$_config/nix-agents/pi/bases/$_base/state"
+    mkdir -p "$_profile_dir" "$_state_dir"
+    for _asset in skills extensions prompts AGENTS.md hook-manifest skill-versions.json; do
+      if [ -e "$_assets/$_asset" ] && [ ! -e "$_profile_dir/$_asset" ]; then
+        cp -R "$_assets/$_asset" "$_profile_dir/$_asset"
+      fi
+    done
+    for _state in auth.json models.json settings.json; do
+      if [ ! -e "$_profile_dir/$_state" ] && [ -e "$_state_dir/$_state" ]; then
+        ln -sfn "$_state_dir/$_state" "$_profile_dir/$_state"
+      fi
+    done
+    _settings_dir="$_config/nix-agents/pi/bases/$_base/settings"
+    if [ -d "$_settings_dir" ]; then
+      for _setting in "$_settings_dir"/*; do
+        [ -f "$_setting" ] || continue
+        _name="''${_setting##*/}"
+        [ "$_name" = "env" ] && continue
+        case "$_name" in .*|*.backup|*.hm-symlink) continue ;; esac
+        ln -sfn "$_setting" "$_profile_dir/$_name" 2>/dev/null || true
+      done
+    fi
+    ${personalPiCredentialArms}
+    export GIT_AUTHOR_NAME=${lib.escapeShellArg personalPiGit.userName}
+    export GIT_AUTHOR_EMAIL=${lib.escapeShellArg personalPiGit.userEmail}
+    export GIT_COMMITTER_NAME=${lib.escapeShellArg personalPiGit.userName}
+    export GIT_COMMITTER_EMAIL=${lib.escapeShellArg personalPiGit.userEmail}
+    export GIT_AUTHOR_SIGNINGKEY=${lib.escapeShellArg personalPiGit.signingKey}
+    export GIT_COMMITTER_SIGNINGKEY=${lib.escapeShellArg personalPiGit.signingKey}
+    export PI_CODING_AGENT_DIR="$_profile_dir"
+    exec ${self.packages.${pkgs.system}.pi}/bin/pi "$@"
+  '';
 
   mkSopsSecret = assistant: {
     name = assistant.authSecret;

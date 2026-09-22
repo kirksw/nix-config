@@ -3,7 +3,7 @@
 **Status:** Active  
 **Last verified:** 2026-07-24  
 **Profile:** `personal-default`  
-**Configuration:** [`agents/presets/profiles.nix`](../../agents/presets/profiles.nix)
+**Configuration:** [`agents/pi-profiles.nix`](../../agents/pi-profiles.nix)
 
 This document tracks the configured model chains across four dimensions:
 

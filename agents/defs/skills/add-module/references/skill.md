@@ -24,8 +24,6 @@ Example inline shape:
       # My Skill
     '';
     version = "1.0.0";
-    resources = { };
-    src = null;
   };
 }
 ```
@@ -42,3 +40,5 @@ Example directory-backed shape:
   };
 }
 ```
+
+Inline skills get a generated `SKILL.md` with YAML frontmatter; `src` skills ship their own.

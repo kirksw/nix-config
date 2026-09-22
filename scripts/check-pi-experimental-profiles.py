@@ -1,39 +1,80 @@
 #!/usr/bin/env python3
-"""Check synced default, fallback, and browser settings without reading credentials."""
+"""Check synced minimal fallback, Herdr default, and browser settings without reading credentials."""
 
 import json
 import os
+import re
 from pathlib import Path
 
 root = Path(os.environ["XDG_CONFIG_HOME"]) / "nix-agents"
 bases = root / "pi/bases"
-old = "npm:@tintinweb/pi-subagents@0.14.3"
+tintinweb = "npm:@tintinweb/pi-subagents@0.14.3"
+herdr_agents = "local:pi-herdr-agents"
+pi_extensions = "/Users/kisw/git/github.com/kirksw/pi-extensions/main"
+plannotator = "npm:@plannotator/pi-extension"
+agenticos = "/Users/kisw/git/github.com/kirksw/agenticOS/main"
+excluded = {
+    "npm:@juicesharp/rpiv-btw@1.20.0",
+    "npm:context-mode@1.0.169",
+    "npm:pi-observational-memory@3.0.3",
+}
 
+
+def identity(package):
+    """Reduce a package reference to a stable name that ignores Nix store paths."""
+    source = package["source"] if isinstance(package, dict) else package
+    if source.startswith("npm:") or source == pi_extensions or source == agenticos:
+        return source
+    match = re.search(r"/agents/packages/([\w.-]+)$", source)
+    if match:
+        return f"local:{match.group(1)}"
+    match = re.search(r"^[a-z0-9]{32}-(.+?)-\d[\w.-]*$", source.rsplit("/", 1)[-1])
+    if match:
+        return f"local:{match.group(1)}"
+    return source
+
+
+def identities(settings):
+    return sorted(identity(package) for package in settings["packages"])
+
+
+# Fallback profiles load only these packages; everything else is opt-in.
+minimal = [
+    "npm:pi-web-access@0.13.0",
+    "npm:pi-verbosity-control@0.3.0",
+    "local:pi-litellm-provider",
+]
+# Default and browser profiles keep the lean set with the Herdr replacement applied.
+lean = [
+    "npm:pi-cmux@0.1.16",
+    "npm:pi-cost@0.1.1",
+    "local:pi-herdr",
+    tintinweb,
+    "npm:pi-observational-memory@3.0.3",
+    "npm:pi-permission-system@0.8.0",
+    "npm:pi-verbosity-control@0.3.0",
+    "npm:pi-web-access@0.13.0",
+    "local:pi-fast-mode",
+    "npm:@juicesharp/rpiv-btw@1.20.0",
+    "local:pi-todo",
+    "local:pi-mlflow-tracer",
+]
+herdr = sorted(
+    [package for package in lean if package not in excluded and package != tintinweb]
+    + [herdr_agents, pi_extensions, plannotator]
+)
 
 for scope in ("personal", "work"):
     fallback = bases / scope / "profiles" / f"{scope}-fallback"
     default = bases / f"{scope}-default/profiles/{scope}-default"
     browser = bases / f"{scope}-browser/profiles/{scope}-browser"
-    baseline = json.loads((fallback / "settings.json").read_text())
-    actual = json.loads((default / "settings.json").read_text())
-    patched = [p for p in actual["packages"] if isinstance(p, str) and p.endswith("-pi-herdr-agents-1.7.0-local.1")]
-    assert len(patched) == 1, f"{scope}: missing patched Herdr package"
-    new = patched[0]
-    assert baseline["packages"].count(old) == 1
-    assert new not in baseline["packages"]
-    excluded = {
-        "npm:@juicesharp/rpiv-btw@1.20.0",
-        "npm:context-mode@1.0.169",
-        "npm:pi-observational-memory@3.0.3",
-    }
-    expected = baseline | {"packages": [
-        new if p == old else p for p in baseline["packages"]
-        if (p["source"] if isinstance(p, dict) else p) not in excluded
-    ] + [
-        "/Users/kisw/git/github.com/kirksw/pi-extensions/main",
-        "npm:@plannotator/pi-extension",
-    ]}
-    assert actual == expected, f"{scope}: unexpected default settings"
+    fallback_settings = json.loads((fallback / "settings.json").read_text())
+    default_settings = json.loads((default / "settings.json").read_text())
+    assert identities(fallback_settings) == sorted(minimal), f"{scope}: unexpected fallback packages"
+    assert "subagents" not in fallback_settings, f"{scope}: fallback keeps subagent settings"
+    extra = [agenticos] if scope == "work" else ["local:pi-litellm-provider"]
+    assert identities(default_settings) == sorted(herdr + extra), f"{scope}: unexpected default packages"
+    assert tintinweb not in identities(default_settings), f"{scope}: default keeps Tintinweb"
     for profile in (fallback, default, browser):
         settings = json.loads((profile / "settings.json").read_text())
         deepseek = {"litellm/deepseek-flash", "litellm/deepseek-v4-pro"}
@@ -48,8 +89,10 @@ for scope in ("personal", "work"):
         else:
             assert not deepseek.intersection(settings["enabledModels"])
     browser_settings = json.loads((browser / "settings.json").read_text())
-    assert "npm:pi-web-access@0.13.0" in browser_settings["packages"]
-    assert new not in browser_settings["packages"]
+    browser_extra = [] if scope == "work" else ["local:pi-litellm-provider"]
+    assert identities(browser_settings) == sorted(herdr + browser_extra), f"{scope}: unexpected browser packages"
+    assert "npm:pi-web-access@0.13.0" in identities(browser_settings)
+    assert tintinweb not in identities(browser_settings)
     servers = json.loads((browser / "mcporter.json").read_text())["mcpServers"]
     if scope == "personal":
         assert set(servers) == {"affine"}
@@ -78,7 +121,4 @@ for scope in ("personal", "work"):
         assert (profile / "settings.json").resolve() != (fallback / "settings.json").resolve()
     for removed in (f"{scope}-full", f"{scope}-experimental", "home-factory", "work-factory"):
         assert not (bases / removed).exists(), removed
-    for target in ("claude", "codex", "opencode"):
-        for kind in ("fallback", "browser"):
-            assert not (root / target / "bases" / f"{scope}-{kind}").exists()
-    print(f"{scope}: promoted default, independent fallback, browser skills, isolated settings/auth verified")
+    print(f"{scope}: minimal fallback, Herdr default/browser, browser skills, isolated settings/auth verified")
