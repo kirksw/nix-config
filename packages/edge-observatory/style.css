@@ -74,3 +74,77 @@
 .weather-day:has(.weather-icon[aria-label="Rain"]) .weather-icon{color:#94bed2!important}
 :root[data-theme=paper] .weather-day:has(.weather-icon[aria-label="Rain"]) .weather-icon{color:#35677a!important}
 .theme-dot.piggy-pink{background:#f2b8ce}.theme-dot.sea-glass{background:#a1dfc8}.theme-dot.ember{background:#f2b586}.theme-dot.paper{background:#286451}
+/* Condensed agent cards: profile badge, workspace, status, cost only. */
+.agent-card{min-height:74px;padding:13px 15px}
+.agent-heading h2{font-size:20px}
+.agent-cost{margin-top:8px}
+.profile-badge{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;font:700 15px var(--mono);letter-spacing:0}
+.profile-badge.personal{background:#bcec9b2e;color:var(--mint)}
+.profile-badge.work{background:#edbc752e;color:var(--amber)}
+:root[data-theme=paper] .profile-badge.personal{background:#28645126}:root[data-theme=paper] .profile-badge.work{background:#91462226}
+/* Agent cards: one stable row, with fixed profile/status columns. */
+.agent-list{grid-template-columns:1fr;gap:8px}
+.agent-card{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:13px;min-height:68px;padding:11px 14px}
+.agent-body{min-width:0}.agent-body h2{font-size:20px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-trail{display:grid;justify-items:end;align-content:center;gap:6px;min-width:138px}
+.agent-trail .status{font-size:15px!important}.agent-trail .agent-cost{margin:0;font-size:16px!important}
+.profile-badge{width:36px;height:36px;border-radius:10px}.profile-badge svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.profile-badge.personal svg path:last-child{fill:currentColor;stroke:none}
+@media(min-width:2100px){.agent-card{min-height:72px;padding:12px 15px}.agent-body h2{font-size:21px}}
+/* Reserve a separate lane so the agent scrollbar never covers card content. */
+.agent-list{scrollbar-gutter:stable;padding-right:12px}
+.agent-list::-webkit-scrollbar{width:8px}.agent-list::-webkit-scrollbar-track{background:transparent}.agent-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+/* Cost summary: compare personal/work across the two useful windows. */
+.cost-windows{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cost-window{min-height:100px;padding:13px 14px;border:1px solid var(--line);border-top:2px solid var(--mint);border-radius:7px;background:#ffffff06}
+.cost-window.work{border-top-color:var(--amber)}
+.cost-profile{display:flex;align-items:center;gap:9px;color:var(--muted)}
+.cost-profile .profile-badge{width:27px;height:27px;border-radius:7px}.cost-profile .profile-badge svg{width:17px;height:17px}
+.cost-profile>span{font:14px var(--mono);letter-spacing:1px}
+.cost-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:11px}
+.cost-total{min-width:0}.cost-total span{display:block;color:var(--muted);font:12px var(--mono);letter-spacing:.8px}.cost-total strong{display:block;margin-top:4px;color:var(--text);font:22px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Costs live in the glance panel, outside the scrollable agent area. */
+.agents .activity-footer{margin-top:auto}
+.glance .cost-summary{border-top:1px solid var(--line);padding-top:15px;margin-top:14px}
+.glance .cost-windows{margin:10px 0 0;padding:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.glance .cost-window{min-height:82px;padding:10px 12px}
+.cost-profile-icon{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:7px;font:700 13px var(--mono)}
+.cost-profile-icon.personal{background:#bcec9b2e;color:var(--mint)}.cost-profile-icon.work{background:#edbc752e;color:var(--amber)}
+:root[data-theme=paper] .cost-profile-icon.personal{background:#28645126}:root[data-theme=paper] .cost-profile-icon.work{background:#91462226}
+.glance .cost-profile>span{font-size:12px}.glance .cost-totals{margin-top:8px;gap:8px}.glance .cost-total span{font-size:10px}.glance .cost-total strong{font-size:18px}
+/* Keep forecast and cost summary in separate fixed-height bands. */
+.glance .weather{flex:0;padding-bottom:14px}
+.glance .weather-forecast{flex:none;height:165px}
+.glance .weather-day{padding:11px 10px}
+.glance .weather-day span{font-size:13px}.glance .weather-day small{font-size:12px}.glance .weather-day strong{font-size:23px}.glance .weather-icon{font-size:32px!important;margin:5px 0 2px!important}
+.glance .cost-summary{flex:none;margin-top:0;padding-top:12px}
+.glance .weather{flex:0 0 215px;min-height:215px;padding:12px 0}
+.glance .weather-current{font-size:23px;margin:7px 0 10px}
+.glance .weather-forecast{height:130px}
+.glance .weather-day{height:130px;min-height:130px;padding:9px 9px}
+.glance .cost-summary{height:112px;min-height:112px}
+/* Remove polling timestamps; connection state is represented by content/status styling. */
+#agent-health,.calendar-health{display:none}
+/* Explicit right-column rows prevent forecast/cost overlap at 720px. */
+.glance{display:grid;grid-template-rows:32px 130px 210px 112px;align-content:start}
+.glance .section-head{grid-row:1}.glance .clock-block{grid-row:2;padding:8px 0 14px}.glance .weather{grid-row:3;min-height:0;height:auto;padding:10px 0 12px;overflow:hidden}.glance .cost-summary{grid-row:4;min-height:0;height:auto;margin:0;padding-top:10px;overflow:hidden}
+.glance .weather-current{font-size:22px;margin:6px 0 8px}.glance .weather-forecast{height:144px}.glance .weather-day{height:144px;min-height:144px;padding:8px 9px}.glance .weather-icon{font-size:29px!important;margin:4px 0 1px!important}.glance .weather-day strong{font-size:21px}.glance .weather-day small{font-size:11px}
+.glance .cost-windows{margin-top:7px}.glance .cost-window{min-height:73px;height:73px;padding:8px 10px}.glance .cost-profile-icon{width:22px;height:22px;font-size:12px}.glance .cost-profile>span{font-size:11px}.glance .cost-totals{margin-top:5px}.glance .cost-total span{font-size:9px}.glance .cost-total strong{font-size:17px;margin-top:2px}
+/* Give cost values their full line box; the first compact pass clipped descenders. */
+.glance{grid-template-rows:32px 130px 202px 125px}
+.glance .cost-window{min-height:88px;height:88px}.glance .cost-summary{padding-top:9px}
+/* Dense panels scroll cleanly instead of clipping their final item. */
+.agents,.agenda{display:flex;flex-direction:column}
+.agent-list,.calendar-content{flex:1;max-height:none;padding-bottom:14px;scroll-padding-bottom:14px}
+.calendar-content{padding-right:12px;scrollbar-gutter:stable}
+.calendar-content::-webkit-scrollbar{width:8px}.calendar-content::-webkit-scrollbar-track{background:transparent}.calendar-content::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.calendar-content .agenda-row:last-child,.agent-list .agent-card:last-child{margin-bottom:2px}
+/* The forecast needs its full label/condition line above the cost band. */
+.glance{grid-template-rows:32px 130px 235px 125px}
+.glance .weather{min-height:0;height:auto;padding:10px 0 10px;overflow:visible}
+.glance .weather-forecast{height:158px;min-height:158px}
+.glance .weather-day{height:158px;min-height:158px;padding:9px 9px 11px;overflow:hidden}
+.glance .weather-day small{display:block;min-height:32px}
+/* Keep the tomorrow heading attached to its first event row. */
+.tomorrow-preview{break-inside:avoid}.tomorrow-preview>.eyebrow{display:block;margin-bottom:4px}.tomorrow-preview>.agenda-row:first-of-type{padding-top:12px}
+/* Cost badges use the same person/briefcase glyphs and alignment as agent rows. */
+.glance .cost-profile .profile-badge{width:28px;height:28px;border-radius:8px}.glance .cost-profile .profile-badge svg{width:18px;height:18px}

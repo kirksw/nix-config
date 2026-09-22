@@ -153,10 +153,17 @@ const costWindows = document.querySelector('.cost-windows');
 function renderCostWindows(data) {
   if (data.status !== 'connected') { costWindows.textContent = 'Pi costs unavailable'; return; }
   costWindows.replaceChildren();
-  for (const key of ['1d', '3d', '7d', '30d']) {
-    const value = data.costs[key] ?? 0;
-    const card = element('div', 'cost-window', '');
-    card.append(element('span', '', key.toUpperCase()), element('strong', '', `$${value.toFixed(2)}`));
+  for (const profile of ['personal', 'work']) {
+    const card = element('section', `cost-window ${profile}`, '');
+    const heading = element('div', 'cost-profile', '');
+    heading.append(profileIcon(profile === 'work'), element('span', '', profile.toUpperCase()));
+    const totals = element('div', 'cost-totals', '');
+    for (const [period, label] of [['1d', 'TODAY'], ['7d', '7 DAYS']]) {
+      const total = element('div', 'cost-total', '');
+      total.append(element('span', '', label), element('strong', '', `$${(data.costs[`${profile}${period}`] ?? 0).toFixed(2)}`));
+      totals.append(total);
+    }
+    card.append(heading, totals);
     costWindows.append(card);
   }
 }
@@ -166,7 +173,7 @@ const health = document.getElementById('agent-health');
 const calendarContent = document.createElement('div');
 const calendarHealth = document.createElement('p');
 calendarContent.className = 'calendar-content';
-calendarHealth.className = 'source-note';
+calendarHealth.className = 'source-note calendar-health';
 calendarHealth.textContent = 'Connecting to Apple Calendar...';
 const agenda = document.querySelector('.agenda');
 agenda.querySelector('.next-event').replaceWith(calendarContent);
@@ -177,6 +184,20 @@ function element(tag, className, text) {
   node.className = className;
   node.textContent = text;
   return node;
+}
+function profileIcon(isWork) {
+  const badge = element('span', `profile-badge ${isWork ? 'work' : 'personal'}`, '');
+  badge.setAttribute('aria-label', isWork ? 'Work profile' : 'Personal profile');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', isWork
+    ? 'M8 7V5.5C8 4.7 8.7 4 9.5 4h5c.8 0 1.5.7 1.5 1.5V7m-11 0h14v11H5V7Zm0 4h14M10 11v2h4v-2'
+    : 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8c.7-3.7 3.1-5.5 7-5.5s6.3 1.8 7 5.5H5Z');
+  svg.append(path);
+  badge.append(svg);
+  return badge;
 }
 function request(name, body = {}) {
   window.webkit.messageHandlers[name].postMessage(body);
@@ -191,17 +212,19 @@ function renderAgents(data) {
   }
   agentList.replaceChildren();
   document.querySelector('.count').textContent = String(data.agents.length).padStart(2, '0');
-  for (const agent of data.agents.sort((a, b) => Number(b.unread) - Number(a.unread))) {
+  const priority = agent => agent.unread || agent.status === 'done' ? 0 : agent.status === 'working' ? 1 : 2;
+  for (const agent of data.agents.sort((a, b) => priority(a) - priority(b))) {
     const card = element('article', agent.unread ? 'agent-card unread' : 'agent-card', '');
+    const isWork = (agent.profile ?? '').startsWith('work');
+    const badge = profileIcon(isWork);
+    badge.title = agent.profile ? `${agent.profile} profile` : `${isWork ? 'work' : 'personal'} profile`;
     const body = element('div', 'agent-body', '');
-    const heading = element('div', 'agent-heading', '');
-    heading.append(element('h2', '', agent.workspace));
+    body.append(element('h2', '', agent.workspace));
+    const trail = element('div', 'agent-trail', '');
     const style = agent.status === 'working' ? 'running' : agent.status === 'blocked' ? 'waiting' : 'done';
-    heading.append(element('span', `status ${style}`, agent.unread ? 'NEW RESPONSE' : agent.status.toUpperCase()));
-    const cost = agent.cost == null ? 'Cost unavailable' : `$${agent.cost.toFixed(2)}`;
-    const tokens = agent.tokens == null ? '' : ` / ${(agent.tokens / 1000).toFixed(1)}k tok`;
-    body.append(heading, element('p', '', `${agent.agent} / ${agent.id}`), element('div', 'agent-cost', `${cost}${tokens}`));
-    card.append(body);
+    trail.append(element('span', `status ${style}`, agent.unread ? 'NEW RESPONSE' : agent.status.toUpperCase()));
+    trail.append(element('div', 'agent-cost', agent.cost == null ? '—' : `$${agent.cost.toFixed(2)}`));
+    card.append(badge, body, trail);
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
     card.setAttribute('aria-haspopup', 'dialog');
@@ -275,8 +298,20 @@ function renderCalendar(data) {
   });
   if (!today.length) calendarContent.append(element('h2', '', 'No more events today'));
   if (later.length) {
-    const preview = element('section', 'tomorrow-preview', ''); preview.append(element('h3', 'eyebrow', 'TOMORROW')); calendarContent.append(preview);
-    for (const event of later) { const row = element('article', 'agenda-row', ''); row.append(element('time', '', event.allDay ? 'All day' : timeFormat.format(new Date(event.start))), element('h2', '', event.title)); makeEventInteractive(row, event); preview.append(row); if (calendarContent.scrollHeight > calendarContent.clientHeight) { row.remove(); break; } }
+    const preview = element('section', 'tomorrow-preview', '');
+    preview.append(element('h3', 'eyebrow', 'TOMORROW'));
+    calendarContent.append(preview);
+    let visibleRows = 0;
+    for (const event of later) {
+      const row = element('article', 'agenda-row', '');
+      row.append(element('time', '', event.allDay ? 'All day' : timeFormat.format(new Date(event.start))), element('h2', '', event.title));
+      makeEventInteractive(row, event);
+      preview.append(row);
+      if (calendarContent.scrollHeight > calendarContent.clientHeight) { row.remove(); break; }
+      visibleRows += 1;
+    }
+    // Never leave an orphaned or partially clipped TOMORROW heading at the panel edge.
+    if (!visibleRows) preview.remove();
   }
   calendarHealth.textContent = `Apple Calendar / Updated ${timeFormat.format(new Date(data.updatedAt))}`;
 }

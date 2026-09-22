@@ -218,15 +218,23 @@ private final class NativeBridge: NSObject, WKScriptMessageHandler, CLLocationMa
 
     private func collectCostWindows() -> [String: Double] {
         let now = Date().timeIntervalSince1970 * 1000
-        let windows: [(String, Double)] = [("1d", 86_400_000), ("3d", 259_200_000), ("7d", 604_800_000), ("30d", 2_592_000_000)]
-        var totals = Dictionary(uniqueKeysWithValues: windows.map { ($0.0, 0.0) })
+        let windows: [(String, Double)] = [("1d", 86_400_000), ("7d", 604_800_000)]
+        let profiles = ["personal", "work"]
+        var totals = Dictionary(uniqueKeysWithValues: profiles.flatMap { profile in
+            windows.map { ("\(profile)\($0.0)", 0.0) }
+        })
         let root = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".local/share/nix-agents/pi/sessions")
+        let rootPath = root.standardizedFileURL.path + "/"
         guard let enumerator = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey], options: [.skipsHiddenFiles]) else { return totals }
         while let file = enumerator.nextObject() as? URL {
             guard file.pathExtension == "jsonl",
                   let attributes = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
                   let modified = attributes.contentModificationDate,
-                  now - modified.timeIntervalSince1970 * 1000 <= 2_592_000_000 else { continue }
+                  now - modified.timeIntervalSince1970 * 1000 <= 604_800_000 else { continue }
+            let filePath = file.standardizedFileURL.path
+            guard filePath.hasPrefix(rootPath) else { continue }
+            let profileName = filePath.dropFirst(rootPath.count).prefix { $0 != "/" }
+            let profile = profileName.hasPrefix("work-") ? "work" : "personal"
             guard let data = try? Data(contentsOf: file), data.count <= 16_000_000 else { continue }
             for line in String(decoding: data, as: UTF8.self).split(separator: "\n") {
                 guard let item = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
@@ -243,7 +251,7 @@ private final class NativeBridge: NSObject, WKScriptMessageHandler, CLLocationMa
                     recordTime = date.timeIntervalSince1970 * 1000
                 } else { continue }
                 for (name, duration) in windows where now - recordTime <= duration && now >= recordTime {
-                    totals[name, default: 0] += cost
+                    totals["\(profile)\(name)", default: 0] += cost
                 }
             }
         }
@@ -324,10 +332,19 @@ private final class NativeBridge: NSObject, WKScriptMessageHandler, CLLocationMa
             let records = envelope.result.snapshot.agents.map { raw in
                 let sessionPath = raw.agentSession?.value
                 let statistics = sessionPath.map { self.costStatistics(sessionPath: $0) }
-                return AgentRecord(id: String(raw.paneID.prefix(256)), agent: String((raw.agent ?? "unknown").prefix(128)),
-                            status: String((raw.agentStatus ?? "unknown").prefix(32)),
-                            workspace: String((workspaces[raw.workspaceID ?? ""] ?? "Unknown workspace").prefix(128)),
-                            sessionIdentity: sessionPath, focused: raw.focused ?? false, cost: statistics?.cost, tokens: statistics?.tokens, unread: false)
+                // The profile is the path segment after "sessions/" in the agent's Pi session file.
+                var profile: String?
+                if let sessionPath, let range = sessionPath.range(of: "sessions/") {
+                    let segment = sessionPath[range.upperBound...].prefix { $0 != "/" }
+                    profile = segment.isEmpty ? nil : String(segment.prefix(64))
+                }
+                let id = String(raw.paneID.prefix(256))
+                let agentName = String((raw.agent ?? "unknown").prefix(128))
+                let status = String((raw.agentStatus ?? "unknown").prefix(32))
+                let workspace = String((workspaces[raw.workspaceID ?? ""] ?? "Unknown workspace").prefix(128))
+                return AgentRecord(id: id, agent: agentName, status: status, workspace: workspace,
+                            sessionIdentity: sessionPath, profile: profile,
+                            focused: raw.focused ?? false, cost: statistics?.cost, tokens: statistics?.tokens, unread: false)
             }
             let marked = self.tracker.update(records)
             self.send("agents", AgentPayload(status: "connected", updatedAt: self.isoFormatter.string(from: Date()), agents: marked))
@@ -410,6 +427,9 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
     private var quitItem: NSMenuItem?
     private var fullscreenTransition = false
     private var fullscreenRetries = 0
+    private let maintenanceQueue = DispatchQueue(label: "local.edge-observatory.maintenance", qos: .utility)
+    private var screenChangeWorkItem: DispatchWorkItem?
+    private var wakeTouchRestartWorkItem: DispatchWorkItem?
 
     func start() {
         NSApp.mainMenu = makeMenu()
@@ -417,6 +437,7 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
         statusItem?.button?.title = "EDGE"
         statusItem?.menu = makeMenu()
         NotificationCenter.default.addObserver(self, selector: #selector(screensChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(systemDidWake), name: NSWorkspace.didWakeNotification, object: nil)
         showOnTargetIfPresent()
     }
     private func makeMenu() -> NSMenu {
@@ -425,8 +446,36 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
         submenu.addItem(withTitle: "Quit EDGE Observatory", action: #selector(quit), keyEquivalent: "q").target = self
         quitItem = submenu.items.last; return menu
     }
-    @objc private func quit() { _ = XeneonGamma.restore(); NSApp.terminate(nil) }
-    @objc private func screensChanged() { showOnTargetIfPresent() }
+    @objc private func quit() {
+        // Gamma restore touches the DDC bus and display tables; never block the main thread with it.
+        maintenanceQueue.async {
+            _ = XeneonGamma.restore()
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
+    }
+    @objc private func screensChanged() {
+        // Displays detach and reattach repeatedly while waking; tearing the dashboard down on
+        // every notification recreates the webview and touch runtime in a storm. Coalesce and
+        // re-check presence before acting.
+        screenChangeWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.showOnTargetIfPresent() }
+        screenChangeWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75, execute: work)
+    }
+    @objc private func systemDidWake() {
+        // IOHIDManager can retain a stale device connection across sleep even when the display
+        // never disconnects. Recreate only the touch runtime after wake-time USB churn settles.
+        wakeTouchRestartWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.window != nil,
+                  NSScreen.screens.contains(where: { $0.localizedName == targetDisplayName }) else { return }
+            EdgeTouchRuntimeStop(self.touchRuntime)
+            self.touchRuntime = EdgeTouchRuntimeCreateAndStart()
+            NSLog("EDGE Observatory restarted touch runtime after wake")
+        }
+        wakeTouchRestartWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: work)
+    }
     private func showOnTargetIfPresent() {
         guard let screen = NSScreen.screens.first(where: { $0.localizedName == targetDisplayName }) else {
             // Discard the old native fullscreen Space; it cannot be reused after hotplug.
@@ -435,7 +484,7 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
             window?.close()
             window = nil
             bridge = nil
-            _ = XeneonGamma.restore()
+            maintenanceQueue.async { _ = XeneonGamma.restore() }
             fullscreenTransition = false
             EdgeTouchRuntimeStop(touchRuntime)
             touchRuntime = nil
@@ -490,7 +539,12 @@ private final class ObservatoryController: NSObject, NSWindowDelegate, WKNavigat
         return options
     }
     func windowShouldClose(_ sender: NSWindow) -> Bool { false }
-    deinit { _ = XeneonGamma.restore(); EdgeTouchRuntimeStop(touchRuntime); if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) } }
+    deinit {
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
+        maintenanceQueue.async { _ = XeneonGamma.restore() }
+        EdgeTouchRuntimeStop(touchRuntime)
+        if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
+    }
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url, url.isFileURL, let root = Bundle.main.resourceURL, url.path == root.appendingPathComponent("index.html").path else { decisionHandler(.cancel); return }; decisionHandler(.allow)
     }

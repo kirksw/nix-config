@@ -29,22 +29,24 @@ struct AgentRecord: Codable {
     let status: String
     let workspace: String
     let sessionIdentity: String?
+    var profile: String? = nil
     let focused: Bool
     let cost: Double?
     let tokens: Int?
     var unread: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id, agent, status, workspace, focused, cost, tokens, unread
+        case id, agent, status, workspace, profile, focused, cost, tokens, unread
     }
 
     init(id: String, agent: String, status: String, workspace: String,
-         sessionIdentity: String?, focused: Bool, cost: Double?, tokens: Int?, unread: Bool) {
+         sessionIdentity: String?, profile: String? = nil, focused: Bool, cost: Double?, tokens: Int?, unread: Bool) {
         self.id = id
         self.agent = agent
         self.status = status
         self.workspace = workspace
         self.sessionIdentity = sessionIdentity
+        self.profile = profile
         self.focused = focused
         self.cost = cost
         self.tokens = tokens
@@ -62,5 +64,6 @@ struct AgentRecord: Codable {
         tokens = try values.decodeIfPresent(Int.self, forKey: .tokens)
         unread = try values.decode(Bool.self, forKey: .unread)
         sessionIdentity = nil
+        profile = try values.decodeIfPresent(String.self, forKey: .profile)
     }
 }

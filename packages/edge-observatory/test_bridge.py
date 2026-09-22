@@ -42,5 +42,15 @@ class BridgeSourceTests(unittest.TestCase):
         self.assertNotIn('int main(', source)
         self.assertTrue((ROOT / 'TOUCH-LICENSE').is_file())
 
+    def test_wake_restarts_touch_runtime_without_recreating_dashboard(self):
+        source = (ROOT / 'EdgeObservatory.swift').read_text()
+        self.assertIn('NSWorkspace.didWakeNotification', source)
+        self.assertIn('#selector(systemDidWake)', source)
+        self.assertIn('wakeTouchRestartWorkItem?.cancel()', source)
+        self.assertIn('DispatchQueue.main.asyncAfter(deadline: .now() + 2.0', source)
+        self.assertIn('EdgeTouchRuntimeStop(self.touchRuntime)', source)
+        self.assertIn('self.touchRuntime = EdgeTouchRuntimeCreateAndStart()', source)
+        self.assertIn('NSWorkspace.shared.notificationCenter.removeObserver(self)', source)
+
 if __name__ == '__main__':
     unittest.main()

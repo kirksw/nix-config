@@ -20,7 +20,6 @@
       <div class="section-head"><h1 id="agents-title">In motion<span class="count">00</span></h1><span class="eyebrow">HERDR / LIVE</span></div>
       <div class="agent-list" aria-live="polite"></div>
       <div class="activity-footer" id="agent-health">Connecting to Herdr...</div>
-      <div class="cost-windows" aria-label="Pi cost windows">Loading Pi costs...</div>
     </section>
     <section class="agenda panel" aria-labelledby="agenda-title">
       <div class="section-head"><h1 id="agenda-title">On the horizon</h1><span class="eyebrow">GOOGLE CALENDAR</span></div>
@@ -31,6 +30,7 @@
       <div class="section-head"><span class="eyebrow">RIGHT HERE, RIGHT NOW</span><span class="clock-dot"></span></div>
       <div class="clock-block"><time id="clock" class="clock">--:--</time><div class="clock-context"><div id="date" class="date">LOCAL TIME</div><div id="timezone" class="timezone"></div></div></div>
       <section class="weather" aria-labelledby="weather-title"><div class="eyebrow" id="weather-title">LOCAL WEATHER</div><div class="weather-current">Finding your location...</div><div class="weather-forecast"></div></section>
+      <section class="cost-summary" aria-labelledby="cost-title"><div class="eyebrow" id="cost-title">PI COSTS / REPORTED</div><div class="cost-windows" aria-label="Pi cost windows">Loading Pi costs...</div></section>
     </aside>
   </main>
   <dialog class="display-dialog" aria-labelledby="display-dialog-title"><form method="dialog"><button class="display-close" aria-label="Close display controls">Close</button></form><div class="eyebrow">XENEON EDGE / LOCAL CONTROL</div><h2 id="display-dialog-title">Display settings</h2><section class="brightness-control" aria-labelledby="brightness-title"><div class="eyebrow" id="brightness-title">BRIGHTNESS</div><div class="brightness-row"><input class="brightness-slider" type="range" min="5" max="100" step="1" value="90" aria-label="EDGE brightness"><output class="brightness-value" aria-live="polite">READING</output><button type="button" class="brightness-restore" hidden>Restore</button></div><p class="brightness-status" aria-live="polite">Checking monitor control...</p></section><section class="temperature-control" aria-labelledby="temperature-title"><div class="eyebrow" id="temperature-title">COLOR TEMPERATURE</div><div class="temperature-row"><button type="button" data-temperature="warm">Warm</button><button type="button" data-temperature="neutral">Neutral</button><button type="button" data-temperature="cool">Cool</button><button type="button" class="temperature-restore" hidden>Reset</button></div><p class="temperature-status" aria-live="polite">Checking display color control...</p></section></dialog>

@@ -29,8 +29,8 @@ for ((attempt = 0; attempt < 30; attempt++)); do
     aerospace macos-native-fullscreen off --window-id "$window_id"
     sleep 1
     aerospace fullscreen off --window-id "$window_id"
-    aerospace move-node-to-workspace dashboard --window-id "$window_id"
-    aerospace workspace dashboard
+    aerospace move-node-to-workspace edge --window-id "$window_id"
+    aerospace workspace edge
     aerospace focus --window-id "$window_id"
     # Allow the display/Space transition to finish before creating a fullscreen Space.
     sleep 1
@@ -40,5 +40,5 @@ for ((attempt = 0; attempt < 30; attempt++)); do
   sleep 0.5
 done
 
-printf 'Dashboard launched, but its window was not detected. Move it to dashboard manually.\n' >&2
+printf 'Dashboard launched, but its window was not detected. Move it to the edge workspace manually.\n' >&2
 exit 1
