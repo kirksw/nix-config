@@ -192,6 +192,7 @@ in
   nixosModules.k3s = {
     enable = true;
     role = "server";
+    disableTraefik = true;
     nodeName = "nixos-ry6a";
     clusterInit = true;
     tokenFile = config.sops.secrets."k8s/node/secret".path;
