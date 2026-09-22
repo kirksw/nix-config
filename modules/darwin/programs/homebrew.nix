@@ -7,13 +7,11 @@
 }:
 
 let
-  homebrewVersion = "5.1.9";
+  homebrewVersion = "7.0.6";
+  # Homebrew 7.0.6 provides macOS 27 (Golden Gate) symbols and the cask
+  # dependency fix, so this repository carries no Homebrew patches.
   homebrewPackage = pkgs.runCommandLocal "brew-${homebrewVersion}" { version = homebrewVersion; } ''
     cp -R "${inputs.homebrew-brew}" "$out"
-    chmod -R u+w "$out/Library/Homebrew/api/cask"
-    # The cask API can encode bare macOS dependencies as {}, which otherwise trips dep_type.to_sym.
-    substituteInPlace "$out/Library/Homebrew/api/cask/cask_struct_generator.rb" \
-      --replace-fail 'dep_type = value.keys.first' $'dep_type = value.keys.first\n            next [key, nil] if dep_type.nil?'
   '';
 in
 {

@@ -20,6 +20,8 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P3 XS Decide whether `brew --version` must report the real version; Homebrew 7 changed `brew.sh` so nix-homebrew's `patchBrew` version-embedding sed no longer matches and the version falls back to `>=4.3.0 (shallow or no git repository)`. Setting it needs a local `HOMEBREW_VERSION` patch, which the Homebrew 7.0.6 bump removed (homebrew 7.0.6)
+- P3 XS Report to `zhaofengli/nix-homebrew` that `patchBrew`'s version-embedding sed (`^HOMEBREW_VERSION=`, `^GIT_REVISION=`) no longer matches Homebrew 7's `brew.sh` (homebrew 7.0.6)
 - P2 S Retire the legacy generated `~/.config/nix-agents/{claude,codex,opencode}` trees for the Pi-only configuration, preserving sessions and authentication until the user confirms removal (feat-pi-only)
 - P3 XS Tune `affine-mcp` HTTP session limits (`AFFINE_MCP_HTTP_MAX_SESSIONS`, default 32, and `AFFINE_MCP_HTTP_SESSION_IDLE_TIMEOUT_MS`, default 30 min) in the deployment manifests if idle-capacity exhaustion recurs from clients that do not send session DELETE (feat-mcporter-session-cleanup)
 - P2 S Add a safe retirement path for legacy Pi work-experimental, work-factory, and work-full settings directories, preserving session and auth data; these unsynced directories retain bare Claude model entries (feat-work-claude-bedrock-only)

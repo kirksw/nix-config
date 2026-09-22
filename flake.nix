@@ -16,7 +16,7 @@
     };
 
     homebrew-brew = {
-      url = "github:Homebrew/brew/5.1.9";
+      url = "github:Homebrew/brew/7.0.6";
       flake = false;
     };
 
