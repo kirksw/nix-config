@@ -181,9 +181,7 @@ let
     defaultThinkingLevel = "medium";
     enabledModels = [
       "litellm/openai/gpt-6-astra"
-      "litellm/openai/gpt-5.5"
       "litellm/openai/gpt-6-sol"
-      "litellm/openai/gpt-5.6-terra"
       "litellm/openai/gpt-6-luna"
       "litellm/minimax-m3"
       "litellm/glm-5.3"
@@ -220,14 +218,12 @@ let
 
   piWorkModelDefaults = {
     defaultProvider = "openai";
-    defaultModel = "gpt-5.6-terra";
+    defaultModel = "gpt-6-sol";
     defaultThinkingLevel = "medium";
     enabledModels = [
       "gpt-6-astra"
       "gpt-6-sol"
-      "gpt-5.6-terra"
       "gpt-6-luna"
-      "gpt-5.5"
       "gpt-5.4"
       "gpt-5.4-mini"
       "amazon-bedrock/eu.anthropic.claude-sonnet-5"
