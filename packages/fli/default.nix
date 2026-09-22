@@ -35,7 +35,7 @@ python3Packages.buildPythonApplication rec {
   src = fetchFromGitHub {
     owner = "punitarani";
     repo = "fli";
-    rev = "121d34fea056dc513258958c4262cb5a4cc033c1";
+    rev = "881aee5ff4321e81ea2157cb44be94ce6a21dc1b";
     hash = "sha256-SJk4fGqL3xnU505TI+3oHd1+YqlvoVKcN3W+8jKqGmI=";
   };
 
