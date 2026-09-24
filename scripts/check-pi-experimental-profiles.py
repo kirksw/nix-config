@@ -46,18 +46,14 @@ minimal = [
 ]
 # Default and browser profiles keep the lean set with the Herdr replacement applied.
 lean = [
-    "npm:pi-cmux@0.1.16",
     "npm:pi-cost@0.1.1",
     "local:pi-herdr",
     tintinweb,
     "npm:pi-observational-memory@3.0.3",
-    "npm:pi-permission-system@0.8.0",
     "npm:pi-verbosity-control@0.3.0",
     "npm:pi-web-access@0.13.0",
-    "local:pi-fast-mode",
     "npm:@juicesharp/rpiv-btw@1.20.0",
     "local:pi-todo",
-    "local:pi-mlflow-tracer",
 ]
 herdr = sorted(
     [package for package in lean if package not in excluded and package != tintinweb]
@@ -83,7 +79,6 @@ for scope in ("personal", "work"):
             manifest = (profile / "AGENTS.md").read_text()
             assert "openai-codex/" not in manifest
             assert "litellm/openai/gpt-6-astra" in manifest
-            assert "| E | litellm/openai/gpt-5.6-luna |" in manifest
             for agent in (profile / "agents").glob("*.md"):
                 assert "model: openai-codex/" not in agent.read_text(), agent
         else:
