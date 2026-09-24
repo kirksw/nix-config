@@ -110,45 +110,25 @@ let
     S = [ "litellm/openai/gpt-6-astra" ];
     A = [
       "litellm/openai/gpt-6-sol"
-      "litellm/openai/gpt-5.5"
-      "zai/glm-5.2"
+      "litellm/glm-5.3"
     ];
-    B = [ "litellm/openai/gpt-5.6-terra" ];
-    C = [
+    B = [
+      "litellm/glm-5.3-flash"
       "litellm/openai/gpt-6-luna"
-      "minimax/minimax-m3"
     ];
-    D = [
-      "minimax/minimax-m2.7-highspeed"
-      "zai/glm-5-turbo"
+    C = [
+      "litellm/deepseek-v4-pro"
+      "litellm/deepseek-flash"
     ];
-    E = [ "litellm/openai/gpt-6-luna" ];
   };
   workTierMapping = {
     S = [
       "openai/gpt-6-astra"
-      "amazon-bedrock/eu.anthropic.claude-fable-5"
+      "amazon-bedrock/eu.anthropic.claude-opus-5-5"
     ];
-    A = [
-      "openai/gpt-6-sol"
-      "amazon-bedrock/eu.anthropic.claude-opus-5"
-      "amazon-bedrock/eu.anthropic.claude-opus-4-8"
-      "openai/gpt-5.5"
-    ];
-    B = [
-      "openai/gpt-5.6-terra"
-      "amazon-bedrock/eu.anthropic.claude-sonnet-4-6"
-      "openai/gpt-5.4"
-    ];
-    C = [
-      "openai/gpt-6-luna"
-      "openai/gpt-5.4-mini"
-    ];
-    D = [ "openai/gpt-5.4-nano" ];
-    E = [
-      "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
-      "openai/gpt-5.4-nano"
-    ];
+    A = [ "openai/gpt-6-sol" ];
+    B = [ "openai/gpt-6-luna" ];
+    C = [ "openai/gpt-6-luna" ];
   };
 in
 {

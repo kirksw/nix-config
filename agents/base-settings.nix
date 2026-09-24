@@ -222,13 +222,8 @@ let
       "gpt-6-astra"
       "gpt-6-sol"
       "gpt-6-luna"
-      "gpt-5.4"
-      "gpt-5.4-mini"
       "amazon-bedrock/eu.anthropic.claude-sonnet-5"
       "amazon-bedrock/eu.anthropic.claude-opus-5-5"
-      "amazon-bedrock/eu.anthropic.claude-opus-5"
-      "amazon-bedrock/eu.anthropic.claude-opus-4-8"
-      "amazon-bedrock/eu.anthropic.claude-haiku-4-5-20251001-v1:0"
     ];
   };
 
