@@ -8,7 +8,6 @@ let
   piHerdrPackage = "${self}/agents/packages/pi-herdr";
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
-  piMlflowTracerPackage = "${self.packages.${system}.pi-mlflow-tracer}";
   piLitellmProviderPackage = "${self}/agents/packages/pi-litellm-provider";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
 
@@ -29,7 +28,6 @@ let
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
     piAgentJournalPackage
-    piMlflowTracerPackage
   ];
   packageSource = package: if builtins.isAttrs package then package.source else package;
   piLeanExcludedPackageRefs = [
