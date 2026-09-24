@@ -13,18 +13,12 @@ let
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
-    {
-      source = "npm:pi-cmux@0.1.16";
-      autoload = false;
-    }
     "npm:pi-cost@0.1.1"
     piHerdrPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-observational-memory@3.0.3"
-    "npm:pi-permission-system@0.8.0"
     "npm:pi-verbosity-control@0.3.0"
     "npm:pi-web-access@0.13.0"
-    "${self.packages.${system}.pi-fast-mode}"
     "npm:@juicesharp/rpiv-btw@1.20.0"
     piTodoPackage
     piAgentJournalPackage
