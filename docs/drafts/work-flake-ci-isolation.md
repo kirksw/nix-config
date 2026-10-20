@@ -42,7 +42,7 @@ sources:
     resource: https://github.com/kirksw/nix-config/blob/main/agents/presets/profiles.nix
   - id: source-agent-flake-ops
     title: Agent flake operations reference
-    resource: https://github.com/kirksw/nix-config/blob/main/agents/defs/skills/nix-agents/references/flake-ops.md
+    resource: https://github.com/kirksw/nix-config/blob/main/agents/defs/skills/nix-config/references/flake-ops.md
   - id: source-flake-ops-doc
     title: Flake operations index
     resource: https://github.com/kirksw/nix-config/blob/main/docs/agents/nix-flake-ops.md
@@ -387,7 +387,7 @@ A macOS runner or configured remote Darwin builder can additionally build the Lu
 3. Extract public declarations into `flake/inputs.nix`, imported by both flakes, and generate `work/flake.lock` in an authenticated environment.
 4. Refactor `modules/home/programs/devops.nix`, `flake/packages.nix`, and `flake/apps.nix` around explicit public/work dependency injection.
 5. Split agent generation: parameterize or relocate `agents/base-settings.nix` and `agents/defs/mcps/lunar-skills.nix`, and ensure root profile generation excludes work profiles while the work flake supplies `lunar-skills-mcp`.[^source-agent-settings][^source-lunar-mcp][^source-agent-profiles]
-6. Update command references in `README.md` and `agents/defs/skills/nix-agents/references/flake-ops.md` to point work operations at the nested flake.[^source-agent-flake-ops]
+6. Update command references in `README.md` and `agents/defs/skills/nix-config/references/flake-ops.md` to point work operations at the nested flake.[^source-agent-flake-ops]
 7. Validate the work flake, then remove private declarations and work outputs from root and intentionally regenerate the public `flake.lock`.
 8. Run the validation matrix on a clean checkout; only then remove obsolete root Lunar inventory and compatibility documentation.
 
@@ -458,7 +458,7 @@ The isolation boundary itself is decided: root has no work input or shim, and `l
 [^source-agent-settings]: `agents/base-settings.nix`
 [^source-lunar-mcp]: `agents/defs/mcps/lunar-skills.nix`
 [^source-agent-profiles]: `agents/presets/profiles.nix`
-[^source-agent-flake-ops]: `agents/defs/skills/nix-agents/references/flake-ops.md`
+[^source-agent-flake-ops]: `agents/defs/skills/nix-config/references/flake-ops.md`
 [^source-flake-ops-doc]: `docs/agents/nix-flake-ops.md`
 [^source-docs-readme]: `docs/README.md`
 [^source-okf-spec]: [Open Knowledge Format v0.2 specification](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)

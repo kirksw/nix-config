@@ -95,9 +95,9 @@ That checkout and its runtime dependencies must exist on the machine.
 `fallback` is minimal: `pi-web-access`, `pi-verbosity-control`, and `pi-litellm-provider` only.
 It has no subagents, MCP tooling, tracing, to-do tracking, or permission enforcement, and it does not depend on that checkout or `pi-herdr-agents`.
 
-Browser profiles include `agent-browser`, `google-hotels`, and `system-context` skills.
+Browser profiles include `agent-browser`, `google-hotels`, and `nix-config` skills.
 The personal browser profile also includes `affine` and `home-mcp`.
-Browser profiles include the web-access package and have no configured MCP servers.
+Browser profiles include the web-access package. The personal browser base configures the AFFiNE MCP server; the work browser base has no MCP servers.
 The launcher uses installed Google Chrome on macOS when available; otherwise run `agent-browser install` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
 The launcher gives agent-browser separate persistent browser profiles and session names for personal and work use.
 Browser skills do not authorize bookings, payments, or other external commitments without user approval.
@@ -110,42 +110,42 @@ Every profile selects skills only. The repository defines no custom agents.
 
 - base: `personal-default`
 - purpose: everyday personal engineering with Herdr orchestration
-- skills: `add-module`, `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-agents`, `secrets-management`, `session-heuristics`, `skill-creator`, `system-context`, `xcode`
+- skills: `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-config`, `session-heuristics`, `skill-creator`
 - package surface: the lean set with the `pi-herdr-agents` replacement
 
 ### `personal-fallback`
 
 - base: `personal`
 - purpose: minimal personal setup
-- skills: the same fourteen skills as `personal-default`
+- skills: the same ten skills as `personal-default`
 - package surface: `pi-web-access`, `pi-verbosity-control`, `pi-litellm-provider`
 
 ### `personal-browser`
 
 - base: `personal-browser`
 - purpose: browser automation and web/travel research
-- skills: `affine`, `agent-browser`, `google-hotels`, `home-mcp`, `system-context`
+- skills: `affine`, `agent-browser`, `google-hotels`, `home-mcp`, `nix-config`
 - MCP: the AFFiNE HTTP server, used by the generated AFFiNE CLI skill
 
 ### `work-default`
 
 - base: `work-default`
 - purpose: everyday work engineering with Herdr orchestration
-- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `land`, `lavish`, `linear`, `lunar-skills`, `nix-agents`, `slack`, `sourcegraph`, `system-context`, `work-mcp`
+- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `land`, `lavish`, `linear`, `lunar-skills`, `nix-config`, `slack`, `sourcegraph`, `work-mcp`
 - package surface: the lean set with the `pi-herdr-agents` replacement and `agenticos`
 
 ### `work-fallback`
 
 - base: `work`
 - purpose: minimal work setup
-- skills: the same thirteen skills as `work-default`
+- skills: the same twelve skills as `work-default`
 - package surface: `pi-web-access`, `pi-verbosity-control`, `pi-litellm-provider`
 
 ### `work-browser`
 
 - base: `work-browser`
 - purpose: browser automation and web/travel research
-- skills: `agent-browser`, `google-hotels`, `system-context`
+- skills: `agent-browser`, `google-hotels`, `nix-config`
 
 Full and factory profiles no longer exist for any target.
 Old runtime directories and sessions are not deleted by sync; removed profile names fail selection.

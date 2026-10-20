@@ -33,8 +33,9 @@ bases.<name> = {
 ```
 
 Providers are defined in the `providers` attrset, which maps a `credentialRef` environment
-variable to the `envVar` that Pi reads.
+variable to the `envVar` that Pi reads. Select provider names on the base, not the profile.
+The current wrapper supports environment-variable providers only; see `../recipes/manage-secrets.md`.
 
-A new profile needs one wrapper change: add its name to the profile-to-base `case` in
+A new profile needs a launcher routing change: add its name to the profile-to-base `case` in
 `modules/home/programs/ai-agents.nix` and to the matching assertion in
 `scripts/check-pi-experimental-launchers.py`.

@@ -5,16 +5,16 @@ Follow these conventions when writing Nix code in this repository.
 ## Formatting
 
 - Use 2-space indentation
-- Use `nixfmt-rfc-style` (not plain `nixfmt`) as documented by the repo
-- Format all `.nix` files before committing: `nix run .#fmt`
+- Format `.nix` files with `nixfmt` (RFC style; installed by `homeModules.neovim`) before committing: `nixfmt <file>`
 - Check format without modifying: `nixfmt --check <file>`
 
 ## Linting
 
+Run the checks on the files you changed. A repository-wide run reports findings that predate your change.
+
 ```bash
-nix run .#lint
-statix check .
-deadnix --fail .
+statix check <changed .nix files>
+nix run nixpkgs#deadnix -- --fail <changed .nix files>
 ```
 
 ## Module Pattern For `defs/`
@@ -60,7 +60,7 @@ builtins.toJSON {
 
 ## Naming
 
-- Use kebab-case for agent, skill, and MCP names: `agents.my-agent`, `skills.nix-agents`
+- Use kebab-case for agent, skill, and MCP names: `agents.my-agent`, `skills.nix-config`
 - Use camelCase for Nix option paths: `options.tierMapping`, `options.mcpServers`
 
 ## Common Patterns
@@ -89,8 +89,9 @@ lib.mapAttrsToList (name: value: { inherit name; ... }) attrset
 Run before committing:
 
 ```bash
-nix run .#fmt
-nix run .#lint
+nixfmt <changed .nix files>
+statix check <changed .nix files>
+nix run nixpkgs#deadnix -- --fail <changed .nix files>
 nix flake check --no-build
 ```
 
