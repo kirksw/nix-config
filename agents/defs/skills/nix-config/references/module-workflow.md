@@ -72,8 +72,9 @@ bases.<name> = {
 };
 ```
 
-The `pi` wrapper maps each base provider to its `envVar` and exports the base commit
-identity at launch, so a new provider needs no wrapper change.
+The `pi` wrapper maps environment-variable providers for each base to their `envVar` and
+exports the base commit identity at launch. Other provider backends need wrapper support;
+see `../recipes/manage-secrets.md`.
 
 Profiles are addressed as `bases/<base>/profiles/<profile>`. The launcher maps profile
 names to bases; update both `modules/home/programs/ai-agents.nix` and
@@ -91,6 +92,6 @@ PI_OFFLINE=1 pi list
 
 ## Existing Names
 
-- Skills: `add-module`, `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-agents`, `secrets-management`, `session-heuristics`, `skill-creator`, `system-context`, `xcode`
+- Skills: `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-config`, `session-heuristics`, `skill-creator`
 - Profiles: `personal-default`, `personal-fallback`, `personal-browser`, `work-default`, `work-fallback`, `work-browser`
 - Providers: `personal-zai-key`, `personal-minimax-key`, `personal-litellm-api-key`, `personal-litellm-cf-client-id`, `personal-litellm-cf-client-secret`, `work-openai-key`

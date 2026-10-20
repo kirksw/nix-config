@@ -49,4 +49,4 @@ Each VM runs its own tailscale daemon. The auth key determines whether the VM's 
 - **Reusable key** (tailscale `--authkey`): VM retains its tailnet IP across restarts. Use for persistent VMs.
 - **Ephemeral key** (tailscale `--authkey --ephemeral`): VM gets a new identity each start. Use for ephemeral VMs.
 
-The key should be stored in SOPS and passed to the VM config. For the host's SOPS setup, see the `secrets-management` skill.
+The key should be stored in SOPS and passed to the VM config. For the host's SOPS setup, see the `nix-config` skill's `recipes/manage-secrets.md`.

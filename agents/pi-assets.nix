@@ -16,7 +16,6 @@ let
   skillFiles = [
     ./defs/skills/1password
     ./defs/skills/activities-search
-    ./defs/skills/add-module
     ./defs/skills/affine
     ./defs/skills/agent-browser
     ./defs/skills/codex-imagegen
@@ -39,16 +38,14 @@ let
     ./defs/skills/linear
     ./defs/skills/lunar-skills
     ./defs/skills/microvm-agent
-    ./defs/skills/nix-agents
+    ./defs/skills/nix-config
     ./defs/skills/parallel-reviews
     ./defs/skills/plan-x
-    ./defs/skills/secrets-management.nix
     ./defs/skills/session-heuristics
     ./defs/skills/session-resume.nix
     ./defs/skills/skill-creator
     ./defs/skills/slack
     ./defs/skills/sourcegraph
-    ./defs/skills/system-context
     ./defs/skills/travel-search
     ./defs/skills/what-if
     ./defs/skills/work-mcp

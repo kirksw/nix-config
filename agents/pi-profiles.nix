@@ -63,7 +63,6 @@ let
   };
 
   personalSkills = [
-    "add-module"
     "agent-browser"
     "codex-imagegen"
     "domain-modeling"
@@ -71,12 +70,9 @@ let
     "home-mcp"
     "land"
     "lavish"
-    "nix-agents"
-    "secrets-management"
+    "nix-config"
     "session-heuristics"
     "skill-creator"
-    "system-context"
-    "xcode"
   ];
   workSkills = [
     "1password"
@@ -87,10 +83,9 @@ let
     "lavish"
     "linear"
     "lunar-skills"
-    "nix-agents"
+    "nix-config"
     "slack"
     "sourcegraph"
-    "system-context"
     "work-mcp"
   ];
   personalBrowserSkills = [
@@ -98,12 +93,12 @@ let
     "agent-browser"
     "google-hotels"
     "home-mcp"
-    "system-context"
+    "nix-config"
   ];
   workBrowserSkills = [
     "agent-browser"
     "google-hotels"
-    "system-context"
+    "nix-config"
   ];
 
   personalTierMapping = {

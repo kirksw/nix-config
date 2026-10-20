@@ -102,8 +102,13 @@ for scope in ("personal", "work"):
     for profile in (fallback, default):
         assert not (profile / "skills/affine").exists()
         assert "affine" not in json.loads((profile / "mcporter.json").read_text())["mcpServers"]
-    for skill in ("agent-browser", "google-hotels", "system-context"):
+    for skill in ("agent-browser", "google-hotels"):
         assert (browser / "skills" / skill / "SKILL.md").is_file(), (scope, skill)
+    for profile in (fallback, default, browser):
+        assert (profile / "skills/nix-config/SKILL.md").is_file(), (scope, profile)
+        assert (profile / "skills/nix-config/recipes/manage-secrets.md").is_file(), (scope, profile)
+        for retired in ("add-module", "nix-agents", "secrets-management", "system-context"):
+            assert not (profile / "skills" / retired).exists(), (scope, profile, retired)
     for name in ("models.json", "mcporter.json"):
         assert json.loads((fallback / name).read_text()) == json.loads((default / name).read_text())
     for profile in (default, browser):

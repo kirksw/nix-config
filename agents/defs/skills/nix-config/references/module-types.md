@@ -10,6 +10,6 @@ When the user is unsure, ask what outcome they want:
 - reusable guidance or workflow: skill
 - different active skills or model tiers for a scope: profile
 
-Agents, MCP server definitions, lifecycle hooks, and preset bundles were removed together with
-the external `nix-agents` generator. Do not offer them. MCP access is exposed through generated
-CLI skills that read the base `mcporter.json`.
+Do not offer agent, lifecycle-hook, or preset definitions as skill/profile module types.
+MCP servers are configured separately in `agents/base-settings.nix`; dedicated CLI skills use
+the base `mcporter.json` where applicable.
