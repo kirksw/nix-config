@@ -20,6 +20,7 @@ Effort: `XS` <1h, `S` 1-4h, `M` half day, `L` 1-2 days, `XL` 3+ days.
 
 ## Open
 
+- P3 S Fix the 61 `statix` and 29 `deadnix` findings in the tree, or wire both tools scoped to changed files into the pre-commit hook, so the documented lint step can run repo-wide (lint-docs)
 - P3 XS Decide whether `brew --version` must report the real version; Homebrew 7 changed `brew.sh` so nix-homebrew's `patchBrew` version-embedding sed no longer matches and the version falls back to `>=4.3.0 (shallow or no git repository)`. Setting it needs a local `HOMEBREW_VERSION` patch, which the Homebrew 7.0.6 bump removed (homebrew 7.0.6)
 - P3 XS Report to `zhaofengli/nix-homebrew` that `patchBrew`'s version-embedding sed (`^HOMEBREW_VERSION=`, `^GIT_REVISION=`) no longer matches Homebrew 7's `brew.sh` (homebrew 7.0.6)
 - P2 S Retire the legacy generated `~/.config/nix-agents/{claude,codex,opencode}` trees for the Pi-only configuration, preserving sessions and authentication until the user confirms removal (feat-pi-only)
