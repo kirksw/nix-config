@@ -23,6 +23,6 @@ After confirmation, set `MCP_WRITE_CONFIRMED=1` only for that runner process.
 Refresh wrappers explicitly, never during Nix evaluation or profile synchronization:
 
 ```sh
-nix run .#update-home-mcp-skills
+nix run .#update-home-mcp-skills -- affine
 nix run .#sync-agents
 ```

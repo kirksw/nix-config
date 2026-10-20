@@ -236,14 +236,6 @@ let
     };
   };
 
-  piPersonalMcpServers = {
-    xcode = {
-      command = "xcrun";
-      args = [ "mcpbridge" ];
-      lifecycle = "lazy";
-    };
-  };
-
   piWorkMcpServers = {
     "1password" = {
       command = "/Applications/1Password.app/Contents/MacOS/onepassword-mcp";
@@ -289,11 +281,6 @@ let
   piEmptyMcporter = builtins.toJSON {
     imports = [ ];
     mcpServers = { };
-  };
-
-  piPersonalMcporter = builtins.toJSON {
-    imports = [ ];
-    mcpServers = lib.mapAttrs (_: server: server // { lifecycle = "ephemeral"; }) piPersonalMcpServers;
   };
 
   piWorkMcporter = builtins.toJSON {
@@ -350,7 +337,7 @@ in
       personal = {
         "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs;
         "models.json" = piPersonalModels;
-        "mcporter.json" = piPersonalMcporter;
+        "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
       };
       work = {
@@ -360,7 +347,7 @@ in
         "env" = piWorkEnv;
       };
       personal-default = {
-        "mcporter.json" = piPersonalMcporter;
+        "mcporter.json" = piEmptyMcporter;
         "models.json" = piPersonalModels;
         "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
         "env" = mkPiPersonalEnv "personal-default";

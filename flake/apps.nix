@@ -130,12 +130,8 @@ let
 
     repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel)"
     cd "$repo_root"
-    server="''${1:-xcode}"
+    server="''${1:-affine}"
     case "$server" in
-      xcode)
-        config="$HOME/.config/nix-agents/pi/bases/personal/settings/mcporter.json"
-        output_dir="agents/defs/skills/home-mcp/generated"
-        ;;
       affine)
         config="$HOME/.config/nix-agents/pi/bases/personal-browser/settings/mcporter.json"
         output_dir="agents/defs/skills/affine/generated"
@@ -144,7 +140,7 @@ let
         fi
         export AFFINE_MCP_HTTP_TOKEN
         ;;
-      *) echo "Usage: update-home-mcp-skills [xcode|affine]" >&2; exit 1 ;;
+      *) echo "Usage: update-home-mcp-skills [affine]" >&2; exit 1 ;;
     esac
     target="$output_dir/$server.cjs"
     temporary="$target.tmp"
@@ -549,7 +545,7 @@ in
     type = "app";
     program = "${updateHomeMcpSkills}/bin/update-home-mcp-skills";
     meta = {
-      description = "Explicitly generate the Xcode MCP CLI wrapper for personal profiles.";
+      description = "Explicitly generate the AFFiNE MCP CLI wrapper for personal browser profiles.";
     };
   };
 
