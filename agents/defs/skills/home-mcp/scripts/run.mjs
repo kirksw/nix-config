@@ -15,7 +15,7 @@ const typedClient = resolve(skillDir, "generated", `${server}-client.d.ts`);
 if (!existsSync(cli) && !existsSync(typedClient)) throw new Error(`No generated wrapper exists for '${server}'. Run: nix run .#update-home-mcp-skills`);
 
 const normalizedTool = tool.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-const writeOperation = /(^|[-_])(add|append|approve|archive|assign|cancel|change|copy|create|delete|download|invite|link|make|manage|mark|merge|move|prepare|refresh|reject|remove|rename|resolve|revoke|rm|save|send|set|start|stop|submit|subscribe|triage|unarchive|unlink|unresolve|unsubscribe|update|upload|write)([-_]|$)/;
+const writeOperation = /(^|[-_])(add|append|approve|archive|assign|cancel|change|copy|create|delete|download|invite|link|make|manage|mark|merge|move|new|prepare|refresh|reject|remove|rename|resolve|revoke|rm|save|send|set|start|stop|submit|subscribe|triage|unarchive|unlink|unresolve|unsubscribe|update|upload|write)([-_]|$)/;
 const affineReadOnly = /^(analyze-doc-fidelity|current-user|export-doc-markdown|export-with-fidelity-report|find-doc-by-title|get-[a-z-]+|inspect-template-structure|list-[a-z-]+|read-database-cells|read-database-columns|read-doc|search-docs)$/;
 const mutating = server === "affine"
   ? !affineReadOnly.test(normalizedTool)
