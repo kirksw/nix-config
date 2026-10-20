@@ -5,5 +5,6 @@
   ./services/edge-dashboard.nix
   ./services/jankyborders.nix
   ./services/landing.nix
+  ./services/screen-sharing.nix
   ./services/tailscale.nix
 ]

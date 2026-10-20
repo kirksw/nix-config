@@ -20,6 +20,9 @@
   darwinModules.tailscale.enable = true;
   darwinModules.jankyborders.enable = true;
   darwinModules.landing.enable = true;
+  darwinModules.screenSharing.enable = true;
+  darwinModules.screenSharing.allowedUsers = [ user ];
+  darwinModules.screenSharing.remoteDesktop.enable = true;
 
   # specific host config
   nixpkgs.config.allowUnfree = true;
@@ -127,7 +130,7 @@
       };
 
       screencapture.location = "~/Pictures/Screenshots";
-      screensaver.askForPasswordDelay = 10; # in seconds
+      # The screen lock policy is owned by darwinModules.screenSharing.remoteDesktop.
     };
 
     keyboard = {
