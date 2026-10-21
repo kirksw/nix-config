@@ -60,21 +60,20 @@
 		"@juicesharp/rpiv-i18n": "*",
 		"@earendil-works/pi-ai": "*",
 		"@earendil-works/pi-coding-agent": "*",
-		"@earendil-works/pi-tui": "*"
+		"@earendil-works/pi-tui": "*",
+		"typebox": "*"
 	},
 	"peerDependenciesMeta": {
 		"@juicesharp/rpiv-i18n": {
 			"optional": true
 		}
 	},
-	"dependencies": {
-		"typebox": "^1.1.24"
-	},
 	"devDependencies": {
 		"@earendil-works/pi-ai": "0.83.0",
 		"@earendil-works/pi-coding-agent": "0.83.0",
 		"@earendil-works/pi-tui": "0.83.0",
 		"@juicesharp/rpiv-i18n": "2.2.0",
+		"typebox": "1.3.27",
 		"typescript": "5.8.3",
 		"vitest": "3.2.4"
 	}
