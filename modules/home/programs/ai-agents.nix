@@ -62,8 +62,8 @@ let
   # Herdr's official Pi integration reports lifecycle state and the native
   # session path that Herdr needs to resume Pi panes after a restart.
   herdrPiIntegration = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.9.0/src/integration/assets/pi/herdr-agent-state.ts";
-    hash = "sha256-mxxBzXJSD8Kr5fKirsmVwSqSbM6ETfRyx/1fyuT02/o=";
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.9.5/src/integration/assets/pi/herdr-agent-state.ts";
+    hash = "sha256-LFJy1zK0dbv5GgJyA7H5jSX+Q9LBQCUwpEKyiK6soeQ=";
   };
   herdrPiIntegrationTargets =
     lib.concatMap

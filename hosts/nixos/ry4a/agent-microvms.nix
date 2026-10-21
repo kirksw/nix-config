@@ -132,8 +132,8 @@ let
   };
 
   herdrPiIntegration = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.9.0/src/integration/assets/pi/herdr-agent-state.ts";
-    hash = "sha256-mxxBzXJSD8Kr5fKirsmVwSqSbM6ETfRyx/1fyuT02/o=";
+    url = "https://raw.githubusercontent.com/ogulcancelik/herdr/v0.9.5/src/integration/assets/pi/herdr-agent-state.ts";
+    hash = "sha256-LFJy1zK0dbv5GgJyA7H5jSX+Q9LBQCUwpEKyiK6soeQ=";
   };
   localAgents = import ../../../agents { inherit pkgs inputs; };
   agentBaseSettings = import ../../../agents/base-settings.nix {

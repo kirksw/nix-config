@@ -13,17 +13,17 @@
   rustPlatform,
   stdenv,
   writeShellScript,
-  zig_0_15,
+  zig_0_16,
 }:
 
 let
-  version = "0.9.0";
+  version = "0.9.5";
   src = fetchFromGitHub {
     owner = "ogulcancelik";
     repo = "herdr";
     tag = "v${version}";
     # update-hash: source
-    hash = "sha256-SUYF4bbaYwNgoe498VoCUzuLPcjBLQXR0o0DWjjoSnI=";
+    hash = "sha256-N7e7oCKxeCoxek6UT8Lweq16rSsQQi34QMb7C2iNpm8=";
   };
 in
 herdr.overrideAttrs (old: {
@@ -33,16 +33,16 @@ herdr.overrideAttrs (old: {
     pname = "herdr";
     inherit version src;
     # update-hash: cargo
-    hash = "sha256-CW/SF/cAPDv47gS5B7XbVZEE6LC9F1a2I1TLTJ4AWdw=";
+    hash = "sha256-a6DgQodo+qa5yg/d+yMfsM9EUv2LQRFrqZgmwgVxggE=";
   };
 
-  zigDeps = zig_0_15.fetchDeps {
+  zigDeps = zig_0_16.fetchDeps {
     pname = "herdr";
     inherit version;
     src = "${src}/vendor/libghostty-vt";
     fetchAll = true;
     # update-hash: zig
-    hash = "sha256-PnM+hZIlLyQwK8vJgd/Bhjt1lNIz06T8FahwliRmMrY=";
+    hash = "sha256-Cy0DdSvce+fhOFIfxHMQGF2b2j16UkS27UpGbfC42XI=";
   };
 
   postInstall = ''
