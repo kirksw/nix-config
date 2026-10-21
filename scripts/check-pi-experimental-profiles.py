@@ -13,6 +13,11 @@ herdr_agents = "local:pi-herdr-agents"
 pi_extensions = "/Users/kisw/git/github.com/kirksw/pi-extensions/main"
 plannotator = "npm:@plannotator/pi-extension"
 agenticos = "/Users/kisw/git/github.com/kirksw/agenticOS/main"
+lunar = [
+    "npm:@lunarway/pi-lunar-quiet-tools@0.1.0",
+    "npm:@lunarway/pi-lunar-litellm@0.2.1",
+    "npm:@lunarway/pi-lunar-statusline@0.7.0",
+]
 excluded = {
     "npm:@juicesharp/rpiv-btw@1.20.0",
     "npm:context-mode@1.0.169",
@@ -68,7 +73,7 @@ for scope in ("personal", "work"):
     default_settings = json.loads((default / "settings.json").read_text())
     assert identities(fallback_settings) == sorted(minimal), f"{scope}: unexpected fallback packages"
     assert "subagents" not in fallback_settings, f"{scope}: fallback keeps subagent settings"
-    extra = [agenticos] if scope == "work" else ["local:pi-litellm-provider"]
+    extra = [agenticos, *lunar] if scope == "work" else ["local:pi-litellm-provider"]
     assert identities(default_settings) == sorted(herdr + extra), f"{scope}: unexpected default packages"
     assert tintinweb not in identities(default_settings), f"{scope}: default keeps Tintinweb"
     for profile in (fallback, default, browser):
@@ -84,7 +89,7 @@ for scope in ("personal", "work"):
         else:
             assert not deepseek.intersection(settings["enabledModels"])
     browser_settings = json.loads((browser / "settings.json").read_text())
-    browser_extra = [] if scope == "work" else ["local:pi-litellm-provider"]
+    browser_extra = lunar if scope == "work" else ["local:pi-litellm-provider"]
     assert identities(browser_settings) == sorted(herdr + browser_extra), f"{scope}: unexpected browser packages"
     assert "npm:pi-web-access@0.13.0" in identities(browser_settings)
     assert tintinweb not in identities(browser_settings)
