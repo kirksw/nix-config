@@ -222,13 +222,9 @@ let
     defaultProvider = "openai";
     defaultModel = "gpt-6-sol";
     defaultThinkingLevel = "medium";
-    enabledModels = [
-      "gpt-6-astra"
-      "gpt-6-sol"
-      "gpt-6-luna"
-      "amazon-bedrock/eu.anthropic.claude-sonnet-5"
-      "amazon-bedrock/eu.anthropic.claude-opus-5-5"
-    ];
+    # Scoped models ride the Lunar LiteLLM gateway (`lunar` provider, discovered
+    # dynamically), so scope the whole catalog with a glob rather than pinning ids.
+    enabledModels = [ "lunar/*" ];
   };
 
   piWorkSettingsAttrs =
