@@ -10,6 +10,16 @@ let
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piLitellmProviderPackage = "${self}/agents/packages/pi-litellm-provider";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
+  piNpmCommand = "${self.packages.${system}.pi-npm}/bin/pi-npm";
+
+  # Lunarway Pi packages (github.com/lunarway/pi-packages) are published to
+  # GitHub Packages. `piNpmCommand` routes their installs through the lunarctl
+  # npm wrapper, which supplies the registry token from gh.
+  piLunarPackageRefs = [
+    "npm:@lunarway/pi-lunar-quiet-tools@0.1.0"
+    "npm:@lunarway/pi-lunar-litellm@0.2.1"
+    "npm:@lunarway/pi-lunar-statusline@0.7.0"
+  ];
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
@@ -35,7 +45,7 @@ let
     ++ [ piLitellmProviderPackage ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
-  ) (piPackageRefs ++ [ agenticOSPackage ]);
+  ) (piPackageRefs ++ piLunarPackageRefs ++ [ agenticOSPackage ]);
   # Minimal profile package set: web access, output verbosity, and LiteLLM models.
   # The fallback profiles use this set and deliberately omit subagents, MCP
   # tooling, tracing, permission enforcement, and to-do tracking.
@@ -226,6 +236,7 @@ let
     // piThemeSettings
     // {
       packages = piWorkPackageRefs;
+      npmCommand = [ piNpmCommand ];
       subagents.disableBuiltins = true;
     };
 
