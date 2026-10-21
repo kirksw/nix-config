@@ -11,6 +11,7 @@ Use the recipe matching the task. Read only its linked references as needed; do 
 | --- | --- |
 | Add a Pi skill | `recipes/add-skill.md` |
 | Add or change a Pi profile | `recipes/add-profile.md` |
+| Onboard a macOS host | `recipes/add-host.md` |
 | Edit Nix or agent configuration | `recipes/change-nix-config.md` |
 | Add, edit, or reference a secret or provider | `recipes/manage-secrets.md` |
 | Find the source of an active setting or diagnose a failure | `recipes/diagnose-config.md` |
