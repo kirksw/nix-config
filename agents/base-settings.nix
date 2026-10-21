@@ -219,8 +219,8 @@ let
   };
 
   piWorkModelDefaults = {
-    defaultProvider = "openai";
-    defaultModel = "gpt-6-sol";
+    defaultProvider = "lunar";
+    defaultModel = "anthropic.claude-sonnet-5-5";
     defaultThinkingLevel = "medium";
     # Scoped models ride the Lunar LiteLLM gateway (`lunar` provider, discovered
     # dynamically), so scope the whole catalog with a glob rather than pinning ids.
