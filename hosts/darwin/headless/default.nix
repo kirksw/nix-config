@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   ...
 }:
@@ -9,6 +10,18 @@
   ];
 
   darwinModules.tailscale.enable = true;
+
+  launchd.daemons.tailscale-ssh = {
+    script = ''
+      exec ${config.services.tailscale.package}/bin/tailscale set --ssh
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      # Retry until tailscaled is ready to accept the setting.
+      KeepAlive.SuccessfulExit = false;
+      ThrottleInterval = 10;
+    };
+  };
 
   networking = {
     hostName = "nix-mm1";
@@ -21,6 +34,9 @@
     users.kirk = {
       home = "/Users/kirk";
       shell = pkgs.zsh;
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRojqfJdEXsAAXK4+5G6YLHQ5QpZOsiwwXAb5txy11Z kirk@cntd.io"
+      ];
     };
     users.agent = {
       uid = 502;
@@ -35,7 +51,13 @@
   programs.zsh.enable = true;
   services.openssh.enable = true;
 
-  determinateNix.enable = true;
+  determinateNix = {
+    enable = true;
+    customSettings.trusted-users = [
+      "root"
+      "kirk"
+    ];
+  };
   nixpkgs.config.allowUnfree = true;
   system = {
     stateVersion = 6;

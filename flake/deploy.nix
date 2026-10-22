@@ -7,25 +7,37 @@ let
       hostname,
     }:
     {
-    inherit hostname;
-    sshUser = "root";
-    sshOpts = [
-      "-o"
-      "HostKeyAlias=${nodeName}"
-    ];
+      inherit hostname;
+      sshUser = "root";
+      sshOpts = [
+        "-o"
+        "HostKeyAlias=${nodeName}"
+      ];
 
-    remoteBuild = true;
-    fastConnection = true;
+      remoteBuild = true;
+      fastConnection = true;
 
-    profiles.system = {
-      user = "root";
-      path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.${configName};
-      activationTimeout = 600;
+      profiles.system = {
+        user = "root";
+        path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.${configName};
+        activationTimeout = 600;
+      };
     };
-  };
 in
 {
   nodes = {
+    nix-mm1 = {
+      # Use LAN OpenSSH so restarting Tailscale does not interrupt activation.
+      hostname = "192.168.10.200";
+      sshUser = "kirk";
+      interactiveSudo = true;
+
+      profiles.system = {
+        user = "root";
+        path = deploy-rs.lib.aarch64-darwin.activate.darwin self.darwinConfigurations.nix-mm1;
+      };
+    };
+
     # Preferred: direct LAN OpenSSH path.
     nixos-ry6a = mkNode {
       nodeName = "nixos-ry6a";
