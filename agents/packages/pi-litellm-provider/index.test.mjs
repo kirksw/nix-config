@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import litellmProvider, { credentialsAvailable, toProviderModels } from "./index.ts";
+import litellmProvider, { credentialsAvailable, toProviderModels, withGoSessionHeader } from "./index.ts";
 
 const CREDENTIAL_NAMES = [
   "LITELLM_API_KEY",
@@ -221,6 +221,7 @@ test("discovery falls back to models and registers dual authentication", async (
       LITELLM_CF_ACCESS_CLIENT_SECRET: "client-secret",
     }, async () => {
       await litellmProvider({
+        on() {},
         registerProvider(name, config) {
           registration = { name, config };
         },
@@ -270,6 +271,7 @@ for (const supports_reasoning of [true, false]) {
         LITELLM_CF_ACCESS_CLIENT_SECRET: "client-secret",
       }, async () => {
         await litellmProvider({
+          on() {},
           registerProvider(name, config) {
             registration = { name, config };
           },
@@ -310,4 +312,45 @@ test("DeepSeek aliases preserve gateway metadata and conservative missing-metada
   assert.equal(pro.maxTokens, 393_216);
   assert.equal(pro.reasoning, true);
   assert.deepEqual(pro.input, ["text"]);
+});
+
+
+test("Go requests preserve payload and forward the conversation session", () => {
+  const request = { model: "go/kimi-k3.1-pro", stream: true, extra_headers: { "x-custom": "keep", "x-opencode-session": "wrong" } };
+  assert.deepEqual(withGoSessionHeader(request, "session-123"), {
+    ...request,
+    extra_headers: { "x-custom": "keep", "x-opencode-session": "session-123" },
+  });
+  assert.equal(request.extra_headers["x-opencode-session"], "wrong");
+  assert.equal(withGoSessionHeader(null, "session-123"), null);
+});
+
+test("only LiteLLM Go requests receive a session header", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestHandler;
+  globalThis.fetch = async () => Response.json({ data: [{ id: "go/kimi-k3.1-pro" }] });
+  try {
+    await withCredentialEnvironment({
+      LITELLM_API_KEY: "api-key",
+      LITELLM_CF_ACCESS_CLIENT_ID: "client-id",
+      LITELLM_CF_ACCESS_CLIENT_SECRET: "client-secret",
+    }, async () => {
+      await litellmProvider({
+        on(event, handler) {
+          assert.equal(event, "before_provider_request");
+          requestHandler = handler;
+        },
+        registerProvider() {},
+      });
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  const payload = { model: "go/kimi-k3.1-pro" };
+  const context = (provider, id) => ({ model: { provider, id }, sessionManager: { getSessionId: () => "session-123" } });
+  assert.equal(requestHandler({ payload }, context("litellm", "glm-5.3")), undefined);
+  assert.equal(requestHandler({ payload }, context("opencode-go", "go/kimi-k3.1-pro")), undefined);
+  assert.deepEqual(requestHandler({ payload }, context("litellm", "go/kimi-k3.1-pro")), {
+    ...payload, extra_headers: { "x-opencode-session": "session-123" },
+  });
 });
