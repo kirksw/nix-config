@@ -158,16 +158,19 @@ in
       base = "work-default";
       skills = workSkills;
       tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
     };
     work-fallback = {
       base = "work";
       skills = workSkills;
       tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
     };
     work-browser = {
       base = "work-browser";
       skills = workBrowserSkills;
       tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
     };
   };
 }

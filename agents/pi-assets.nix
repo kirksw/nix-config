@@ -180,6 +180,9 @@ let
       cp ${hookManifest} "$out/hook-manifest"
       cp ${mkAgentsMd profile} "$out/AGENTS.md"
       cp -r ${./targets/pi/extensions}/. "$out/extensions/"
+      ${lib.concatMapStringsSep "\n" (
+        e: ''chmod -R u+w "$out/extensions" && rm -rf "$out/extensions/${e}"''
+      ) (profile.excludeExtensions or [ ])}
       cp -r ${./targets/pi/prompts}/. "$out/prompts/"
     '';
 
