@@ -974,9 +974,9 @@ in
   ];
 
   systemd.tmpfiles.rules =
-    (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -") assistants)
-    ++ [ "d /var/lib/microvms/${personalAgent.name} 0700 root root -" ]
-    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") (llmRouters));
+    (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 microvm kvm -") assistants)
+    ++ [ "d /var/lib/microvms/${personalAgent.name} 0700 microvm kvm -" ]
+    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 microvm kvm -") (llmRouters));
 
   microvm.vms =
     builtins.listToAttrs (map mkVm assistants)
