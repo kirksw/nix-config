@@ -190,14 +190,11 @@ in
           bind = "loopback";
           tailscale = {
             mode = "serve";
-            resetOnExit = false;
           };
           # Tailscale Serve maps the dashboard to https://<node>.<tailnet> (443).
           trustedProxies = [ "127.0.0.1/32" ];
           controlUi = {
             allowedOrigins = [ "https://${config.networking.hostName}.tail54de03.ts.net" ];
-            allowInsecureAuth = false;
-            dangerouslyDisableDeviceAuth = false;
           };
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
@@ -224,7 +221,7 @@ in
           transport = "streamable-http";
           headers.Authorization = "Bearer \${AFFINE_MCP_HTTP_TOKEN}";
           supportsParallelToolCalls = false;
-          timeout = 60;
+          requestTimeoutMs = 60000;
         };
         plugins.entries.memory-core = {
           enabled = true;
@@ -273,7 +270,7 @@ in
             };
           };
         };
-        messages.tts = {
+        tts = {
           auto = "off";
           provider = "minimax";
           providers = {
@@ -349,28 +346,28 @@ in
                   {
                     id = "openai/gpt-5.5";
                     name = "GPT-5.5";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
                   {
                     id = "openai/gpt-5.6-sol";
                     name = "GPT-5.6 Sol";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
                   {
                     id = "openai/gpt-5.6-terra";
                     name = "GPT-5.6 Terra";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
                   {
                     id = "openai/gpt-5.6-luna";
                     name = "GPT-5.6 Luna";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
@@ -742,7 +739,7 @@ in
           };
         }
         // lib.optionalAttrs (cfg.modelAllowlist != [ ]) {
-          models = lib.genAttrs cfg.modelAllowlist (_: { });
+          modelPolicy.allow = cfg.modelAllowlist;
         };
         channels.telegram = {
           enabled = true;
