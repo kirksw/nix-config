@@ -292,7 +292,6 @@ let
 
       # Export sops-decrypted credentials as env vars.
       # The nix-agents wrapper picks these up via providers with credentialSource = "env".
-      ZAI_SECRET_PATH="${config.sops.secrets."zai".path}"
       MINIMAX_SECRET_PATH="${config.sops.secrets."minimax".path}"
       LUNAR_OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
       LUNAR_ANTHROPIC_KEY_PATH="${config.sops.secrets."api/lunar/anthropic".path}"
@@ -300,9 +299,6 @@ let
       MLFLOW_CF_ACCESS_CLIENT_ID_PATH="${config.sops.secrets."api/mlflow/client-id".path}"
       MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH="${config.sops.secrets."api/mlflow/client-secret".path}"
 
-      if [ -f "$ZAI_SECRET_PATH" ]; then
-        export PERSONAL_ZAI_API_KEY="$(cat "$ZAI_SECRET_PATH")"
-      fi
       if [ -f "$MINIMAX_SECRET_PATH" ]; then
         export PERSONAL_MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
       fi
@@ -752,6 +748,7 @@ in
 
                     # Pi uses Bedrock for Claude, not direct Anthropic credentials.
                     unset ANTHROPIC_API_KEY ANTHROPIC_OAUTH_TOKEN LUNAR_ANTHROPIC_API_KEY
+                    unset ZAI_API_KEY PERSONAL_ZAI_API_KEY
                     case "$_pi_session_profile" in
                       work-default|work-fallback|work-browser)
                         if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
@@ -764,9 +761,6 @@ in
                           if [ -f "$AFFINE_MCP_TOKEN_PATH" ]; then
                             export AFFINE_MCP_HTTP_TOKEN="$(tr -d '[:space:]' < "$AFFINE_MCP_TOKEN_PATH")"
                           fi
-                        fi
-                        if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-                          export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
                         fi
                         if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
                           export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"

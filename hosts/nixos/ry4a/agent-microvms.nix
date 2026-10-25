@@ -240,7 +240,6 @@ let
       })
       [
         "minimax_api_key"
-        "zai_api_key"
       ]
   );
 
@@ -522,14 +521,11 @@ let
     let
       authKeyFile = config.sops.secrets.${personalAgent.authSecret}.path;
       authKeyDir = builtins.dirOf authKeyFile;
-      providerKeyDir = builtins.dirOf config.sops.secrets."personal-agent/zai_api_key".path;
+      providerKeyDir = builtins.dirOf config.sops.secrets."personal-agent/minimax_api_key".path;
       piLauncher = pkgs.writeShellScriptBin "pi" ''
-        zaiKeyFile=/run/personal-agent-secrets/zai_api_key
+        unset ZAI_API_KEY PERSONAL_ZAI_API_KEY
         minimaxKeyFile=/run/personal-agent-secrets/minimax_api_key
 
-        if [ -r "$zaiKeyFile" ]; then
-          export PERSONAL_ZAI_API_KEY="$(${pkgs.coreutils}/bin/cat "$zaiKeyFile")"
-        fi
         if [ -r "$minimaxKeyFile" ]; then
           export PERSONAL_MINIMAX_API_KEY="$(${pkgs.coreutils}/bin/cat "$minimaxKeyFile")"
         fi
@@ -703,7 +699,6 @@ let
             serviceConfig.Type = "oneshot";
             script = ''
               ${pkgs.coreutils}/bin/install -d -m 0700 -o agent -g users /run/personal-agent-secrets
-              ${pkgs.coreutils}/bin/install -m 0400 -o agent -g users /run/host-secrets/providers/zai_api_key /run/personal-agent-secrets/zai_api_key
               ${pkgs.coreutils}/bin/install -m 0400 -o agent -g users /run/host-secrets/providers/minimax_api_key /run/personal-agent-secrets/minimax_api_key
             '';
           };

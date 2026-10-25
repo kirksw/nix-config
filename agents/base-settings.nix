@@ -185,8 +185,8 @@ let
   };
 
   piPersonalModelDefaults = {
-    defaultProvider = "zai";
-    defaultModel = "glm-5.2";
+    defaultProvider = "litellm";
+    defaultModel = "openai/gpt-6-sol";
     defaultThinkingLevel = "medium";
     enabledModels = [
       "litellm/openai/gpt-6-astra"

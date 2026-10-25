@@ -5,11 +5,6 @@
 # configuration overlay inside a base that selects skills and model tiers.
 let
   providers = {
-    personal-zai-key = {
-      credentialSource = "env";
-      credentialRef = "PERSONAL_ZAI_API_KEY";
-      envVar = "ZAI_API_KEY";
-    };
     personal-minimax-key = {
       credentialSource = "env";
       credentialRef = "PERSONAL_MINIMAX_API_KEY";
@@ -38,7 +33,6 @@ let
   };
 
   personalProviders = [
-    "personal-zai-key"
     "personal-minimax-key"
     "personal-litellm-api-key"
     "personal-litellm-cf-client-id"

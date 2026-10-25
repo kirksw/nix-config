@@ -88,7 +88,8 @@ assert_jq "$personal_settings" "0" \
 assert_jq "$personal_settings" "true" \
   'any(.packages[]; type == "string" and endswith("/agents/packages/pi-todo"))'
 assert_jq "$personal_settings" "rose-pine" '.theme'
-assert_jq "$personal_settings" "zai" '.defaultProvider'
+assert_jq "$personal_settings" "litellm" '.defaultProvider'
+assert_jq "$personal_settings" "openai/gpt-6-sol" '.defaultModel'
 assert_jq "$personal_settings" "absent" '(.npmCommand // "absent")'
 test -f "$personal_set/node_modules/@plannotator/pi-extension/package.json"
 test -f "$personal_set/.gitignore"
