@@ -213,7 +213,10 @@ let
         let
           settingsDir = "$CONFIG_BASE/${target}/bases/${baseName}/settings";
           storeSettingsDir = settingsDirFor target baseName files;
-          settingNames = builtins.attrNames files;
+          # settings.json is published transactionally by pi-npm-vendor after
+          # the npm packages are vendored, so a failed vendoring never leaves
+          # npm sources that would trigger startup npm installs.
+          settingNames = builtins.filter (fileName: fileName != "settings.json") (builtins.attrNames files);
           fileCommands = lib.concatMapStringsSep "\n" (
             fileName:
             if fileName == "config.toml" then
@@ -285,6 +288,7 @@ let
   allBaseSettingsCommands = syncBaseSettingsCommands "pi";
 
   piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
+  piNpmVendor = "${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor";
   piSubagentsSettingsFile = pkgs.writeText "pi-subagents-settings.json" ''
     {
       "disableDefaultAgents": true,
@@ -483,6 +487,17 @@ let
         fi
       done
     done
+
+    # Vendor Pi npm packages into content-addressed per-base sets and publish
+    # base settings.json with local paths before profiles link settings, so Pi
+    # sessions never install packages at startup. Fail-closed: a missing
+    # vendored set aborts the sync before any profile changes instead of
+    # degrading settings to npm sources.
+    pi_vendor_args="--strict"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      pi_vendor_args="--dry-run"
+    fi
+    "${piNpmVendor}" $pi_vendor_args
 
     ${allSyncCommands}
 

@@ -498,6 +498,17 @@ in
       })
     );
 
+    # Vendor Pi npm packages and publish base settings.json with local
+    # package paths during activation, on fresh setups and updates alike.
+    # Fail-closed: when the vendored set cannot be built and verified the
+    # switch fails; settings are never degraded to npm sources that would
+    # trigger startup npm installs.
+    home.activation.piNpmVendor = lib.mkIf config.homeModules.piCodingAgent.enable (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor --strict
+      ''
+    );
+
     # --- sops secrets (shared across all ai tools) ---
     sops.secrets = lib.mkMerge [
       (lib.mkIf config.homeModules.piCodingAgent.enable {

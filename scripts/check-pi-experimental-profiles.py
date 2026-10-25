@@ -8,28 +8,68 @@ from pathlib import Path
 
 root = Path(os.environ["XDG_CONFIG_HOME"]) / "nix-agents"
 bases = root / "pi/bases"
-tintinweb = "npm:@tintinweb/pi-subagents@0.14.3"
+tintinweb = "npm:@tintinweb/pi-subagents"
 herdr_agents = "local:pi-herdr-agents"
 pi_extensions = "/Users/kisw/git/github.com/kirksw/pi-extensions/main"
-plannotator = "npm:@plannotator/pi-extension"
 agenticos = "/Users/kisw/git/github.com/kirksw/agenticOS/main"
+plannotator = "npm:@plannotator/pi-extension"
 lunar = [
-    "npm:@lunarway/pi-lunar-quiet-tools@0.1.0",
-    "npm:@lunarway/pi-lunar-litellm@0.2.1",
-    "npm:@lunarway/pi-lunar-statusline@0.7.0",
+    "npm:@lunarway/pi-lunar-quiet-tools",
+    "npm:@lunarway/pi-lunar-litellm",
+    "npm:@lunarway/pi-lunar-statusline",
 ]
+context_decisions = "npm:pi-context-decisions"
 excluded = {
-    "npm:@juicesharp/rpiv-btw@1.20.0",
-    "npm:context-mode@1.0.169",
-    "npm:pi-observational-memory@3.0.3",
+    "npm:@juicesharp/rpiv-btw",
+    "npm:context-mode",
+    "npm:pi-observational-memory",
 }
+# Exact pins that vendored copies and npm sources must both carry.
+# @plannotator/pi-extension is deliberately unpinned.
+pins = {
+    "pi-cost": "0.1.1",
+    "pi-verbosity-control": "0.3.0",
+    "pi-web-access": "0.13.0",
+    "@lunarway/pi-lunar-quiet-tools": "0.1.0",
+    "@lunarway/pi-lunar-litellm": "0.2.1",
+    "@lunarway/pi-lunar-statusline": "0.7.0",
+    "pi-context-decisions": "2.2.0",
+    "@tintinweb/pi-subagents": "0.14.3",
+}
+vendored_re = re.compile(
+    r"^(?P<root>.*/pi/npm/(?P<base>[^/]+)(?:/set-[0-9a-f]+)?)/node_modules/(?P<name>@[^/]+/[^/]+|[^/]+)$"
+)
+
+
+def npm_name(source):
+    """Reduce an npm source or vendored path to its package name."""
+    match = vendored_re.match(source)
+    if match:
+        return match.group("name")
+    if source.startswith("npm:"):
+        spec = source[len("npm:") :]
+        parts = spec.split("@")
+        return "@" + parts[1] if parts[0] == "" else parts[0]
+    return None
+
+
+def vendored_version(source):
+    """Installed version of a vendored package path, or None."""
+    match = vendored_re.match(source)
+    if not match:
+        return None
+    pkg = Path(match.group("root")) / "node_modules" / match.group("name") / "package.json"
+    if not pkg.is_file():
+        return None
+    return json.loads(pkg.read_text()).get("version")
 
 
 def identity(package):
     """Reduce a package reference to a stable name that ignores Nix store paths."""
     source = package["source"] if isinstance(package, dict) else package
-    if source.startswith("npm:") or source == pi_extensions or source == agenticos:
-        return source
+    name = npm_name(source)
+    if name is not None:
+        return f"npm:{name}"
     match = re.search(r"/agents/packages/([\w.-]+)$", source)
     if match:
         return f"local:{match.group(1)}"
@@ -43,21 +83,41 @@ def identities(settings):
     return sorted(identity(package) for package in settings["packages"])
 
 
+def check_pins(scope, base, settings):
+    """Vendored copies and npm sources must both carry the pinned versions."""
+    for package in settings["packages"]:
+        source = package["source"] if isinstance(package, dict) else package
+        name = npm_name(source)
+        if name is None or name not in pins:
+            continue
+        expected = pins[name]
+        match = vendored_re.match(source)
+        if match:
+            assert match.group("base") == base, f"{scope}: {source} vendored under the wrong base"
+            actual = vendored_version(source)
+            assert actual == expected, f"{scope}: {name} vendored as {actual}, expected {expected}"
+        else:
+            spec = source[len("npm:") :]
+            parts = spec.split("@")
+            version = parts[-1] if len(parts) > (1 if parts[0] else 2) else None
+            assert version == expected, f"{scope}: {source} does not pin {expected}"
+
+
 # Fallback profiles load only these packages; everything else is opt-in.
 minimal = [
-    "npm:pi-web-access@0.13.0",
-    "npm:pi-verbosity-control@0.3.0",
+    "npm:pi-web-access",
+    "npm:pi-verbosity-control",
     "local:pi-litellm-provider",
 ]
 # Default and browser profiles keep the lean set with the Herdr replacement applied.
 lean = [
-    "npm:pi-cost@0.1.1",
+    "npm:pi-cost",
     "local:pi-herdr",
     tintinweb,
-    "npm:pi-observational-memory@3.0.3",
-    "npm:pi-verbosity-control@0.3.0",
-    "npm:pi-web-access@0.13.0",
-    "npm:@juicesharp/rpiv-btw@1.20.0",
+    "npm:pi-observational-memory",
+    "npm:pi-verbosity-control",
+    "npm:pi-web-access",
+    "npm:@juicesharp/rpiv-btw",
     "local:pi-todo",
 ]
 herdr = sorted(
@@ -73,11 +133,22 @@ for scope in ("personal", "work"):
     default_settings = json.loads((default / "settings.json").read_text())
     assert identities(fallback_settings) == sorted(minimal), f"{scope}: unexpected fallback packages"
     assert "subagents" not in fallback_settings, f"{scope}: fallback keeps subagent settings"
-    extra = [agenticos, *lunar] if scope == "work" else ["local:pi-litellm-provider"]
+    extra = (
+        [agenticos, *lunar, context_decisions]
+        if scope == "work"
+        else ["local:pi-litellm-provider"]
+    )
     assert identities(default_settings) == sorted(herdr + extra), f"{scope}: unexpected default packages"
     assert tintinweb not in identities(default_settings), f"{scope}: default keeps Tintinweb"
     for profile in (fallback, default, browser):
         settings = json.loads((profile / "settings.json").read_text())
+        base_dir = profile.parent.parent.name
+        check_pins(scope, base_dir, settings)
+        for package in settings["packages"]:
+            source = package["source"] if isinstance(package, dict) else package
+            assert not source.startswith("npm:"), (
+                f"{scope}: {source} would trigger a startup npm install"
+            )
         deepseek = {"litellm/deepseek-flash", "litellm/deepseek-v4-pro"}
         if scope == "personal":
             assert deepseek <= set(settings["enabledModels"])
@@ -89,9 +160,11 @@ for scope in ("personal", "work"):
         else:
             assert not deepseek.intersection(settings["enabledModels"])
     browser_settings = json.loads((browser / "settings.json").read_text())
-    browser_extra = lunar if scope == "work" else ["local:pi-litellm-provider"]
+    browser_extra = (
+        [*lunar, context_decisions] if scope == "work" else ["local:pi-litellm-provider"]
+    )
     assert identities(browser_settings) == sorted(herdr + browser_extra), f"{scope}: unexpected browser packages"
-    assert "npm:pi-web-access@0.13.0" in identities(browser_settings)
+    assert "npm:pi-web-access" in identities(browser_settings)
     assert tintinweb not in identities(browser_settings)
     servers = json.loads((browser / "mcporter.json").read_text())["mcpServers"]
     if scope == "personal":

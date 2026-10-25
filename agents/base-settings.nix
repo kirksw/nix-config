@@ -21,6 +21,13 @@ let
     "npm:@lunarway/pi-lunar-statusline@0.7.0"
   ];
 
+  # Work-only extras: context decision tracking rides the default and browser
+  # work profiles; the minimal fallback set replaces `packages` wholesale, so
+  # additions here never reach work-fallback or the personal scopes.
+  piWorkExtraPackageRefs = [
+    "npm:pi-context-decisions@2.2.0"
+  ];
+
   piPackageRefs = [
     "npm:context-mode@1.0.169"
     "npm:pi-cost@0.1.1"
@@ -45,7 +52,7 @@ let
     ++ [ piLitellmProviderPackage ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
-  ) (piPackageRefs ++ piLunarPackageRefs ++ [ agenticOSPackage ]);
+  ) (piPackageRefs ++ piLunarPackageRefs ++ piWorkExtraPackageRefs ++ [ agenticOSPackage ]);
   # Minimal profile package set: web access, output verbosity, and LiteLLM models.
   # The fallback profiles use this set and deliberately omit subagents, MCP
   # tooling, tracing, permission enforcement, and to-do tracking.

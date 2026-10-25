@@ -186,6 +186,7 @@
         inherit
           nixpkgs
           inputs
+          self
           ;
       };
       mkApps = import ./flake/apps.nix {
@@ -264,6 +265,9 @@
             sync-agents-settings-merge = pkgs.runCommand "sync-agents-settings-merge" { } ''
               export HOME="$TMPDIR/home"
               export XDG_CONFIG_HOME="$TMPDIR/config"
+              # No network in the check sandbox: the offline stub npm lets the
+              # fail-closed vendoring succeed and publish local paths.
+              export PI_NPM_BIN=${./scripts/pi-npm-stub.sh}
 
               settings_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/settings"
               profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-fallback"
@@ -292,12 +296,22 @@
             pi-experimental-profiles = pkgs.runCommand "pi-experimental-profiles" { } ''
               export HOME="$TMPDIR/home"
               export XDG_CONFIG_HOME="$TMPDIR/config"
+              export PI_NPM_BIN=${./scripts/pi-npm-stub.sh}
               ${appSet.sync-agents.program}
               ${pkgs.python3}/bin/python3 ${./scripts/check-pi-experimental-profiles.py}
               mkdir -p "$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/settings"
               printf '{}\n' > "$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/settings/auth.json"
               ${appSet.sync-agents.program}
               ${pkgs.python3}/bin/python3 ${./scripts/check-pi-experimental-profiles.py}
+              touch $out
+            '';
+
+            pi-npm-vendor = pkgs.runCommand "pi-npm-vendor" { } ''
+              export HOME="$TMPDIR/home"
+              export JQ_BIN=${pkgs.jq}/bin/jq
+              ${pkgs.bash}/bin/bash ${./scripts/check-pi-npm-vendor.sh} \
+                ${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor \
+                ${./scripts/pi-npm-stub.sh}
               touch $out
             '';
 
@@ -330,6 +344,7 @@
             pi-mlx-dspark-provider = pkgs.runCommand "pi-mlx-dspark-provider" { } ''
               export HOME="$TMPDIR/home"
               export XDG_CONFIG_HOME="$TMPDIR/config"
+              export PI_NPM_BIN=${./scripts/pi-npm-stub.sh}
               ${appSet.sync-agents.program}
 
               profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/personal-default/profiles/personal-default"
