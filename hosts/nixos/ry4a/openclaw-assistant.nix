@@ -349,28 +349,28 @@ in
                   {
                     id = "openai/gpt-5.5";
                     name = "GPT-5.5";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
                   {
                     id = "openai/gpt-5.6-sol";
                     name = "GPT-5.6 Sol";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
                   {
                     id = "openai/gpt-5.6-terra";
                     name = "GPT-5.6 Terra";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
                   {
                     id = "openai/gpt-5.6-luna";
                     name = "GPT-5.6 Luna";
-                    contextWindow = 272000;
+                    contextWindow = 500000;
                     maxTokens = 128000;
                     reasoning = true;
                   }
