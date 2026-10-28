@@ -8,6 +8,7 @@ set -euo pipefail
 
 vendor="${1:-pi-npm-vendor}"
 stub_npm="${2:-$(dirname "$0")/pi-npm-stub.sh}"
+pi_npm="${3:-pi-npm}"
 jq_bin="${JQ_BIN:-jq}"
 
 tmpdir="$(mktemp -d)"
@@ -118,8 +119,10 @@ assert_jq "$fallback_settings" "false" \
   'any(.packages[]; (if type == "object" then .source else . end) | contains("pi-context-decisions"))'
 assert_jq "$fallback_settings" "0" \
   '[.packages[] | (if type == "object" then .source else . end) | select(startswith("npm:"))] | length'
-assert_jq "$fallback_settings" "2" \
-  '[.packages[] | select(type == "string" and startswith($root))] | length' "$fallback_set"
+assert_jq "$fallback_settings" "true" \
+  'all(.packages[]; type == "string" and startswith($root))' "$fallback_set"
+assert_jq "$fallback_settings" "true" \
+  'any(.packages[]; type == "string" and . == ($root + "/node_modules/@lunarway/pi-lunar-litellm"))' "$fallback_set"
 assert_jq "$personal_settings" "false" \
   'any(.packages[]; (if type == "object" then .source else . end) | contains("pi-context-decisions"))'
 
@@ -193,5 +196,18 @@ for base in personal personal-browser personal-default work work-browser work-de
   assert_jq "$settings" "0" \
     '[.packages[] | (if type == "object" then .source else . end) | select(startswith("npm:"))] | length'
 done
+
+echo "== 11. Pi npm resolves registry tools in an activation-like PATH"
+mkdir -p "$XDG_CONFIG_HOME/npm/pi"
+cat > "$XDG_CONFIG_HOME/npm/pi/npm" <<EOF
+#!/bin/sh
+set -eu
+command -v gh >/dev/null
+command -v npm >/dev/null
+exec "$stub_npm" "\$@"
+EOF
+chmod +x "$XDG_CONFIG_HOME/npm/pi/npm"
+PATH=/usr/bin:/bin "$pi_npm" install pi-web-access@0.13.0 --prefix "$tmpdir/restricted" --legacy-peer-deps
+assert_jq "$tmpdir/restricted/node_modules/pi-web-access/package.json" "0.13.0" '.version'
 
 echo "check-pi-npm-vendor: all vendoring regression assertions passed"

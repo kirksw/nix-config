@@ -311,7 +311,8 @@
               export JQ_BIN=${pkgs.jq}/bin/jq
               ${pkgs.bash}/bin/bash ${./scripts/check-pi-npm-vendor.sh} \
                 ${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor \
-                ${./scripts/pi-npm-stub.sh}
+                ${./scripts/pi-npm-stub.sh} \
+                ${self.packages.${system}.pi-npm}/bin/pi-npm
               touch $out
             '';
 
