@@ -131,7 +131,10 @@ for scope in ("personal", "work"):
     browser = bases / f"{scope}-browser/profiles/{scope}-browser"
     fallback_settings = json.loads((fallback / "settings.json").read_text())
     default_settings = json.loads((default / "settings.json").read_text())
-    assert identities(fallback_settings) == sorted(minimal), f"{scope}: unexpected fallback packages"
+    fallback_packages = (
+        [*minimal[:-1], "npm:@lunarway/pi-lunar-litellm"] if scope == "work" else minimal
+    )
+    assert identities(fallback_settings) == sorted(fallback_packages), f"{scope}: unexpected fallback packages"
     assert "subagents" not in fallback_settings, f"{scope}: fallback keeps subagent settings"
     extra = (
         [agenticos, *lunar, context_decisions]
@@ -159,6 +162,10 @@ for scope in ("personal", "work"):
                 assert "model: openai-codex/" not in agent.read_text(), agent
         else:
             assert not deepseek.intersection(settings["enabledModels"])
+            assert settings["defaultProvider"] == "lunar"
+            assert settings["enabledModels"] == ["lunar/*"]
+            assert "openai" not in json.loads((profile / "models.json").read_text())["providers"]
+            assert "openai" not in json.loads((profile / "auth.json").read_text())
     browser_settings = json.loads((browser / "settings.json").read_text())
     browser_extra = (
         [*lunar, context_decisions] if scope == "work" else ["local:pi-litellm-provider"]

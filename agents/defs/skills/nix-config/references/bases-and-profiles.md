@@ -35,7 +35,7 @@
 
 - own path prefixes: none
 - hosts the `work-fallback` profile
-- provider: `work-openai-key`
+- no direct provider credentials; work models use the Lunar LiteLLM gateway
 - commits use the Lunar work identity and signing key
 
 ### `work-default`
