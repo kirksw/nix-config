@@ -62,11 +62,11 @@ let
     piLitellmProviderPackage
   ];
   mkPiMinimalSettings =
-    defaults:
+    defaults: packages:
     builtins.toJSON (
       (builtins.removeAttrs defaults [ "subagents" ])
       // {
-        packages = piMinimalPackageRefs;
+        inherit packages;
       }
     );
   mkPiHerdrSettings =
@@ -243,12 +243,7 @@ let
       subagents.disableBuiltins = true;
     };
 
-  piWorkModels = builtins.toJSON {
-    providers = {
-      openai.baseUrl = "https://eu.api.openai.com/v1";
-      mlx-dspark = piMlxDsparkProvider;
-    };
-  };
+  piWorkModels = builtins.toJSON { providers = { }; };
 
   piWorkMcpServers = {
     "1password" = {
@@ -323,33 +318,20 @@ let
       export AGENTICOS_INSTANCE="lunarOS"
       export AGENTICOS_TOOL_MODE="${agenticosToolMode}"
       export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/${base}/settings/mcporter.json"
-      if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-        export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-      fi
-      export AWS_PROFILE="lw-employee-ai"
-      export AWS_REGION="eu-west-1"
-      export AWS_SDK_LOAD_CONFIG=1
     '';
 
   piWorkEnv = mkPiWorkEnv {
     base = "work";
     agenticosToolMode = "lazy";
   };
-  piWorkAuth = builtins.toJSON {
-    openai = {
-      type = "api_key";
-      key = "$OPENAI_API_KEY";
-    };
-  };
-
 in
 {
-  inherit piPersonalPackageRefs piWorkAuth;
+  inherit piPersonalPackageRefs;
 
   targets = {
     pi = {
       personal = {
-        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs;
+        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs piMinimalPackageRefs;
         "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
@@ -357,7 +339,10 @@ in
       work = {
         "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
-        "settings.json" = mkPiMinimalSettings piWorkSettingsAttrs;
+        "settings.json" = mkPiMinimalSettings piWorkSettingsAttrs (
+          builtins.filter (package: package != piLitellmProviderPackage) piMinimalPackageRefs
+          ++ [ "npm:@lunarway/pi-lunar-litellm@0.2.1" ]
+        );
         "env" = piWorkEnv;
       };
       personal-default = {

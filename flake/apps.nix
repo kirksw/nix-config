@@ -287,8 +287,8 @@ let
 
   allBaseSettingsCommands = syncBaseSettingsCommands "pi";
 
-  piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
   piNpmVendor = "${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor";
+  piEmptyAuthFile = pkgs.writeText "pi-empty-auth.json" "{}";
   piSubagentsSettingsFile = pkgs.writeText "pi-subagents-settings.json" ''
     {
       "disableDefaultAgents": true,
@@ -472,7 +472,22 @@ let
     ${allBaseSettingsCommands}
 
     remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
-    seed_mutable_file "${piWorkAuthFile}" "$CONFIG_BASE/pi/bases/work/settings/auth.json" 0600
+    # Initialize the work login store without direct provider credentials.
+    seed_mutable_file "${piEmptyAuthFile}" "$CONFIG_BASE/pi/bases/work/settings/auth.json" 0600
+    # Remove the retired direct OpenAI credential without touching other work logins.
+    for work_base in work work-default work-browser; do
+      work_auth="$CONFIG_BASE/pi/bases/$work_base/settings/auth.json"
+      if [ -f "$work_auth" ] && ${pkgs.jq}/bin/jq -e 'has("openai")' "$work_auth" >/dev/null 2>&1; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+          echo "DRY-RUN remove openai from $work_auth"
+        else
+          work_auth_tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          ${pkgs.jq}/bin/jq 'del(.openai)' "$work_auth" > "$work_auth_tmp"
+          run ${pkgs.coreutils}/bin/install -m 0600 "$work_auth_tmp" "$work_auth"
+          run ${pkgs.coreutils}/bin/rm -f "$work_auth_tmp"
+        fi
+      fi
+    done
 
     # Share login state only within each scope; settings and sessions stay separate.
     for scope in personal work; do

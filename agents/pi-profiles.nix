@@ -25,11 +25,6 @@ let
       credentialRef = "PERSONAL_LITELLM_CF_ACCESS_CLIENT_SECRET";
       envVar = "LITELLM_CF_ACCESS_CLIENT_SECRET";
     };
-    work-openai-key = {
-      credentialSource = "env";
-      credentialRef = "LUNAR_OPENAI_API_KEY";
-      envVar = "OPENAI_API_KEY";
-    };
   };
 
   personalProviders = [
@@ -38,7 +33,7 @@ let
     "personal-litellm-cf-client-id"
     "personal-litellm-cf-client-secret"
   ];
-  workProviders = [ "work-openai-key" ];
+  workProviders = [ ];
 
   personalGit = {
     userName = "Kirk Sweeney";
@@ -111,13 +106,10 @@ let
     ];
   };
   workTierMapping = {
-    S = [
-      "openai/gpt-6-astra"
-      "amazon-bedrock/eu.anthropic.claude-opus-5-5"
-    ];
-    A = [ "openai/gpt-6-sol" ];
-    B = [ "openai/gpt-6-luna" ];
-    C = [ "openai/gpt-6-luna" ];
+    S = [ "lunar/gpt-6-astra" ];
+    A = [ "lunar/gpt-6.1-sol" ];
+    B = [ "lunar/gpt-6-luna" ];
+    C = [ "lunar/gpt-6-luna" ];
   };
 in
 {

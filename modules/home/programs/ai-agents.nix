@@ -293,20 +293,12 @@ let
       # Export sops-decrypted credentials as env vars.
       # The nix-agents wrapper picks these up via providers with credentialSource = "env".
       MINIMAX_SECRET_PATH="${config.sops.secrets."minimax".path}"
-      LUNAR_OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
-      LUNAR_ANTHROPIC_KEY_PATH="${config.sops.secrets."api/lunar/anthropic".path}"
       GIT_PAT_PATH="${config.sops.secrets."git/pat".path}"
       MLFLOW_CF_ACCESS_CLIENT_ID_PATH="${config.sops.secrets."api/mlflow/client-id".path}"
       MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH="${config.sops.secrets."api/mlflow/client-secret".path}"
 
       if [ -f "$MINIMAX_SECRET_PATH" ]; then
         export PERSONAL_MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
-      fi
-      if [ -f "$LUNAR_OPENAI_KEY_PATH" ]; then
-        export LUNAR_OPENAI_API_KEY="$(cat "$LUNAR_OPENAI_KEY_PATH")"
-      fi
-      if [ -f "$LUNAR_ANTHROPIC_KEY_PATH" ]; then
-        export LUNAR_ANTHROPIC_API_KEY="$(cat "$LUNAR_ANTHROPIC_KEY_PATH")"
       fi
       if [ -f "$GIT_PAT_PATH" ]; then
         export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GIT_PAT_PATH")"
@@ -317,22 +309,6 @@ let
       if [ -f "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH" ]; then
         export CF_ACCESS_CLIENT_SECRET="$(tr -d '[:space:]' < "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH")"
       fi
-
-      ensure_aws_sso_profile() {
-        local profile="$1"
-        local sso_session="$2"
-        local aws="${lib.getExe pkgs.awscli2}"
-
-        if "$aws" sts get-caller-identity --profile "$profile" >/dev/null 2>&1; then
-          return 0
-        fi
-
-        # All Lunar work profiles share this SSO session, so one login refreshes
-        # its cached token and makes fresh role credentials available to Pi.
-        echo "Refreshing AWS SSO session '$sso_session' for profile '$profile'..." >&2
-        "$aws" sso login --sso-session "$sso_session"
-        "$aws" sts get-caller-identity --profile "$profile" >/dev/null
-      }
 
       _nix_agents_extra_args=()
       _nix_agents_exec=("${nixAgentsPkg}/bin/${target}")
@@ -723,15 +699,6 @@ in
                       # Generated profile environment is trusted Nix configuration.
                       . "$_pi_profile_env"
                     fi
-                    case "$_pi_session_profile" in
-                      work-default|work-fallback|work-browser)
-                        unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
-                        export AWS_PROFILE="lw-employee-ai"
-                        export AWS_REGION="eu-west-1"
-                        export AWS_SDK_LOAD_CONFIG=1
-                        ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
-                        ;;
-                    esac
                     export PI_CODING_AGENT_SESSION_DIR="''${PI_CODING_AGENT_SESSION_DIR:-''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile}"
                     mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
@@ -745,17 +712,13 @@ in
                     export TMP="$_pi_tmp_root"
                     export TEMP="$_pi_tmp_root"
 
-
-                    # Pi uses Bedrock for Claude, not direct Anthropic credentials.
                     unset ANTHROPIC_API_KEY ANTHROPIC_OAUTH_TOKEN LUNAR_ANTHROPIC_API_KEY
                     unset ZAI_API_KEY PERSONAL_ZAI_API_KEY
                     case "$_pi_session_profile" in
                       work-default|work-fallback|work-browser)
-                        if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-                          export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-                        fi
+                        unset OPENAI_API_KEY LUNAR_OPENAI_API_KEY
                         ;;
-                      *)
+                      personal-default|personal-fallback|personal-browser)
                         if [ "$_pi_session_profile" = "personal-browser" ]; then
                           AFFINE_MCP_TOKEN_PATH="${config.sops.secrets."api/affine/mcp-token".path}"
                           if [ -f "$AFFINE_MCP_TOKEN_PATH" ]; then
