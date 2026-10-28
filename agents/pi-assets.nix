@@ -48,7 +48,6 @@ let
     ./defs/skills/sourcegraph
     ./defs/skills/travel-search
     ./defs/skills/what-if
-    ./defs/skills/work-mcp
     ./defs/skills/writing-great-skills
     ./defs/skills/xcode
     ./defs/skills/yeet

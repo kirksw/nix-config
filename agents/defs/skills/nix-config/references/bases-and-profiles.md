@@ -110,7 +110,7 @@ Every profile selects skills only. The repository defines no custom agents.
 
 - base: `personal-default`
 - purpose: everyday personal engineering with Herdr orchestration
-- skills: `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-config`, `session-heuristics`, `skill-creator`
+- skills: `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `lavish`, `nix-config`, `session-heuristics`, `skill-creator`
 - package surface: the lean set with the `pi-herdr-agents` replacement
 
 ### `personal-fallback`
@@ -131,7 +131,7 @@ Every profile selects skills only. The repository defines no custom agents.
 
 - base: `work-default`
 - purpose: everyday work engineering with Herdr orchestration
-- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `land`, `lavish`, `linear`, `lunar-skills`, `nix-config`, `slack`, `sourcegraph`, `work-mcp`
+- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `lavish`, `linear`, `lunar-skills`, `nix-config`, `slack`, `sourcegraph`
 - package surface: the lean set with the `pi-herdr-agents` replacement and `agenticos`
 
 ### `work-fallback`

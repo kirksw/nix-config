@@ -68,14 +68,12 @@ let
     "grafana"
     "granola"
     "hubble-mcp"
-    "land"
     "lavish"
     "linear"
     "lunar-skills"
     "nix-config"
     "slack"
     "sourcegraph"
-    "work-mcp"
   ];
   personalBrowserSkills = [
     "affine"

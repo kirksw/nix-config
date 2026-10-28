@@ -87,8 +87,8 @@ let
     repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel)"
     cd "$repo_root"
     config="$HOME/.config/nix-agents/pi/bases/work/settings/mcporter.json"
-    output_dir="agents/defs/skills/work-mcp/generated"
     servers="1password granola grafana linear lunar-skills hubble-mcp sourcegraph slack"
+    selected_servers="''${*:-$servers}"
 
     if [ ! -r "$config" ]; then
       echo "Missing generated work MCPorter configuration: $config" >&2
@@ -96,19 +96,31 @@ let
       exit 1
     fi
 
-    ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
     failures=""
-    for server in $servers; do
+    for server in $selected_servers; do
+      case " $servers " in
+        *" $server "*) ;;
+        *)
+          echo "Unknown work MCP server: $server" >&2
+          exit 2
+          ;;
+      esac
+
+      output_dir="agents/defs/skills/$server/generated"
       target="$output_dir/$server.cjs"
+      typed_client="$output_dir/$server-client.ts"
       temporary="$target.tmp"
+      ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
       ${pkgs.coreutils}/bin/rm -f "$temporary"
       echo "Generating $server..."
       if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli "$server" --runtime node --bundle "$temporary" --minify; then
         ${pkgs.coreutils}/bin/mv "$temporary" "$target"
+        ${pkgs.coreutils}/bin/rm -f "$typed_client" "$output_dir/$server-client.d.ts"
       else
         ${pkgs.coreutils}/bin/rm -f "$temporary"
         echo "Falling back to a generated typed client for $server..."
-        if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" emit-ts "$server" --mode client --out "$output_dir/$server-client.ts"; then
+        if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" emit-ts "$server" --mode client --out "$typed_client"; then
+          ${pkgs.coreutils}/bin/rm -f "$target"
           echo "Generated emit-ts fallback for $server."
         else
           failures="$failures $server"
@@ -122,7 +134,7 @@ let
       exit 1
     fi
 
-    echo "Generated complete MCP CLI wrappers in $output_dir."
+    echo "Generated MCP CLI wrappers in dedicated skill directories."
   '';
 
   updateHomeMcpSkills = pkgs.writeShellScriptBin "update-home-mcp-skills" ''

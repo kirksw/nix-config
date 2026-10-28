@@ -187,6 +187,10 @@ for scope in ("personal", "work"):
     for profile in (fallback, default):
         assert not (profile / "skills/affine").exists()
         assert "affine" not in json.loads((profile / "mcporter.json").read_text())["mcpServers"]
+    if scope == "work":
+        assert not (default / "skills/work-mcp").exists()
+        for skill in ("1password", "grafana", "granola", "hubble-mcp", "linear", "lunar-skills", "slack", "sourcegraph"):
+            assert (default / "skills" / skill / "scripts/run.mjs").is_file(), skill
     for skill in ("agent-browser", "google-hotels"):
         assert (browser / "skills" / skill / "SKILL.md").is_file(), (scope, skill)
     for profile in (fallback, default, browser):
