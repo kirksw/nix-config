@@ -83,7 +83,8 @@ personal_settings="$(settings_of personal-default)"
 test ! -e "$personal_settings"
 "$vendor" --strict >"$tmpdir/run1.out" 2>&1
 personal_set="$(set_root_of personal-default)"
-assert_jq "$personal_settings" "$personal_set/node_modules/pi-cost" '.packages[0]'
+assert_jq "$personal_settings" "true" \
+  'any(.packages[]; type == "string" and endswith("/agents/packages/pi-herdr"))'
 assert_jq "$personal_settings" "0" \
   '[.packages[] | (if type == "object" then .source else . end) | select(startswith("npm:"))] | length'
 assert_jq "$personal_settings" "true" \
@@ -94,8 +95,6 @@ assert_jq "$personal_settings" "openai/gpt-6-sol" '.defaultModel'
 assert_jq "$personal_settings" "absent" '(.npmCommand // "absent")'
 test -f "$personal_set/node_modules/@plannotator/pi-extension/package.json"
 test -f "$personal_set/.gitignore"
-assert_jq "$personal_set/package.json" "0.1.1" '.dependencies["pi-cost"]'
-assert_jq "$personal_set/vendor-manifest.json" "0.1.1" '.["pi-cost"].version'
 [ "$(npm_calls_for "$personal_set")" -eq 1 ]
 
 echo "== 2. warm set: no npm call, settings unchanged"
@@ -148,11 +147,11 @@ cp -R "$personal_set" "$old_set"
 "$jq_bin" --slurpfile pkgs "$tmpdir/old-packages.json" '.packages = $pkgs[0]' \
   "$personal_settings" > "$tmpdir/old-settings.json"
 cp "$tmpdir/old-settings.json" "$personal_settings"
-rm -rf "$personal_set/node_modules/pi-cost"
+rm -rf "$personal_set/node_modules/pi-web-access"
 FAIL_NEXT_INSTALL=1 assert_vendor_fails "npm failure must fail the run"
 grep -q "npm install failed" "$tmpdir/fail.err"
 "$jq_bin" -e --slurpfile before "$tmpdir/old-settings.json" '. == $before[0]' "$personal_settings" >/dev/null
-test -f "$old_set/node_modules/pi-cost/package.json"
+test -f "$old_set/node_modules/pi-web-access/package.json"
 
 echo "== 6. incomplete verification fails without publishing"
 PI_OFFLINE=1 assert_vendor_fails "offline incomplete set must fail"

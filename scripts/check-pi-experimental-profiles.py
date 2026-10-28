@@ -27,7 +27,6 @@ excluded = {
 # Exact pins that vendored copies and npm sources must both carry.
 # @plannotator/pi-extension is deliberately unpinned.
 pins = {
-    "pi-cost": "0.1.1",
     "pi-verbosity-control": "0.3.0",
     "pi-web-access": "0.13.0",
     "@lunarway/pi-lunar-quiet-tools": "0.1.0",
@@ -111,7 +110,6 @@ minimal = [
 ]
 # Default and browser profiles keep the lean set with the Herdr replacement applied.
 lean = [
-    "npm:pi-cost",
     "local:pi-herdr",
     tintinweb,
     "npm:pi-observational-memory",

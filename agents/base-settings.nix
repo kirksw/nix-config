@@ -30,7 +30,6 @@ let
 
   piPackageRefs = [
     "npm:context-mode@1.0.169"
-    "npm:pi-cost@0.1.1"
     piHerdrPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-observational-memory@3.0.3"
