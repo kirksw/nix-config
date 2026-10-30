@@ -206,6 +206,19 @@ in
     tokenFile = config.sops.secrets."k8s/node/secret".path;
   };
 
+  systemd.services.aiostreams-tailscale-serve = {
+    description = "Expose AIOStreams over Tailnet HTTPS";
+    after = [ "tailscaled.service" ];
+    requires = [ "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg --yes --https=31430 http://127.0.0.1:31431";
+      ExecStop = "${pkgs.tailscale}/bin/tailscale serve --https=31430 off";
+    };
+  };
+
   systemd.services.kubernetes-dashboard-tailscale-cert = {
     description = "Issue Tailscale cert and sync dashboard TLS secret";
     after = [
