@@ -76,7 +76,18 @@
   # Classic dbus to avoid user-session reload failures during remote activation
   services.dbus.implementation = "dbus";
 
-  networking.firewall.enable = true;
+  networking.firewall = {
+    enable = true;
+    interfaces.tailscale0.allowedTCPPorts = [ 31420 ];
+    # Filter before NodePort DNAT, which can bypass the INPUT firewall.
+    extraCommands = ''
+      ip46tables -t raw -C PREROUTING ! -i tailscale0 -p tcp --dport 31420 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || \
+        ip46tables -t raw -I PREROUTING 1 ! -i tailscale0 -p tcp --dport 31420 -m addrtype --dst-type LOCAL -j DROP
+    '';
+    extraStopCommands = ''
+      ip46tables -t raw -D PREROUTING ! -i tailscale0 -p tcp --dport 31420 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || true
+    '';
+  };
 
   system.stateVersion = "26.05";
 
