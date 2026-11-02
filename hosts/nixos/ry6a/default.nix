@@ -120,14 +120,22 @@ in
     interfaces.tailscale0.allowedTCPPorts = [
       31400
       31410
+      31420
+      31431
     ];
     # Filter before NodePort DNAT, which can bypass the INPUT firewall.
     extraCommands = ''
       ip46tables -t raw -C PREROUTING ! -i tailscale0 -p tcp --dport 31410 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || \
         ip46tables -t raw -I PREROUTING 1 ! -i tailscale0 -p tcp --dport 31410 -m addrtype --dst-type LOCAL -j DROP
+      ip46tables -t raw -C PREROUTING ! -i tailscale0 -p tcp --dport 31420 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || \
+        ip46tables -t raw -I PREROUTING 1 ! -i tailscale0 -p tcp --dport 31420 -m addrtype --dst-type LOCAL -j DROP
+      ip46tables -t raw -C PREROUTING ! -i tailscale0 -p tcp --dport 31431 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || \
+        ip46tables -t raw -I PREROUTING 1 ! -i tailscale0 -p tcp --dport 31431 -m addrtype --dst-type LOCAL -j DROP
     '';
     extraStopCommands = ''
       ip46tables -t raw -D PREROUTING ! -i tailscale0 -p tcp --dport 31410 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || true
+      ip46tables -t raw -D PREROUTING ! -i tailscale0 -p tcp --dport 31420 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || true
+      ip46tables -t raw -D PREROUTING ! -i tailscale0 -p tcp --dport 31431 -m addrtype --dst-type LOCAL -j DROP 2>/dev/null || true
     '';
   };
   #networking.firewall.allowedTCPPorts = [ 6443 ];
@@ -196,6 +204,19 @@ in
     nodeName = "nixos-ry6a";
     clusterInit = true;
     tokenFile = config.sops.secrets."k8s/node/secret".path;
+  };
+
+  systemd.services.aiostreams-tailscale-serve = {
+    description = "Expose AIOStreams over Tailnet HTTPS";
+    after = [ "tailscaled.service" ];
+    requires = [ "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --bg --yes --https=31430 http://127.0.0.1:31431";
+      ExecStop = "${pkgs.tailscale}/bin/tailscale serve --https=31430 off";
+    };
   };
 
   systemd.services.kubernetes-dashboard-tailscale-cert = {
