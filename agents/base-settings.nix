@@ -207,22 +207,7 @@ let
       packages = piPersonalPackageRefs;
     };
 
-  piMlxDsparkProvider = {
-    baseUrl = "http://127.0.0.1:18080";
-    api = "anthropic-messages";
-    apiKey = "mlx-dspark";
-    models = [
-      {
-        id = "Qwen3-8B-4bit";
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-    ];
-  };
-
-  piPersonalModels = builtins.toJSON {
-    providers.mlx-dspark = piMlxDsparkProvider;
-  };
+  piPersonalModels = builtins.toJSON { providers = { }; };
 
   piWorkModelDefaults = {
     defaultProvider = "lunar";
