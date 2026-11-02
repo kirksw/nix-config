@@ -9,6 +9,7 @@ let
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piLitellmProviderPackage = "${self}/agents/packages/pi-litellm-provider";
+  piClaudeBridgePackage = "npm:pi-claude-bridge@0.9.3";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
   piNpmCommand = "${self.packages.${system}.pi-npm}/bin/pi-npm";
 
@@ -48,7 +49,10 @@ let
     builtins.filter (
       package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
     ) piPackageRefs
-    ++ [ piLitellmProviderPackage ];
+    ++ [
+      piLitellmProviderPackage
+      piClaudeBridgePackage
+    ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
   ) (piPackageRefs ++ piLunarPackageRefs ++ piWorkExtraPackageRefs ++ [ agenticOSPackage ]);
@@ -196,6 +200,7 @@ let
       "litellm/glm-5.3-flash"
       "litellm/deepseek-flash"
       "litellm/deepseek-v4-pro"
+      "claude-bridge/*"
     ];
     subagents.disableBuiltins = true;
   };
@@ -315,7 +320,9 @@ in
   targets = {
     pi = {
       personal = {
-        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs piMinimalPackageRefs;
+        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs (
+          piMinimalPackageRefs ++ [ piClaudeBridgePackage ]
+        );
         "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;

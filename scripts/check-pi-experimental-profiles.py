@@ -29,6 +29,7 @@ excluded = {
 pins = {
     "pi-verbosity-control": "0.3.0",
     "pi-web-access": "0.13.0",
+    "pi-claude-bridge": "0.9.3",
     "@lunarway/pi-lunar-quiet-tools": "0.1.0",
     "@lunarway/pi-lunar-litellm": "0.2.1",
     "@lunarway/pi-lunar-statusline": "0.7.0",
@@ -131,14 +132,16 @@ for scope in ("personal", "work"):
     fallback_settings = json.loads((fallback / "settings.json").read_text())
     default_settings = json.loads((default / "settings.json").read_text())
     fallback_packages = (
-        [*minimal[:-1], "npm:@lunarway/pi-lunar-litellm"] if scope == "work" else minimal
+        [*minimal[:-1], "npm:@lunarway/pi-lunar-litellm"]
+        if scope == "work"
+        else [*minimal, "npm:pi-claude-bridge"]
     )
     assert identities(fallback_settings) == sorted(fallback_packages), f"{scope}: unexpected fallback packages"
     assert "subagents" not in fallback_settings, f"{scope}: fallback keeps subagent settings"
     extra = (
         [agenticos, *lunar, context_decisions]
         if scope == "work"
-        else ["local:pi-litellm-provider"]
+        else ["local:pi-litellm-provider", "npm:pi-claude-bridge"]
     )
     assert identities(default_settings) == sorted(herdr + extra), f"{scope}: unexpected default packages"
     assert tintinweb not in identities(default_settings), f"{scope}: default keeps Tintinweb"
@@ -154,6 +157,7 @@ for scope in ("personal", "work"):
         deepseek = {"litellm/deepseek-flash", "litellm/deepseek-v4-pro"}
         if scope == "personal":
             assert deepseek <= set(settings["enabledModels"])
+            assert "claude-bridge/*" in settings["enabledModels"]
             assert json.loads((profile / "models.json").read_text())["providers"] == {}
             manifest = (profile / "AGENTS.md").read_text()
             assert "openai-codex/" not in manifest
@@ -182,7 +186,9 @@ for scope in ("personal", "work"):
     assert (web / "skills/animate/RECIPES.md").is_file()
     browser_settings = json.loads((browser / "settings.json").read_text())
     browser_extra = (
-        [*lunar, context_decisions] if scope == "work" else ["local:pi-litellm-provider"]
+        [*lunar, context_decisions]
+        if scope == "work"
+        else ["local:pi-litellm-provider", "npm:pi-claude-bridge"]
     )
     assert identities(browser_settings) == sorted(herdr + browser_extra), f"{scope}: unexpected browser packages"
     assert "npm:pi-web-access" in identities(browser_settings)
