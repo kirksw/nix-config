@@ -48,6 +48,12 @@ let
 
   homelabSshHosts = [
     {
+      match = "nix-mm1";
+      hostname = "nix-mm1";
+      user = "kirk";
+      key = "kirksw";
+    }
+    {
       match = "nixos-ry6a";
       hostname = "nixos-ry6a";
       user = "k8s";

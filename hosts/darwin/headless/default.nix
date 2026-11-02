@@ -31,23 +31,37 @@
 
   users = {
     knownUsers = [ "agent" ];
-    users.kirk = {
-      home = "/Users/kirk";
-      shell = pkgs.zsh;
-      openssh.authorizedKeys.keys = [
+    users = {
+      kirk = {
+        home = "/Users/kirk";
+        shell = pkgs.zsh;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRojqfJdEXsAAXK4+5G6YLHQ5QpZOsiwwXAb5txy11Z kirk@cntd.io"
+        ];
+      };
+      root.openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRojqfJdEXsAAXK4+5G6YLHQ5QpZOsiwwXAb5txy11Z kirk@cntd.io"
       ];
-    };
-    users.agent = {
-      uid = 502;
-      home = "/Users/agent";
-      shell = pkgs.zsh;
-      description = "Unattended development agent";
-      createHome = true;
+      agent = {
+        uid = 502;
+        home = "/Users/agent";
+        shell = pkgs.zsh;
+        description = "Unattended development agent";
+        createHome = true;
+      };
     };
   };
 
-  environment.shells = [ pkgs.zsh ];
+  environment = {
+    systemPackages = [ pkgs.herdr ];
+    shells = [ pkgs.zsh ];
+
+    # Keep Nix available to deploy-rs in non-login root SSH commands only.
+    etc."ssh/sshd_config.d/102-root-nix-path.conf".text = ''
+      Match User root
+        SetEnv PATH=/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+    '';
+  };
   programs.zsh.enable = true;
   services.openssh.enable = true;
 
