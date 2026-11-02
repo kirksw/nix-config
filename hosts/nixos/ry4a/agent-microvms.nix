@@ -80,9 +80,20 @@ let
         ];
         modelAllowlist = [
           "litellm/openai/*"
-          "litellm/deepseek-*"
-          "litellm/glm-*"
+          "litellm/deepseek-flash"
+          "litellm/deepseek-v4-pro"
+          "litellm/glm-4.5"
+          "litellm/glm-4.5-air"
+          "litellm/glm-4.6"
+          "litellm/glm-4.7"
+          "litellm/glm-5"
+          "litellm/glm-5-turbo"
+          "litellm/glm-5.1"
+          "litellm/glm-5.2"
+          "litellm/glm-5.3"
+          "litellm/glm-5.3-flash"
         ];
+        fileTransferEnabled = false;
         thinkingDefault = "medium";
         reasoningDefault = "on";
         secretsFile = "sanja";
@@ -106,9 +117,20 @@ let
         providerMode = "litellm";
         modelAllowlist = [
           "litellm/openai/*"
-          "litellm/deepseek-*"
-          "litellm/glm-*"
+          "litellm/deepseek-flash"
+          "litellm/deepseek-v4-pro"
+          "litellm/glm-4.5"
+          "litellm/glm-4.5-air"
+          "litellm/glm-4.6"
+          "litellm/glm-4.7"
+          "litellm/glm-5"
+          "litellm/glm-5-turbo"
+          "litellm/glm-5.1"
+          "litellm/glm-5.2"
+          "litellm/glm-5.3"
+          "litellm/glm-5.3-flash"
         ];
+        fileTransferEnabled = false;
         modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
           "litellm/glm-5.2"
@@ -335,6 +357,7 @@ let
                 assistant.openclaw.providerMode = assistant.openclaw.providerMode or "router";
                 assistant.openclaw.modelPrimary = assistant.openclaw.modelPrimary or "router-anthropic/glm/glm-5.2";
                 assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
+                assistant.openclaw.fileTransferEnabled = assistant.openclaw.fileTransferEnabled or true;
                 assistant.openclaw.thinkingDefault = assistant.openclaw.thinkingDefault or "off";
                 assistant.openclaw.reasoningDefault = assistant.openclaw.reasoningDefault or "off";
                 assistant.openclaw.sherpaRuntimeDir = self.packages.${pkgs.system}."sherpa-onnx-runtime";

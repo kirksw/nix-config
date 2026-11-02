@@ -40,6 +40,12 @@ in
       description = "The complete model allowlist when non-empty.";
     };
 
+    fileTransferEnabled = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to configure the file-transfer plugin for this assistant.";
+    };
+
     thinkingDefault = lib.mkOption {
       type = lib.types.str;
       default = "off";
@@ -220,12 +226,49 @@ in
           supportsParallelToolCalls = false;
           requestTimeoutMs = 60000;
         };
-        plugins.entries.memory-core = {
-          enabled = true;
-          config.dreaming.enabled = true;
-        };
-        plugins.entries.memory-wiki = {
-          enabled = true;
+        plugins.entries = {
+          memory-core = {
+            enabled = true;
+            config.dreaming.enabled = true;
+          };
+          memory-wiki.enabled = true;
+        }
+        // lib.optionalAttrs cfg.fileTransferEnabled {
+          file-transfer = {
+            enabled = true;
+            config.nodes."*" = {
+              ask = "on-miss";
+              allowReadPaths = [
+                "/srv/assistant/**"
+                "/var/lib/openclaw/logs/**"
+                "/etc/assistant/**"
+                "/etc/openclaw/openclaw.json"
+                "/Users/kisw/git/**"
+                "/Users/kisw/Desktop/**"
+                "/Users/kisw/Downloads/**"
+                "/tmp/openclaw/**"
+                "/tmp/openclaw-transfer/**"
+              ];
+              allowWritePaths = [
+                "/srv/assistant/inbox/**"
+                "/srv/assistant/workspace/**"
+                "/Users/kisw/Downloads/openclaw-transfer/**"
+                "/tmp/openclaw/**"
+                "/tmp/openclaw-transfer/**"
+              ];
+              denyPaths = [
+                "/run/host-secrets/**"
+                "/run/secrets/**"
+                "/var/lib/openclaw/config/**"
+                "/Users/*/.ssh/**"
+                "/Users/*/.gnupg/**"
+                "/Users/*/.config/sops/**"
+                "/Users/*/Library/Keychains/**"
+              ];
+              maxBytes = 16777216;
+              followSymlinks = false;
+            };
+          };
         };
         skills = {
           allowBundled = [
@@ -283,41 +326,6 @@ in
               outputFormat = "wav";
               timeoutMs = 120000;
             };
-          };
-        };
-        plugins.entries.file-transfer = {
-          enabled = true;
-          config.nodes."*" = {
-            ask = "on-miss";
-            allowReadPaths = [
-              "/srv/assistant/**"
-              "/var/lib/openclaw/logs/**"
-              "/etc/assistant/**"
-              "/etc/openclaw/openclaw.json"
-              "/Users/kisw/git/**"
-              "/Users/kisw/Desktop/**"
-              "/Users/kisw/Downloads/**"
-              "/tmp/openclaw/**"
-              "/tmp/openclaw-transfer/**"
-            ];
-            allowWritePaths = [
-              "/srv/assistant/inbox/**"
-              "/srv/assistant/workspace/**"
-              "/Users/kisw/Downloads/openclaw-transfer/**"
-              "/tmp/openclaw/**"
-              "/tmp/openclaw-transfer/**"
-            ];
-            denyPaths = [
-              "/run/host-secrets/**"
-              "/run/secrets/**"
-              "/var/lib/openclaw/config/**"
-              "/Users/*/.ssh/**"
-              "/Users/*/.gnupg/**"
-              "/Users/*/.config/sops/**"
-              "/Users/*/Library/Keychains/**"
-            ];
-            maxBytes = 16777216;
-            followSymlinks = false;
           };
         };
         models.mode = "replace";
