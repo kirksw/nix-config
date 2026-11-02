@@ -30,7 +30,7 @@ in
 
     modelPrimary = lib.mkOption {
       type = lib.types.str;
-      default = "router-anthropic/minimax/MiniMax-M3";
+      default = "router-anthropic/glm/glm-5.2";
       description = "Default model identifier for this assistant.";
     };
 
@@ -152,9 +152,6 @@ in
           if [ -f ${cfg.sopsDir}/litellm_api_key ]; then
             echo "LITELLM_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/litellm_api_key)"
           fi
-          if [ -f ${cfg.sopsDir}/minimax_api_key ]; then
-            echo "MINIMAX_CODE_PLAN_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/minimax_api_key)"
-          fi
           if [ -f ${cfg.sopsDir}/zai_api_key ]; then
             echo "ZAI_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/zai_api_key)"
           fi
@@ -272,14 +269,8 @@ in
         };
         tts = {
           auto = "off";
-          provider = "minimax";
+          provider = "tts-local-cli";
           providers = {
-            minimax = {
-              model = "speech-2.8-hd";
-              speakerVoiceId = "English_expressive_narrator";
-              speed = 1.0;
-              vol = 1.0;
-            };
             "tts-local-cli" = {
               command = "${cfg.sherpaRuntimeDir}/bin/sherpa-onnx-offline-tts";
               args = [
@@ -389,66 +380,6 @@ in
                     input = [ "text" ];
                   }
                   {
-                    id = "minimax-m2";
-                    name = "MiniMax M2";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.1";
-                    name = "MiniMax M2.1";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.1-highspeed";
-                    name = "MiniMax M2.1 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.5";
-                    name = "MiniMax M2.5";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.5-highspeed";
-                    name = "MiniMax M2.5 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.7";
-                    name = "MiniMax M2.7";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.7-highspeed";
-                    name = "MiniMax M2.7 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m3";
-                    name = "MiniMax M3";
-                    contextWindow = 1000000;
-                    maxTokens = 131072;
-                    reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                  }
-                  {
                     id = "glm-4.5";
                     name = "GLM 4.5";
                     contextWindow = 131072;
@@ -523,78 +454,6 @@ in
             }
           else if cfg.providerMode == "direct" then
             {
-              minimax = {
-                baseUrl = "https://api.minimax.io/v1";
-                api = "openai-completions";
-                apiKey = {
-                  source = "env";
-                  provider = "default";
-                  id = "MINIMAX_CODE_PLAN_KEY";
-                };
-                models = [
-                  {
-                    id = "MiniMax-M3";
-                    name = "MiniMax M3";
-                    contextWindow = 1000000;
-                    maxTokens = 131072;
-                    reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                  }
-                  {
-                    id = "MiniMax-M2.7";
-                    name = "MiniMax M2.7";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.7-highspeed";
-                    name = "MiniMax M2.7 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.5";
-                    name = "MiniMax M2.5";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.5-highspeed";
-                    name = "MiniMax M2.5 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.1";
-                    name = "MiniMax M2.1";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.1-highspeed";
-                    name = "MiniMax M2.1 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2";
-                    name = "MiniMax M2";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                ];
-              };
-
               zai = {
                 baseUrl = "https://api.z.ai/api/coding/paas/v4/";
                 api = "openai-completions";
@@ -681,26 +540,6 @@ in
                   id = "LLM_ROUTER_API_KEY";
                 };
                 models = [
-                  {
-                    id = "minimax/MiniMax-M3";
-                    name = "MiniMax M3";
-                    api = "anthropic-messages";
-                    contextWindow = 1000000;
-                    maxTokens = 524288;
-                    reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                  }
-                  {
-                    id = "minimax/MiniMax-M2.7-highspeed";
-                    name = "MiniMax M2.7 Highspeed";
-                    api = "anthropic-messages";
-                    contextWindow = 204800;
-                    maxTokens = 204800;
-                    reasoning = true;
-                  }
                   # home-llm-router currently exposes GLM as glm/*, not zai/*.
                   {
                     id = "glm/glm-5.2";

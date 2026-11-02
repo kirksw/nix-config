@@ -76,10 +76,13 @@ let
         providerMode = "litellm";
         modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
-          "litellm/minimax-m3"
           "litellm/glm-5.2"
         ];
-        modelAllowlist = [ "litellm/*" ];
+        modelAllowlist = [
+          "litellm/openai/*"
+          "litellm/deepseek-*"
+          "litellm/glm-*"
+        ];
         thinkingDefault = "medium";
         reasoningDefault = "on";
         secretsFile = "sanja";
@@ -102,11 +105,12 @@ let
         router = "home-llm-router";
         providerMode = "litellm";
         modelAllowlist = [
-          "litellm/*"
+          "litellm/openai/*"
+          "litellm/deepseek-*"
+          "litellm/glm-*"
         ];
         modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
-          "litellm/minimax-m3"
           "litellm/glm-5.2"
         ];
         thinkingDefault = "medium";
@@ -277,7 +281,6 @@ let
                   name = "assistants/${sf}/${name}";
                 })
                 [
-                  "minimax_api_key"
                   "zai_api_key"
                 ]
             )
@@ -330,8 +333,7 @@ let
               ({ ... }: {
                 assistant.openclaw.router = assistant.openclaw.router;
                 assistant.openclaw.providerMode = assistant.openclaw.providerMode or "router";
-                assistant.openclaw.modelPrimary =
-                  assistant.openclaw.modelPrimary or "router-anthropic/minimax/MiniMax-M3";
+                assistant.openclaw.modelPrimary = assistant.openclaw.modelPrimary or "router-anthropic/glm/glm-5.2";
                 assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
                 assistant.openclaw.thinkingDefault = assistant.openclaw.thinkingDefault or "off";
                 assistant.openclaw.reasoningDefault = assistant.openclaw.reasoningDefault or "off";
