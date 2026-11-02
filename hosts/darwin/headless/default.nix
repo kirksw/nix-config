@@ -67,6 +67,11 @@
   };
   programs.zsh.enable = true;
   services.openssh.enable = true;
+  system.activationScripts.postActivation.text = ''
+    if ! /usr/sbin/dseditgroup -o checkmember -m agent com.apple.access_ssh >/dev/null 2>&1; then
+      /usr/sbin/dseditgroup -o edit -a agent -t user com.apple.access_ssh
+    fi
+  '';
 
   determinateNix = {
     enable = true;
