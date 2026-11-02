@@ -609,6 +609,7 @@ in
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         fliPackage
         pkgs.agent-browser
+        self.packages.${system}.claude-code
         (mkCredWrapper "pi" self.packages.${system}.pi ''
                     _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
                     # Herdr children pass the parent agent directory, not its profile selector.
