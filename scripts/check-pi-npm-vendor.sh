@@ -189,7 +189,7 @@ test -d "$old_set"
 echo "== 10. healthy machine completes"
 "$vendor" --strict >"$tmpdir/final.out" 2>&1
 grep -q "pi-npm-vendor: complete" "$tmpdir/final.out"
-for base in personal personal-browser personal-default work work-browser work-default; do
+for base in personal personal-browser personal-default personal-web work work-browser work-default work-web; do
   settings="$(settings_of "$base")"
   test -f "$settings"
   assert_jq "$settings" "0" \

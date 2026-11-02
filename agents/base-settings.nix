@@ -359,6 +359,21 @@ in
           export AFFINE_MCP_SOPS_FILE="${self}/secrets/assistants/affine-mcp.yaml"
         '';
       };
+      personal-web = {
+        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
+        "models.json" = piPersonalModels;
+        "mcporter.json" = piEmptyMcporter;
+        "env" = mkPiPersonalEnv "personal-web";
+      };
+      work-web = {
+        "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
+        "models.json" = piWorkModels;
+        "mcporter.json" = piWorkMcporter;
+        "env" = mkPiWorkEnv {
+          base = "work-web";
+          agenticosToolMode = "lazy";
+        };
+      };
       work-browser = {
         "settings.json" = mkPiHerdrSettings (
           piWorkSettingsAttrs

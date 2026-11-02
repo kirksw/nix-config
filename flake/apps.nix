@@ -487,7 +487,7 @@ let
     # Initialize the work login store without direct provider credentials.
     seed_mutable_file "${piEmptyAuthFile}" "$CONFIG_BASE/pi/bases/work/settings/auth.json" 0600
     # Remove the retired direct OpenAI credential without touching other work logins.
-    for work_base in work work-default work-browser; do
+    for work_base in work work-default work-browser work-web; do
       work_auth="$CONFIG_BASE/pi/bases/$work_base/settings/auth.json"
       if [ -f "$work_auth" ] && ${pkgs.jq}/bin/jq -e 'has("openai")' "$work_auth" >/dev/null 2>&1; then
         if [ "$DRY_RUN" -eq 1 ]; then
@@ -507,7 +507,7 @@ let
       if [ ! -f "$default_auth" ]; then
         default_auth="$CONFIG_BASE/pi/bases/$scope/state/auth.json"
       fi
-      for kind in default browser; do
+      for kind in default browser web; do
         profile_auth="$CONFIG_BASE/pi/bases/$scope-$kind/settings/auth.json"
         if [ -L "$profile_auth" ] || [ ! -e "$profile_auth" ]; then
           run ${pkgs.coreutils}/bin/ln -sfn "$default_auth" "$profile_auth"
@@ -529,7 +529,7 @@ let
     ${allSyncCommands}
 
     for scope in personal work; do
-      for kind in default browser; do
+      for kind in default browser web; do
         run ${pkgs.coreutils}/bin/ln -sfn \
           "$CONFIG_BASE/pi/bases/$scope-$kind/settings/auth.json" \
           "$CONFIG_BASE/pi/bases/$scope-$kind/profiles/$scope-$kind/auth.json"
@@ -543,7 +543,7 @@ let
     done
 
     # Derived caches must not retain servers removed from profile configuration.
-    for base_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser; do
+    for base_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser work-web/profiles/work-web; do
       run ${pkgs.coreutils}/bin/rm -f "$CONFIG_BASE/pi/bases/$base_profile/mcp-cache.json"
     done
 

@@ -84,6 +84,19 @@
       flake = false;
     };
 
+    emilkowalski-skills = {
+      url = "github:emilkowalski/skills/f1090bec277140d02ed202440185ad9d02ac1490";
+      flake = false;
+    };
+    impeccable-skill = {
+      url = "github:pbakaus/impeccable/e89e3ada3e875a89ac2c5d33d11e65ebef6fe285";
+      flake = false;
+    };
+    taste-skill = {
+      url = "github:Leonxlnx/taste-skill/12af471f627f866411b4bd785b19646d3672784c";
+      flake = false;
+    };
+
     lavish-axi = {
       url = "github:kunchenguid/lavish-axi?rev=50b0facb61b5fc36cb1737e33b20d2894a64323b";
       flake = false;

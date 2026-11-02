@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory() as directory:
         return result.stdout.strip()
 
     listing = run(pix, env, "list")
-    assert all(name in listing for name in ("default", "fallback", "browser", "Google Hotels"))
+    assert all(name in listing for name in ("default", "fallback", "browser", "web", "Google Hotels"))
     assert not (root / "menu").exists()
     assert "pix list" in run(pix, env, "--help")
     for bad in ("full", "factory", "experimental", "unknown", ""):
@@ -48,11 +48,11 @@ with tempfile.TemporaryDirectory() as directory:
     run(pix, env, "--scope", "invalid", code=2)
     run(pix, env, "--profile", code=2)
     assert run(pix, env) == "personal-default"
-    assert (root / "menu").read_text().splitlines() == ["default", "fallback", "browser"]
+    assert (root / "menu").read_text().splitlines() == ["default", "fallback", "browser", "web"]
     assert run(selector, env) == "personal-default:personal-default"
 
     for scope, cli_scope in (("personal", "home"), ("work", "work")):
-        for kind in ("default", "fallback", "browser"):
+        for kind in ("default", "fallback", "browser", "web"):
             profile = f"{scope}-{kind}"
             base = scope if kind == "fallback" else profile
             child_env = env | {"PI_CODING_AGENT_DIR":
@@ -73,6 +73,7 @@ with tempfile.TemporaryDirectory() as directory:
     work.mkdir(parents=True)
     assert run(selector, env, cwd=work) == "work-default:work-default"
     assert run(pix, env, "--profile", "browser", cwd=work) == "work-browser"
+    assert run(pix, env, "--profile", "web", cwd=work) == "work-web"
     for old in ("personal-full", "work-full", "home-factory", "personal-experimental"):
         run(selector, env | {"NIX_AGENTS_PROFILE": old}, code=2)
     print("list, help, menu, path defaults, and invalid selection checks passed")

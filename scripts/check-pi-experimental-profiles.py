@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check synced minimal fallback, Herdr default, and browser settings without reading credentials."""
+"""Check synced Pi fallback, default, browser, and web profiles without reading credentials."""
 
 import json
 import os
@@ -127,6 +127,7 @@ for scope in ("personal", "work"):
     fallback = bases / scope / "profiles" / f"{scope}-fallback"
     default = bases / f"{scope}-default/profiles/{scope}-default"
     browser = bases / f"{scope}-browser/profiles/{scope}-browser"
+    web = bases / f"{scope}-web/profiles/{scope}-web"
     fallback_settings = json.loads((fallback / "settings.json").read_text())
     default_settings = json.loads((default / "settings.json").read_text())
     fallback_packages = (
@@ -141,7 +142,7 @@ for scope in ("personal", "work"):
     )
     assert identities(default_settings) == sorted(herdr + extra), f"{scope}: unexpected default packages"
     assert tintinweb not in identities(default_settings), f"{scope}: default keeps Tintinweb"
-    for profile in (fallback, default, browser):
+    for profile in (fallback, default, browser, web):
         settings = json.loads((profile / "settings.json").read_text())
         base_dir = profile.parent.parent.name
         check_pins(scope, base_dir, settings)
@@ -153,6 +154,7 @@ for scope in ("personal", "work"):
         deepseek = {"litellm/deepseek-flash", "litellm/deepseek-v4-pro"}
         if scope == "personal":
             assert deepseek <= set(settings["enabledModels"])
+            assert json.loads((profile / "models.json").read_text())["providers"] == {}
             manifest = (profile / "AGENTS.md").read_text()
             assert "openai-codex/" not in manifest
             assert "litellm/openai/gpt-6-astra" in manifest
@@ -164,6 +166,20 @@ for scope in ("personal", "work"):
             assert settings["enabledModels"] == ["lunar/*"]
             assert "openai" not in json.loads((profile / "models.json").read_text())["providers"]
             assert "openai" not in json.loads((profile / "auth.json").read_text())
+    web_settings = json.loads((web / "settings.json").read_text())
+    assert identities(web_settings) == identities(default_settings), f"{scope}: unexpected web packages"
+    for skill in (
+        "animate", "animate-expo", "animation-performance", "animation-vocabulary",
+        "apple-design", "ask-sonner", "break-ui", "emil-design-eng",
+        "find-animation-opportunities", "improve-animations", "mobile-native",
+        "pick-ui-library", "prototype", "remove-animations", "review-animations",
+        "write-swift", "impeccable", "design-taste-frontend",
+    ):
+        assert (web / "skills" / skill / "SKILL.md").is_file(), (scope, skill)
+        assert not (default / "skills" / skill).exists(), (scope, skill)
+    assert (web / "skills/impeccable/reference/craft-floor.md").is_file()
+    assert (web / "skills/design-taste-frontend/scripts/draw.mjs").is_file()
+    assert (web / "skills/animate/RECIPES.md").is_file()
     browser_settings = json.loads((browser / "settings.json").read_text())
     browser_extra = (
         [*lunar, context_decisions] if scope == "work" else ["local:pi-litellm-provider"]
@@ -191,14 +207,14 @@ for scope in ("personal", "work"):
             assert (default / "skills" / skill / "scripts/run.mjs").is_file(), skill
     for skill in ("agent-browser", "google-hotels"):
         assert (browser / "skills" / skill / "SKILL.md").is_file(), (scope, skill)
-    for profile in (fallback, default, browser):
+    for profile in (fallback, default, browser, web):
         assert (profile / "skills/nix-config/SKILL.md").is_file(), (scope, profile)
         assert (profile / "skills/nix-config/recipes/manage-secrets.md").is_file(), (scope, profile)
         for retired in ("add-module", "nix-agents", "secrets-management", "system-context"):
             assert not (profile / "skills" / retired).exists(), (scope, profile, retired)
     for name in ("models.json", "mcporter.json"):
         assert json.loads((fallback / name).read_text()) == json.loads((default / name).read_text())
-    for profile in (default, browser):
+    for profile in (default, browser, web):
         auth = profile / "auth.json"
         assert auth.is_symlink()
         fallback_auth = bases / scope / "settings/auth.json"
@@ -208,4 +224,4 @@ for scope in ("personal", "work"):
         assert (profile / "settings.json").resolve() != (fallback / "settings.json").resolve()
     for removed in (f"{scope}-full", f"{scope}-experimental", "home-factory", "work-factory"):
         assert not (bases / removed).exists(), removed
-    print(f"{scope}: minimal fallback, Herdr default/browser, browser skills, isolated settings/auth verified")
+    print(f"{scope}: fallback, Herdr default/browser/web, pinned web skills, isolated settings/auth verified")
