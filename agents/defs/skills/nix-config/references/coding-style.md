@@ -11,9 +11,10 @@ Follow these conventions when writing Nix code in this repository.
 ## Linting
 
 Run the checks on the files you changed. A repository-wide run reports findings that predate your change.
+Run `statix check` once per changed Nix file; it accepts only one target per invocation.
 
 ```bash
-statix check <changed .nix files>
+statix check <one changed .nix file>
 nix run nixpkgs#deadnix -- --fail <changed .nix files>
 ```
 
@@ -86,11 +87,11 @@ lib.mapAttrsToList (name: value: { inherit name; ... }) attrset
 
 ## Testing
 
-Run before committing:
+Run before committing (`statix check` once per changed Nix file):
 
 ```bash
 nixfmt <changed .nix files>
-statix check <changed .nix files>
+statix check <one changed .nix file>
 nix run nixpkgs#deadnix -- --fail <changed .nix files>
 nix flake check --no-build
 ```

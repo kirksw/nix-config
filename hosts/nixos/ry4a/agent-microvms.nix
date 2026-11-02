@@ -76,10 +76,24 @@ let
         providerMode = "litellm";
         modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
-          "litellm/minimax-m3"
           "litellm/glm-5.2"
         ];
-        modelAllowlist = [ "litellm/*" ];
+        modelAllowlist = [
+          "litellm/openai/*"
+          "litellm/deepseek-flash"
+          "litellm/deepseek-v4-pro"
+          "litellm/glm-4.5"
+          "litellm/glm-4.5-air"
+          "litellm/glm-4.6"
+          "litellm/glm-4.7"
+          "litellm/glm-5"
+          "litellm/glm-5-turbo"
+          "litellm/glm-5.1"
+          "litellm/glm-5.2"
+          "litellm/glm-5.3"
+          "litellm/glm-5.3-flash"
+        ];
+        fileTransferEnabled = false;
         thinkingDefault = "medium";
         reasoningDefault = "on";
         secretsFile = "sanja";
@@ -102,11 +116,23 @@ let
         router = "home-llm-router";
         providerMode = "litellm";
         modelAllowlist = [
-          "litellm/*"
+          "litellm/openai/*"
+          "litellm/deepseek-flash"
+          "litellm/deepseek-v4-pro"
+          "litellm/glm-4.5"
+          "litellm/glm-4.5-air"
+          "litellm/glm-4.6"
+          "litellm/glm-4.7"
+          "litellm/glm-5"
+          "litellm/glm-5-turbo"
+          "litellm/glm-5.1"
+          "litellm/glm-5.2"
+          "litellm/glm-5.3"
+          "litellm/glm-5.3-flash"
         ];
+        fileTransferEnabled = false;
         modelPrimary = "litellm/openai/gpt-5.6-luna";
         modelFallbacks = [
-          "litellm/minimax-m3"
           "litellm/glm-5.2"
         ];
         thinkingDefault = "medium";
@@ -240,7 +266,6 @@ let
       })
       [
         "minimax_api_key"
-        "zai_api_key"
       ]
   );
 
@@ -278,7 +303,6 @@ let
                   name = "assistants/${sf}/${name}";
                 })
                 [
-                  "minimax_api_key"
                   "zai_api_key"
                 ]
             )
@@ -331,9 +355,9 @@ let
               ({ ... }: {
                 assistant.openclaw.router = assistant.openclaw.router;
                 assistant.openclaw.providerMode = assistant.openclaw.providerMode or "router";
-                assistant.openclaw.modelPrimary =
-                  assistant.openclaw.modelPrimary or "router-anthropic/minimax/MiniMax-M3";
+                assistant.openclaw.modelPrimary = assistant.openclaw.modelPrimary or "router-anthropic/glm/glm-5.2";
                 assistant.openclaw.modelAllowlist = assistant.openclaw.modelAllowlist or [ ];
+                assistant.openclaw.fileTransferEnabled = assistant.openclaw.fileTransferEnabled or true;
                 assistant.openclaw.thinkingDefault = assistant.openclaw.thinkingDefault or "off";
                 assistant.openclaw.reasoningDefault = assistant.openclaw.reasoningDefault or "off";
                 assistant.openclaw.sherpaRuntimeDir = self.packages.${pkgs.system}."sherpa-onnx-runtime";
@@ -522,14 +546,11 @@ let
     let
       authKeyFile = config.sops.secrets.${personalAgent.authSecret}.path;
       authKeyDir = builtins.dirOf authKeyFile;
-      providerKeyDir = builtins.dirOf config.sops.secrets."personal-agent/zai_api_key".path;
+      providerKeyDir = builtins.dirOf config.sops.secrets."personal-agent/minimax_api_key".path;
       piLauncher = pkgs.writeShellScriptBin "pi" ''
-        zaiKeyFile=/run/personal-agent-secrets/zai_api_key
+        unset ZAI_API_KEY PERSONAL_ZAI_API_KEY
         minimaxKeyFile=/run/personal-agent-secrets/minimax_api_key
 
-        if [ -r "$zaiKeyFile" ]; then
-          export PERSONAL_ZAI_API_KEY="$(${pkgs.coreutils}/bin/cat "$zaiKeyFile")"
-        fi
         if [ -r "$minimaxKeyFile" ]; then
           export PERSONAL_MINIMAX_API_KEY="$(${pkgs.coreutils}/bin/cat "$minimaxKeyFile")"
         fi
@@ -703,7 +724,6 @@ let
             serviceConfig.Type = "oneshot";
             script = ''
               ${pkgs.coreutils}/bin/install -d -m 0700 -o agent -g users /run/personal-agent-secrets
-              ${pkgs.coreutils}/bin/install -m 0400 -o agent -g users /run/host-secrets/providers/zai_api_key /run/personal-agent-secrets/zai_api_key
               ${pkgs.coreutils}/bin/install -m 0400 -o agent -g users /run/host-secrets/providers/minimax_api_key /run/personal-agent-secrets/minimax_api_key
             '';
           };
@@ -974,9 +994,9 @@ in
   ];
 
   systemd.tmpfiles.rules =
-    (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 root root -") assistants)
-    ++ [ "d /var/lib/microvms/${personalAgent.name} 0700 root root -" ]
-    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 root root -") (llmRouters));
+    (map (assistant: "d /var/lib/microvms/${assistant.name} 0700 microvm kvm -") assistants)
+    ++ [ "d /var/lib/microvms/${personalAgent.name} 0700 microvm kvm -" ]
+    ++ (map (router: "d /var/lib/microvms/${router.name} 0700 microvm kvm -") (llmRouters));
 
   microvm.vms =
     builtins.listToAttrs (map mkVm assistants)

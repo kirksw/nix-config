@@ -84,6 +84,19 @@
       flake = false;
     };
 
+    emilkowalski-skills = {
+      url = "github:emilkowalski/skills/f1090bec277140d02ed202440185ad9d02ac1490";
+      flake = false;
+    };
+    impeccable-skill = {
+      url = "github:pbakaus/impeccable/e89e3ada3e875a89ac2c5d33d11e65ebef6fe285";
+      flake = false;
+    };
+    taste-skill = {
+      url = "github:Leonxlnx/taste-skill/12af471f627f866411b4bd785b19646d3672784c";
+      flake = false;
+    };
+
     lavish-axi = {
       url = "github:kunchenguid/lavish-axi?rev=50b0facb61b5fc36cb1737e33b20d2894a64323b";
       flake = false;
@@ -186,6 +199,7 @@
         inherit
           nixpkgs
           inputs
+          self
           ;
       };
       mkApps = import ./flake/apps.nix {
@@ -264,6 +278,9 @@
             sync-agents-settings-merge = pkgs.runCommand "sync-agents-settings-merge" { } ''
               export HOME="$TMPDIR/home"
               export XDG_CONFIG_HOME="$TMPDIR/config"
+              # No network in the check sandbox: the offline stub npm lets the
+              # fail-closed vendoring succeed and publish local paths.
+              export PI_NPM_BIN=${./scripts/pi-npm-stub.sh}
 
               settings_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/settings"
               profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/work/profiles/work-fallback"
@@ -292,12 +309,23 @@
             pi-experimental-profiles = pkgs.runCommand "pi-experimental-profiles" { } ''
               export HOME="$TMPDIR/home"
               export XDG_CONFIG_HOME="$TMPDIR/config"
+              export PI_NPM_BIN=${./scripts/pi-npm-stub.sh}
               ${appSet.sync-agents.program}
               ${pkgs.python3}/bin/python3 ${./scripts/check-pi-experimental-profiles.py}
               mkdir -p "$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/settings"
               printf '{}\n' > "$XDG_CONFIG_HOME/nix-agents/pi/bases/personal/settings/auth.json"
               ${appSet.sync-agents.program}
               ${pkgs.python3}/bin/python3 ${./scripts/check-pi-experimental-profiles.py}
+              touch $out
+            '';
+
+            pi-npm-vendor = pkgs.runCommand "pi-npm-vendor" { } ''
+              export HOME="$TMPDIR/home"
+              export JQ_BIN=${pkgs.jq}/bin/jq
+              ${pkgs.bash}/bin/bash ${./scripts/check-pi-npm-vendor.sh} \
+                ${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor \
+                ${./scripts/pi-npm-stub.sh} \
+                ${self.packages.${system}.pi-npm}/bin/pi-npm
               touch $out
             '';
 
@@ -326,39 +354,6 @@
                 ''
               else
                 pkgs.runCommand "mlx-dspark-server-smoke-skipped" { } "touch $out";
-
-            pi-mlx-dspark-provider = pkgs.runCommand "pi-mlx-dspark-provider" { } ''
-              export HOME="$TMPDIR/home"
-              export XDG_CONFIG_HOME="$TMPDIR/config"
-              ${appSet.sync-agents.program}
-
-              profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/personal-default/profiles/personal-default"
-              test -L "$profile_dir/models.json"
-              ${pkgs.jq}/bin/jq -e \
-                '.providers["mlx-dspark"] as $provider
-                 | $provider.baseUrl == "http://127.0.0.1:18080"
-                   and $provider.api == "anthropic-messages"
-                   and $provider.models[0].id == "Qwen3-8B-4bit"
-                   and $provider.models[0].contextWindow == 131072
-                   and $provider.models[0].maxTokens == 8192' \
-                "$profile_dir/models.json" >/dev/null
-              ${pkgs.jq}/bin/jq -e '.defaultProvider == "zai"' "$profile_dir/settings.json" >/dev/null
-              for work_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser; do
-                work_profile_dir="$XDG_CONFIG_HOME/nix-agents/pi/bases/$work_profile"
-                ${pkgs.jq}/bin/jq -e \
-                  '.providers["mlx-dspark"].models[0].id == "Qwen3-8B-4bit"
-                   and .providers.openai.baseUrl == "https://eu.api.openai.com/v1"' \
-                  "$work_profile_dir/models.json" >/dev/null
-              done
-              model_check_dir="$TMPDIR/pi-model-check"
-              mkdir -p "$model_check_dir"
-              cp "$profile_dir/models.json" "$model_check_dir/models.json"
-              printf '{}\n' > "$model_check_dir/settings.json"
-              PI_CODING_AGENT_DIR="$model_check_dir" \
-                ${self.packages.${system}.pi}/bin/pi --no-extensions --list-models mlx-dspark \
-                | ${pkgs.gnugrep}/bin/grep -F 'Qwen3-8B-4bit' >/dev/null
-              touch $out
-            '';
 
             pi-fast-mode-extension-load = pkgs.runCommand "pi-fast-mode-extension-load" { } ''
               export HOME="$TMPDIR/home"

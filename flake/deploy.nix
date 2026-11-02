@@ -29,8 +29,18 @@ in
     nix-mm1 = {
       # Use LAN OpenSSH so restarting Tailscale does not interrupt activation.
       hostname = "192.168.10.200";
-      sshUser = "kirk";
-      interactiveSudo = true;
+      sshUser = "root";
+
+      profiles.system = {
+        user = "root";
+        path = deploy-rs.lib.aarch64-darwin.activate.darwin self.darwinConfigurations.nix-mm1;
+      };
+    };
+
+    # Optional tailnet path; activation may interrupt SSH when Tailscale restarts.
+    nix-mm1-ts = {
+      hostname = "100.93.93.85";
+      sshUser = "root";
 
       profiles.system = {
         user = "root";

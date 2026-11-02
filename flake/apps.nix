@@ -87,8 +87,8 @@ let
     repo_root="$(${pkgs.git}/bin/git rev-parse --show-toplevel)"
     cd "$repo_root"
     config="$HOME/.config/nix-agents/pi/bases/work/settings/mcporter.json"
-    output_dir="agents/defs/skills/work-mcp/generated"
     servers="1password granola grafana linear lunar-skills hubble-mcp sourcegraph slack"
+    selected_servers="''${*:-$servers}"
 
     if [ ! -r "$config" ]; then
       echo "Missing generated work MCPorter configuration: $config" >&2
@@ -96,19 +96,31 @@ let
       exit 1
     fi
 
-    ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
     failures=""
-    for server in $servers; do
+    for server in $selected_servers; do
+      case " $servers " in
+        *" $server "*) ;;
+        *)
+          echo "Unknown work MCP server: $server" >&2
+          exit 2
+          ;;
+      esac
+
+      output_dir="agents/defs/skills/$server/generated"
       target="$output_dir/$server.cjs"
+      typed_client="$output_dir/$server-client.ts"
       temporary="$target.tmp"
+      ${pkgs.coreutils}/bin/mkdir -p "$output_dir"
       ${pkgs.coreutils}/bin/rm -f "$temporary"
       echo "Generating $server..."
       if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" generate-cli "$server" --runtime node --bundle "$temporary" --minify; then
         ${pkgs.coreutils}/bin/mv "$temporary" "$target"
+        ${pkgs.coreutils}/bin/rm -f "$typed_client" "$output_dir/$server-client.d.ts"
       else
         ${pkgs.coreutils}/bin/rm -f "$temporary"
         echo "Falling back to a generated typed client for $server..."
-        if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" emit-ts "$server" --mode client --out "$output_dir/$server-client.ts"; then
+        if ${pkgs.nodejs_22}/bin/npx --yes mcporter@0.13.3 --config "$config" emit-ts "$server" --mode client --out "$typed_client"; then
+          ${pkgs.coreutils}/bin/rm -f "$target"
           echo "Generated emit-ts fallback for $server."
         else
           failures="$failures $server"
@@ -122,7 +134,7 @@ let
       exit 1
     fi
 
-    echo "Generated complete MCP CLI wrappers in $output_dir."
+    echo "Generated MCP CLI wrappers in dedicated skill directories."
   '';
 
   updateHomeMcpSkills = pkgs.writeShellScriptBin "update-home-mcp-skills" ''
@@ -213,7 +225,10 @@ let
         let
           settingsDir = "$CONFIG_BASE/${target}/bases/${baseName}/settings";
           storeSettingsDir = settingsDirFor target baseName files;
-          settingNames = builtins.attrNames files;
+          # settings.json is published transactionally by pi-npm-vendor after
+          # the npm packages are vendored, so a failed vendoring never leaves
+          # npm sources that would trigger startup npm installs.
+          settingNames = builtins.filter (fileName: fileName != "settings.json") (builtins.attrNames files);
           fileCommands = lib.concatMapStringsSep "\n" (
             fileName:
             if fileName == "config.toml" then
@@ -284,7 +299,8 @@ let
 
   allBaseSettingsCommands = syncBaseSettingsCommands "pi";
 
-  piWorkAuthFile = pkgs.writeText "pi-work-auth.json" agentBaseSettings.piWorkAuth;
+  piNpmVendor = "${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor";
+  piEmptyAuthFile = pkgs.writeText "pi-empty-auth.json" "{}";
   piSubagentsSettingsFile = pkgs.writeText "pi-subagents-settings.json" ''
     {
       "disableDefaultAgents": true,
@@ -468,7 +484,22 @@ let
     ${allBaseSettingsCommands}
 
     remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
-    seed_mutable_file "${piWorkAuthFile}" "$CONFIG_BASE/pi/bases/work/settings/auth.json" 0600
+    # Initialize the work login store without direct provider credentials.
+    seed_mutable_file "${piEmptyAuthFile}" "$CONFIG_BASE/pi/bases/work/settings/auth.json" 0600
+    # Remove the retired direct OpenAI credential without touching other work logins.
+    for work_base in work work-default work-browser work-web; do
+      work_auth="$CONFIG_BASE/pi/bases/$work_base/settings/auth.json"
+      if [ -f "$work_auth" ] && ${pkgs.jq}/bin/jq -e 'has("openai")' "$work_auth" >/dev/null 2>&1; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+          echo "DRY-RUN remove openai from $work_auth"
+        else
+          work_auth_tmp="$(${pkgs.coreutils}/bin/mktemp)"
+          ${pkgs.jq}/bin/jq 'del(.openai)' "$work_auth" > "$work_auth_tmp"
+          run ${pkgs.coreutils}/bin/install -m 0600 "$work_auth_tmp" "$work_auth"
+          run ${pkgs.coreutils}/bin/rm -f "$work_auth_tmp"
+        fi
+      fi
+    done
 
     # Share login state only within each scope; settings and sessions stay separate.
     for scope in personal work; do
@@ -476,7 +507,7 @@ let
       if [ ! -f "$default_auth" ]; then
         default_auth="$CONFIG_BASE/pi/bases/$scope/state/auth.json"
       fi
-      for kind in default browser; do
+      for kind in default browser web; do
         profile_auth="$CONFIG_BASE/pi/bases/$scope-$kind/settings/auth.json"
         if [ -L "$profile_auth" ] || [ ! -e "$profile_auth" ]; then
           run ${pkgs.coreutils}/bin/ln -sfn "$default_auth" "$profile_auth"
@@ -484,10 +515,21 @@ let
       done
     done
 
+    # Vendor Pi npm packages into content-addressed per-base sets and publish
+    # base settings.json with local paths before profiles link settings, so Pi
+    # sessions never install packages at startup. Fail-closed: a missing
+    # vendored set aborts the sync before any profile changes instead of
+    # degrading settings to npm sources.
+    pi_vendor_args="--strict"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      pi_vendor_args="--dry-run"
+    fi
+    "${piNpmVendor}" $pi_vendor_args
+
     ${allSyncCommands}
 
     for scope in personal work; do
-      for kind in default browser; do
+      for kind in default browser web; do
         run ${pkgs.coreutils}/bin/ln -sfn \
           "$CONFIG_BASE/pi/bases/$scope-$kind/settings/auth.json" \
           "$CONFIG_BASE/pi/bases/$scope-$kind/profiles/$scope-$kind/auth.json"
@@ -501,7 +543,7 @@ let
     done
 
     # Derived caches must not retain servers removed from profile configuration.
-    for base_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser; do
+    for base_profile in work/profiles/work-fallback work-default/profiles/work-default work-browser/profiles/work-browser work-web/profiles/work-web; do
       run ${pkgs.coreutils}/bin/rm -f "$CONFIG_BASE/pi/bases/$base_profile/mcp-cache.json"
     done
 

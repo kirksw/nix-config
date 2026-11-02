@@ -80,6 +80,7 @@ let
             "default"
             "fallback"
             "browser"
+            "web"
           ]
       )
       [
@@ -292,25 +293,13 @@ let
 
       # Export sops-decrypted credentials as env vars.
       # The nix-agents wrapper picks these up via providers with credentialSource = "env".
-      ZAI_SECRET_PATH="${config.sops.secrets."zai".path}"
       MINIMAX_SECRET_PATH="${config.sops.secrets."minimax".path}"
-      LUNAR_OPENAI_KEY_PATH="${config.sops.secrets."api/lunar/openai".path}"
-      LUNAR_ANTHROPIC_KEY_PATH="${config.sops.secrets."api/lunar/anthropic".path}"
       GIT_PAT_PATH="${config.sops.secrets."git/pat".path}"
       MLFLOW_CF_ACCESS_CLIENT_ID_PATH="${config.sops.secrets."api/mlflow/client-id".path}"
       MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH="${config.sops.secrets."api/mlflow/client-secret".path}"
 
-      if [ -f "$ZAI_SECRET_PATH" ]; then
-        export PERSONAL_ZAI_API_KEY="$(cat "$ZAI_SECRET_PATH")"
-      fi
       if [ -f "$MINIMAX_SECRET_PATH" ]; then
         export PERSONAL_MINIMAX_API_KEY="$(cat "$MINIMAX_SECRET_PATH")"
-      fi
-      if [ -f "$LUNAR_OPENAI_KEY_PATH" ]; then
-        export LUNAR_OPENAI_API_KEY="$(cat "$LUNAR_OPENAI_KEY_PATH")"
-      fi
-      if [ -f "$LUNAR_ANTHROPIC_KEY_PATH" ]; then
-        export LUNAR_ANTHROPIC_API_KEY="$(cat "$LUNAR_ANTHROPIC_KEY_PATH")"
       fi
       if [ -f "$GIT_PAT_PATH" ]; then
         export CODEX_GITHUB_PERSONAL_ACCESS_TOKEN="$(tr -d '[:space:]' < "$GIT_PAT_PATH")"
@@ -321,22 +310,6 @@ let
       if [ -f "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH" ]; then
         export CF_ACCESS_CLIENT_SECRET="$(tr -d '[:space:]' < "$MLFLOW_CF_ACCESS_CLIENT_SECRET_PATH")"
       fi
-
-      ensure_aws_sso_profile() {
-        local profile="$1"
-        local sso_session="$2"
-        local aws="${lib.getExe pkgs.awscli2}"
-
-        if "$aws" sts get-caller-identity --profile "$profile" >/dev/null 2>&1; then
-          return 0
-        fi
-
-        # All Lunar work profiles share this SSO session, so one login refreshes
-        # its cached token and makes fresh role credentials available to Pi.
-        echo "Refreshing AWS SSO session '$sso_session' for profile '$profile'..." >&2
-        "$aws" sso login --sso-session "$sso_session"
-        "$aws" sts get-caller-identity --profile "$profile" >/dev/null
-      }
 
       _nix_agents_extra_args=()
       _nix_agents_exec=("${nixAgentsPkg}/bin/${target}")
@@ -498,6 +471,17 @@ in
       })
     );
 
+    # Vendor Pi npm packages and publish base settings.json with local
+    # package paths during activation, on fresh setups and updates alike.
+    # Fail-closed: when the vendored set cannot be built and verified the
+    # switch fails; settings are never degraded to npm sources that would
+    # trigger startup npm installs.
+    home.activation.piNpmVendor = lib.mkIf config.homeModules.piCodingAgent.enable (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${self.packages.${system}.pi-npm-vendor}/bin/pi-npm-vendor --strict
+      ''
+    );
+
     # --- sops secrets (shared across all ai tools) ---
     sops.secrets = lib.mkMerge [
       (lib.mkIf config.homeModules.piCodingAgent.enable {
@@ -630,7 +614,7 @@ in
                     # Herdr children pass the parent agent directory, not its profile selector.
                     if [ -z "$_pi_session_profile" ]; then
                       for _pi_scope in personal work; do
-                        for _pi_kind in default fallback browser; do
+                        for _pi_kind in default fallback browser web; do
                           _pi_base="$_pi_scope-$_pi_kind"
                           [ "$_pi_kind" != fallback ] || _pi_base="$_pi_scope"
                           if [ "''${PI_CODING_AGENT_DIR:-}" = "''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/$_pi_base/profiles/$_pi_scope-$_pi_kind" ]; then
@@ -656,16 +640,16 @@ in
                     fi
                     case "$_pi_session_profile" in
                       personal-fallback) _pi_session_base="personal" ;;
-                      personal-default|personal-browser) _pi_session_base="$_pi_session_profile" ;;
+                      personal-default|personal-browser|personal-web) _pi_session_base="$_pi_session_profile" ;;
                       work-fallback) _pi_session_base="work" ;;
-                      work-default|work-browser) _pi_session_base="$_pi_session_profile" ;;
+                      work-default|work-browser|work-web) _pi_session_base="$_pi_session_profile" ;;
                       *)
                         echo "unknown nix-agents profile: $_pi_session_profile" >&2
                         exit 2
                         ;;
                     esac
                     case "$_pi_session_profile" in
-                      personal-browser|work-browser)
+                      personal-browser|work-browser|personal-web|work-web)
                         export AGENT_BROWSER_SESSION="$_pi_session_profile"
                         export AGENT_BROWSER_PROFILE="''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/browser/$_pi_session_profile"
                         export AGENT_BROWSER_DOWNLOAD_PATH="$AGENT_BROWSER_PROFILE/downloads"
@@ -679,7 +663,7 @@ in
                     mkdir -p "$PI_CODING_AGENT_DIR"
                     # Load personal secrets before mapping them to Pi provider variables.
                     case "$_pi_session_base" in
-                      personal|personal-default|personal-browser)
+                      personal|personal-default|personal-browser|personal-web)
                         ${loadPersonalLitellmCredentials}
                         ;;
                     esac
@@ -716,21 +700,12 @@ in
                       # Generated profile environment is trusted Nix configuration.
                       . "$_pi_profile_env"
                     fi
-                    case "$_pi_session_profile" in
-                      work-default|work-fallback|work-browser)
-                        unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN AWS_BEARER_TOKEN_BEDROCK
-                        export AWS_PROFILE="lw-employee-ai"
-                        export AWS_REGION="eu-west-1"
-                        export AWS_SDK_LOAD_CONFIG=1
-                        ensure_aws_sso_profile "$AWS_PROFILE" "lunarway"
-                        ;;
-                    esac
                     export PI_CODING_AGENT_SESSION_DIR="''${PI_CODING_AGENT_SESSION_DIR:-''${XDG_DATA_HOME:-$HOME/.local/share}/nix-agents/pi/sessions/$_pi_session_profile}"
                     mkdir -p "$PI_CODING_AGENT_SESSION_DIR"
 
                     _pi_tmp_root="/tmp/personal"
                     case "$_pi_session_profile" in
-                      work-default|work-fallback|work-browser) _pi_tmp_root="/tmp/lunar" ;;
+                      work-default|work-fallback|work-browser|work-web) _pi_tmp_root="/tmp/lunar" ;;
                     esac
 
                     mkdir -p "$_pi_tmp_root"
@@ -738,24 +713,18 @@ in
                     export TMP="$_pi_tmp_root"
                     export TEMP="$_pi_tmp_root"
 
-
-                    # Pi uses Bedrock for Claude, not direct Anthropic credentials.
                     unset ANTHROPIC_API_KEY ANTHROPIC_OAUTH_TOKEN LUNAR_ANTHROPIC_API_KEY
+                    unset ZAI_API_KEY PERSONAL_ZAI_API_KEY
                     case "$_pi_session_profile" in
-                      work-default|work-fallback|work-browser)
-                        if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-                          export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-                        fi
+                      work-default|work-fallback|work-browser|work-web)
+                        unset OPENAI_API_KEY LUNAR_OPENAI_API_KEY
                         ;;
-                      *)
+                      personal-default|personal-fallback|personal-browser|personal-web)
                         if [ "$_pi_session_profile" = "personal-browser" ]; then
                           AFFINE_MCP_TOKEN_PATH="${config.sops.secrets."api/affine/mcp-token".path}"
                           if [ -f "$AFFINE_MCP_TOKEN_PATH" ]; then
                             export AFFINE_MCP_HTTP_TOKEN="$(tr -d '[:space:]' < "$AFFINE_MCP_TOKEN_PATH")"
                           fi
-                        fi
-                        if [ -n "''${PERSONAL_ZAI_API_KEY:-}" ]; then
-                          export ZAI_API_KEY="$PERSONAL_ZAI_API_KEY"
                         fi
                         if [ -n "''${PERSONAL_MINIMAX_API_KEY:-}" ]; then
                           export MINIMAX_API_KEY="$PERSONAL_MINIMAX_API_KEY"
@@ -770,14 +739,15 @@ in
             set -euo pipefail
 
             usage() {
-              printf '%s\n' "usage: pix list" "       pix [--profile default|fallback|browser] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted"
+              printf '%s\n' "usage: pix list" "       pix [--profile default|fallback|browser|web] [--scope home|work] [-- pi-args...]" "       pix selects a profile with fzf when --profile is omitted"
             }
 
             list_profiles() {
               printf '%-10s %s\n' \
                 default "Everyday engineering with Herdr orchestration (formerly experimental)." \
                 fallback "Minimal setup: web access, verbosity control, and LiteLLM models." \
-                browser "Browser automation and web/travel research, including Google Hotels."
+                browser "Browser automation and web/travel research, including Google Hotels." \
+                web "Web design and frontend engineering with pinned design skills."
               printf '\n%s\n' "All profiles support --scope home|work; omitted scope is inferred from the environment or project."
             }
 
@@ -821,15 +791,15 @@ in
             done
 
             case "$profile" in
-              ""|default|fallback|browser) ;;
-              *) die "invalid profile: $profile (expected default, fallback, or browser)" ;;
+              ""|default|fallback|browser|web) ;;
+              *) die "invalid profile: $profile (expected default, fallback, browser, or web)" ;;
             esac
             case "$scope" in
               ""|home|work) ;;
               *) die "invalid scope: $scope (expected home or work)" ;;
             esac
             if [ -z "$profile" ]; then
-              profile="$(printf '%s\n' default fallback browser | fzf --prompt='Pi profile> ' --height=6 --reverse)" || exit 130
+              profile="$(printf '%s\n' default fallback browser web | fzf --prompt='Pi profile> ' --height=6 --reverse)" || exit 130
             fi
             if [ -z "$scope" ]; then
               _pi_scope_profile="''${NIX_AGENTS_PROFILE:-}"
@@ -841,8 +811,8 @@ in
                 _d="''${_d%/*}"
               done
               case "$_pi_scope_profile" in
-                work-default|work-fallback|work-browser) scope=work ;;
-                personal-default|personal-fallback|personal-browser) scope=home ;;
+                work-default|work-fallback|work-browser|work-web) scope=work ;;
+                personal-default|personal-fallback|personal-browser|personal-web) scope=home ;;
               esac
               if [ -z "$scope" ]; then
                 case "$PWD" in

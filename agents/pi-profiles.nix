@@ -5,11 +5,6 @@
 # configuration overlay inside a base that selects skills and model tiers.
 let
   providers = {
-    personal-zai-key = {
-      credentialSource = "env";
-      credentialRef = "PERSONAL_ZAI_API_KEY";
-      envVar = "ZAI_API_KEY";
-    };
     personal-minimax-key = {
       credentialSource = "env";
       credentialRef = "PERSONAL_MINIMAX_API_KEY";
@@ -30,21 +25,15 @@ let
       credentialRef = "PERSONAL_LITELLM_CF_ACCESS_CLIENT_SECRET";
       envVar = "LITELLM_CF_ACCESS_CLIENT_SECRET";
     };
-    work-openai-key = {
-      credentialSource = "env";
-      credentialRef = "LUNAR_OPENAI_API_KEY";
-      envVar = "OPENAI_API_KEY";
-    };
   };
 
   personalProviders = [
-    "personal-zai-key"
     "personal-minimax-key"
     "personal-litellm-api-key"
     "personal-litellm-cf-client-id"
     "personal-litellm-cf-client-secret"
   ];
-  workProviders = [ "work-openai-key" ];
+  workProviders = [ ];
 
   personalGit = {
     userName = "Kirk Sweeney";
@@ -79,14 +68,12 @@ let
     "grafana"
     "granola"
     "hubble-mcp"
-    "land"
     "lavish"
     "linear"
     "lunar-skills"
     "nix-config"
     "slack"
     "sourcegraph"
-    "work-mcp"
   ];
   personalBrowserSkills = [
     "affine"
@@ -100,6 +87,28 @@ let
     "google-hotels"
     "nix-config"
   ];
+  webDesignSkills = [
+    "animate-expo"
+    "animate"
+    "animation-performance"
+    "animation-vocabulary"
+    "apple-design"
+    "ask-sonner"
+    "break-ui"
+    "emil-design-eng"
+    "find-animation-opportunities"
+    "improve-animations"
+    "mobile-native"
+    "pick-ui-library"
+    "prototype"
+    "remove-animations"
+    "review-animations"
+    "write-swift"
+    "impeccable"
+    "design-taste-frontend"
+  ];
+  personalWebSkills = personalSkills ++ webDesignSkills;
+  workWebSkills = workSkills ++ [ "agent-browser" ] ++ webDesignSkills;
 
   personalTierMapping = {
     S = [ "litellm/openai/gpt-6-astra" ];
@@ -117,13 +126,10 @@ let
     ];
   };
   workTierMapping = {
-    S = [
-      "openai/gpt-6-astra"
-      "amazon-bedrock/eu.anthropic.claude-opus-5-5"
-    ];
-    A = [ "openai/gpt-6-sol" ];
-    B = [ "openai/gpt-6-luna" ];
-    C = [ "openai/gpt-6-luna" ];
+    S = [ "lunar/gpt-6-astra" ];
+    A = [ "lunar/gpt-6.1-sol" ];
+    B = [ "lunar/gpt-6-luna" ];
+    C = [ "lunar/gpt-6-luna" ];
   };
 in
 {
@@ -133,9 +139,11 @@ in
     personal = mkBase personalProviders personalGit;
     personal-default = mkBase personalProviders personalGit;
     personal-browser = mkBase personalProviders personalGit;
+    personal-web = mkBase personalProviders personalGit;
     work = mkBase workProviders workGit;
     work-default = mkBase workProviders workGit;
     work-browser = mkBase workProviders workGit;
+    work-web = mkBase workProviders workGit;
   };
 
   profiles = {
@@ -154,20 +162,34 @@ in
       skills = personalBrowserSkills;
       tierMapping = personalTierMapping;
     };
+    personal-web = {
+      base = "personal-web";
+      skills = personalWebSkills;
+      tierMapping = personalTierMapping;
+    };
     work-default = {
       base = "work-default";
       skills = workSkills;
       tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
     };
     work-fallback = {
       base = "work";
       skills = workSkills;
       tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
     };
     work-browser = {
       base = "work-browser";
       skills = workBrowserSkills;
       tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
+    };
+    work-web = {
+      base = "work-web";
+      skills = workWebSkills;
+      tierMapping = workTierMapping;
+      excludeExtensions = [ "minimal-mode" ];
     };
   };
 }

@@ -1,6 +1,7 @@
 {
   nixpkgs,
   inputs,
+  self,
 }:
 system:
 let
@@ -16,6 +17,8 @@ let
     name:
     if name == "pi-herdr-agents" then
       { pi = packages.pi; }
+    else if name == "pi-npm-vendor" then
+      { inherit self; }
     else if name == "lunar-skills-mcp" then
       { backendEngineeringPractices = inputs.backend-engineering-practices; }
     else if name == "land" then

@@ -1,9 +1,9 @@
 {
   "formatVersion": 1,
   "mlx": {
-    "version": "0.32.0",
-    "cp314Macos14Arm64Hash": "sha256-LuebH4wsKjKa/JXs59zgvnmNQ/PedxpjcNK5+XArvZo=",
-    "metalMacos14Arm64Hash": "sha256-W2SyCsJLDEAfSJ3gHoIJ7cTTchJSAfGTFObznjhTIqo="
+    "version": "0.32.2",
+    "cp314Macos14Arm64Hash": "sha256-yZ47ZFG7SlUHHPGVlPVkQ1vYjedwCPN35hGkCou/syg=",
+    "metalMacos14Arm64Hash": "sha256-OCX/83nbwQfdNBPlZKBsrqokgZkQ7EnAQ55FTAahubg="
   },
   "mlxDspark": {
     "version": "0.14.0",

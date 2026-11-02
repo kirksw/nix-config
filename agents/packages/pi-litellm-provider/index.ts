@@ -94,6 +94,19 @@ export function toProviderModels(entries: LiteLlmModelEntry[]): LiteLlmProviderM
   return [...models.values()].sort((left, right) => left.id.localeCompare(right.id));
 }
 
+export function withGoSessionHeader(payload: unknown, sessionId: string): unknown {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return payload;
+  const request = payload as Record<string, unknown>;
+  const extra = request.extra_headers;
+  return {
+    ...request,
+    extra_headers: {
+      ...(extra && typeof extra === "object" && !Array.isArray(extra) ? extra : {}),
+      "x-opencode-session": sessionId,
+    },
+  };
+}
+
 async function fetchWithTimeout(url: string, headers: Headers): Promise<Response> {
   return fetch(url, { headers, signal: AbortSignal.timeout(10_000) });
 }
@@ -116,6 +129,11 @@ async function fetchModelEntries(baseUrl: string, headers: Headers): Promise<Lit
 
 export default async function litellmProvider(pi: ExtensionAPI): Promise<void> {
   if (!credentialsAvailable(process.env)) return;
+
+  pi.on("before_provider_request", (event, ctx) => {
+    if (ctx.model?.provider !== "litellm" || !ctx.model.id.startsWith("go/")) return;
+    return withGoSessionHeader(event.payload, ctx.sessionManager.getSessionId());
+  });
 
   const baseUrl = (process.env.LITELLM_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, "");
   const headers = new Headers({

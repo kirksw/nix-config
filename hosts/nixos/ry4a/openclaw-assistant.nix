@@ -30,7 +30,7 @@ in
 
     modelPrimary = lib.mkOption {
       type = lib.types.str;
-      default = "router-anthropic/minimax/MiniMax-M3";
+      default = "router-anthropic/glm/glm-5.2";
       description = "Default model identifier for this assistant.";
     };
 
@@ -38,6 +38,12 @@ in
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "The complete model allowlist when non-empty.";
+    };
+
+    fileTransferEnabled = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to configure the file-transfer plugin for this assistant.";
     };
 
     thinkingDefault = lib.mkOption {
@@ -152,9 +158,6 @@ in
           if [ -f ${cfg.sopsDir}/litellm_api_key ]; then
             echo "LITELLM_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/litellm_api_key)"
           fi
-          if [ -f ${cfg.sopsDir}/minimax_api_key ]; then
-            echo "MINIMAX_CODE_PLAN_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/minimax_api_key)"
-          fi
           if [ -f ${cfg.sopsDir}/zai_api_key ]; then
             echo "ZAI_API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.sopsDir}/zai_api_key)"
           fi
@@ -190,14 +193,11 @@ in
           bind = "loopback";
           tailscale = {
             mode = "serve";
-            resetOnExit = false;
           };
           # Tailscale Serve maps the dashboard to https://<node>.<tailnet> (443).
           trustedProxies = [ "127.0.0.1/32" ];
           controlUi = {
             allowedOrigins = [ "https://${config.networking.hostName}.tail54de03.ts.net" ];
-            allowInsecureAuth = false;
-            dangerouslyDisableDeviceAuth = false;
           };
           # Trust Tailscale identity so dashboard access doesn't need token auth on tailnet
           auth = {
@@ -224,14 +224,51 @@ in
           transport = "streamable-http";
           headers.Authorization = "Bearer \${AFFINE_MCP_HTTP_TOKEN}";
           supportsParallelToolCalls = false;
-          timeout = 60;
+          requestTimeoutMs = 60000;
         };
-        plugins.entries.memory-core = {
-          enabled = true;
-          config.dreaming.enabled = true;
-        };
-        plugins.entries.memory-wiki = {
-          enabled = true;
+        plugins.entries = {
+          memory-core = {
+            enabled = true;
+            config.dreaming.enabled = true;
+          };
+          memory-wiki.enabled = true;
+        }
+        // lib.optionalAttrs cfg.fileTransferEnabled {
+          file-transfer = {
+            enabled = true;
+            config.nodes."*" = {
+              ask = "on-miss";
+              allowReadPaths = [
+                "/srv/assistant/**"
+                "/var/lib/openclaw/logs/**"
+                "/etc/assistant/**"
+                "/etc/openclaw/openclaw.json"
+                "/Users/kisw/git/**"
+                "/Users/kisw/Desktop/**"
+                "/Users/kisw/Downloads/**"
+                "/tmp/openclaw/**"
+                "/tmp/openclaw-transfer/**"
+              ];
+              allowWritePaths = [
+                "/srv/assistant/inbox/**"
+                "/srv/assistant/workspace/**"
+                "/Users/kisw/Downloads/openclaw-transfer/**"
+                "/tmp/openclaw/**"
+                "/tmp/openclaw-transfer/**"
+              ];
+              denyPaths = [
+                "/run/host-secrets/**"
+                "/run/secrets/**"
+                "/var/lib/openclaw/config/**"
+                "/Users/*/.ssh/**"
+                "/Users/*/.gnupg/**"
+                "/Users/*/.config/sops/**"
+                "/Users/*/Library/Keychains/**"
+              ];
+              maxBytes = 16777216;
+              followSymlinks = false;
+            };
+          };
         };
         skills = {
           allowBundled = [
@@ -273,16 +310,10 @@ in
             };
           };
         };
-        messages.tts = {
+        tts = {
           auto = "off";
-          provider = "minimax";
+          provider = "tts-local-cli";
           providers = {
-            minimax = {
-              model = "speech-2.8-hd";
-              speakerVoiceId = "English_expressive_narrator";
-              speed = 1.0;
-              vol = 1.0;
-            };
             "tts-local-cli" = {
               command = "${cfg.sherpaRuntimeDir}/bin/sherpa-onnx-offline-tts";
               args = [
@@ -295,41 +326,6 @@ in
               outputFormat = "wav";
               timeoutMs = 120000;
             };
-          };
-        };
-        plugins.entries.file-transfer = {
-          enabled = true;
-          config.nodes."*" = {
-            ask = "on-miss";
-            allowReadPaths = [
-              "/srv/assistant/**"
-              "/var/lib/openclaw/logs/**"
-              "/etc/assistant/**"
-              "/etc/openclaw/openclaw.json"
-              "/Users/kisw/git/**"
-              "/Users/kisw/Desktop/**"
-              "/Users/kisw/Downloads/**"
-              "/tmp/openclaw/**"
-              "/tmp/openclaw-transfer/**"
-            ];
-            allowWritePaths = [
-              "/srv/assistant/inbox/**"
-              "/srv/assistant/workspace/**"
-              "/Users/kisw/Downloads/openclaw-transfer/**"
-              "/tmp/openclaw/**"
-              "/tmp/openclaw-transfer/**"
-            ];
-            denyPaths = [
-              "/run/host-secrets/**"
-              "/run/secrets/**"
-              "/var/lib/openclaw/config/**"
-              "/Users/*/.ssh/**"
-              "/Users/*/.gnupg/**"
-              "/Users/*/.config/sops/**"
-              "/Users/*/Library/Keychains/**"
-            ];
-            maxBytes = 16777216;
-            followSymlinks = false;
           };
         };
         models.mode = "replace";
@@ -390,66 +386,6 @@ in
                     maxTokens = 393216;
                     reasoning = true;
                     input = [ "text" ];
-                  }
-                  {
-                    id = "minimax-m2";
-                    name = "MiniMax M2";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.1";
-                    name = "MiniMax M2.1";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.1-highspeed";
-                    name = "MiniMax M2.1 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.5";
-                    name = "MiniMax M2.5";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.5-highspeed";
-                    name = "MiniMax M2.5 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.7";
-                    name = "MiniMax M2.7";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m2.7-highspeed";
-                    name = "MiniMax M2.7 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "minimax-m3";
-                    name = "MiniMax M3";
-                    contextWindow = 1000000;
-                    maxTokens = 131072;
-                    reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
                   }
                   {
                     id = "glm-4.5";
@@ -526,78 +462,6 @@ in
             }
           else if cfg.providerMode == "direct" then
             {
-              minimax = {
-                baseUrl = "https://api.minimax.io/v1";
-                api = "openai-completions";
-                apiKey = {
-                  source = "env";
-                  provider = "default";
-                  id = "MINIMAX_CODE_PLAN_KEY";
-                };
-                models = [
-                  {
-                    id = "MiniMax-M3";
-                    name = "MiniMax M3";
-                    contextWindow = 1000000;
-                    maxTokens = 131072;
-                    reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                  }
-                  {
-                    id = "MiniMax-M2.7";
-                    name = "MiniMax M2.7";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.7-highspeed";
-                    name = "MiniMax M2.7 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.5";
-                    name = "MiniMax M2.5";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.5-highspeed";
-                    name = "MiniMax M2.5 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.1";
-                    name = "MiniMax M2.1";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2.1-highspeed";
-                    name = "MiniMax M2.1 Highspeed";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                  {
-                    id = "MiniMax-M2";
-                    name = "MiniMax M2";
-                    contextWindow = 204800;
-                    maxTokens = 131072;
-                    reasoning = true;
-                  }
-                ];
-              };
-
               zai = {
                 baseUrl = "https://api.z.ai/api/coding/paas/v4/";
                 api = "openai-completions";
@@ -684,26 +548,6 @@ in
                   id = "LLM_ROUTER_API_KEY";
                 };
                 models = [
-                  {
-                    id = "minimax/MiniMax-M3";
-                    name = "MiniMax M3";
-                    api = "anthropic-messages";
-                    contextWindow = 1000000;
-                    maxTokens = 524288;
-                    reasoning = true;
-                    input = [
-                      "text"
-                      "image"
-                    ];
-                  }
-                  {
-                    id = "minimax/MiniMax-M2.7-highspeed";
-                    name = "MiniMax M2.7 Highspeed";
-                    api = "anthropic-messages";
-                    contextWindow = 204800;
-                    maxTokens = 204800;
-                    reasoning = true;
-                  }
                   # home-llm-router currently exposes GLM as glm/*, not zai/*.
                   {
                     id = "glm/glm-5.2";
@@ -742,7 +586,7 @@ in
           };
         }
         // lib.optionalAttrs (cfg.modelAllowlist != [ ]) {
-          models = lib.genAttrs cfg.modelAllowlist (_: { });
+          modelPolicy.allow = cfg.modelAllowlist;
         };
         channels.telegram = {
           enabled = true;

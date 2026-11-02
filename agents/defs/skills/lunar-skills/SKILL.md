@@ -5,14 +5,16 @@ description: Use Lunar Skills MCPorter CLI to discover and read Lunar backend en
 
 # Lunar Skills
 
-Run the generated `lunar-skills` CLI through Context Mode and the shared bounded runner:
+Run the generated `lunar-skills` CLI through Context Mode and its bounded runner:
 
 ```sh
-node "$HOME/.config/nix-agents/pi/bases/work/profiles/work-default/skills/work-mcp/scripts/run.mjs" lunar-skills lunar-skills-list --help
-node "$HOME/.config/nix-agents/pi/bases/work/profiles/work-default/skills/work-mcp/scripts/run.mjs" lunar-skills lunar-skills-search --help
-node "$HOME/.config/nix-agents/pi/bases/work/profiles/work-default/skills/work-mcp/scripts/run.mjs" lunar-skills lunar-skills-read --help
+node "$PI_CODING_AGENT_DIR/skills/lunar-skills/scripts/run.mjs" lunar-skills-list --help
+node "$PI_CODING_AGENT_DIR/skills/lunar-skills/scripts/run.mjs" lunar-skills-search --help
+node "$PI_CODING_AGENT_DIR/skills/lunar-skills/scripts/run.mjs" lunar-skills-read --help
 ```
 
 Search or list to identify the relevant engineering practice, then read that skill before changing affected work code.
 Read a referenced document only when the selected practice points to it and the current task needs the detail.
 Treat loaded practices as work-repository guidance and report any conflict with repository-local instructions.
+
+Refresh this generated wrapper with `nix run .#update-mcp-skills -- lunar-skills`, then run `nix run .#sync-agents`.

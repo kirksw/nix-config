@@ -48,7 +48,7 @@ let
     ./defs/skills/sourcegraph
     ./defs/skills/travel-search
     ./defs/skills/what-if
-    ./defs/skills/work-mcp
+    ./defs/skills/web-design
     ./defs/skills/writing-great-skills
     ./defs/skills/xcode
     ./defs/skills/yeet
@@ -180,6 +180,9 @@ let
       cp ${hookManifest} "$out/hook-manifest"
       cp ${mkAgentsMd profile} "$out/AGENTS.md"
       cp -r ${./targets/pi/extensions}/. "$out/extensions/"
+      ${lib.concatMapStringsSep "\n" (
+        e: ''chmod -R u+w "$out/extensions" && rm -rf "$out/extensions/${e}"''
+      ) (profile.excludeExtensions or [ ])}
       cp -r ${./targets/pi/prompts}/. "$out/prompts/"
     '';
 

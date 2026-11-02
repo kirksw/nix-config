@@ -19,7 +19,6 @@
   - `personal-litellm-api-key`
   - `personal-litellm-cf-client-id`
   - `personal-litellm-cf-client-secret`
-  - local `mlx-dspark/Qwen3-8B-4bit` at `http://127.0.0.1:18080` when the explicit server is running
 
 ### `personal-default`
 
@@ -31,11 +30,16 @@
 - same providers and commit identity as `personal`
 - hosts the `personal-browser` profile
 
+### `personal-web`
+
+- same providers and commit identity as `personal`
+- hosts the `personal-web` profile
+
 ### `work`
 
 - own path prefixes: none
 - hosts the `work-fallback` profile
-- provider: `work-openai-key`
+- no direct provider credentials; work models use the Lunar LiteLLM gateway
 - commits use the Lunar work identity and signing key
 
 ### `work-default`
@@ -48,39 +52,28 @@
 - same providers and commit identity as `work`
 - hosts the `work-browser` profile
 
-Start the local personal model explicitly before selecting it:
+### `work-web`
 
-```sh
-mlx-dspark serve \
-  --model mlx-community/Qwen3-8B-4bit \
-  --host 127.0.0.1 \
-  --port 18080 \
-  --no-thinking \
-  --context-window 131072 \
-  --kv-bits 8
-
-pi --provider mlx-dspark --model Qwen3-8B-4bit
-```
-
-The model and drafter download into `~/.cache/huggingface/hub/` on first use.
-Check readiness and runtime memory with `curl http://127.0.0.1:18080/health` and `curl http://127.0.0.1:18080/metrics`.
-Use `Ctrl-C` in the foreground server terminal to stop it and release model memory.
+- same providers and commit identity as `work`
+- hosts the `work-web` profile
 
 ## Pi Profiles
 
-Pi has three choices in each scope, listed by `pix list`:
+Pi has four choices in each scope, listed by `pix list`:
 
 | Choice | Purpose | Personal profile/base | Work profile/base |
 |---|---|---|---|
 | `default` | Everyday engineering with Herdr orchestration | `personal-default` / `personal-default` | `work-default` / `work-default` |
 | `fallback` | Minimal setup: web access, verbosity control, and LiteLLM models only | `personal-fallback` / `personal` | `work-fallback` / `work` |
 | `browser` | Browser automation and web/travel research | `personal-browser` / `personal-browser` | `work-browser` / `work-browser` |
+| `web` | Frontend engineering and web design | `personal-web` / `personal-web` | `work-web` / `work-web` |
 
 ```sh
 pix list
 pix --profile default --scope home
 pix --profile fallback --scope work
 pix --profile browser --scope home
+pix --profile web --scope work
 ```
 
 `pix` without `--profile` opens a menu with `default` first.
@@ -89,7 +82,7 @@ Use `NIX_AGENTS_PROFILE=<profile> pi` or an ancestor `.nix-agents-profile` file 
 Herdr child sessions inherit the parent profile through `PI_CODING_AGENT_DIR` when no explicit environment selector is set.
 `pix --scope` wins over inferred scope; otherwise scope follows `NIX_AGENTS_PROFILE`, an ancestor profile file, then work path matching, falling back to home.
 
-The `default` and `browser` profiles use `pi-herdr-agents` instead of `tintinweb/pi-subagents` and require Herdr for delegation.
+The `default`, `browser`, and `web` profiles use `pi-herdr-agents` instead of `tintinweb/pi-subagents` and require Herdr for delegation.
 They omit `rpiv-btw`, `context-mode`, and `pi-observational-memory` and load `/Users/kisw/git/github.com/kirksw/pi-extensions/main` (currently `pi-context-flow`).
 That checkout and its runtime dependencies must exist on the machine.
 `fallback` is minimal: `pi-web-access`, `pi-verbosity-control`, and `pi-litellm-provider` only.
@@ -110,7 +103,7 @@ Every profile selects skills only. The repository defines no custom agents.
 
 - base: `personal-default`
 - purpose: everyday personal engineering with Herdr orchestration
-- skills: `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `land`, `lavish`, `nix-config`, `session-heuristics`, `skill-creator`
+- skills: `agent-browser`, `codex-imagegen`, `domain-modeling`, `google-hotels`, `home-mcp`, `lavish`, `nix-config`, `session-heuristics`, `skill-creator`
 - package surface: the lean set with the `pi-herdr-agents` replacement
 
 ### `personal-fallback`
@@ -127,11 +120,18 @@ Every profile selects skills only. The repository defines no custom agents.
 - skills: `affine`, `agent-browser`, `google-hotels`, `home-mcp`, `nix-config`
 - MCP: the AFFiNE HTTP server, used by the generated AFFiNE CLI skill
 
+### `personal-web`
+
+- base: `personal-web`
+- purpose: personal frontend engineering and web design
+- skills: `personal-default` skills plus all 16 skills from `emilkowalski/skills`, `impeccable`, and `design-taste-frontend`
+- package surface: the lean set with the `pi-herdr-agents` replacement
+
 ### `work-default`
 
 - base: `work-default`
 - purpose: everyday work engineering with Herdr orchestration
-- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `land`, `lavish`, `linear`, `lunar-skills`, `nix-config`, `slack`, `sourcegraph`, `work-mcp`
+- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `lavish`, `linear`, `lunar-skills`, `nix-config`, `slack`, `sourcegraph`
 - package surface: the lean set with the `pi-herdr-agents` replacement and `agenticos`
 
 ### `work-fallback`
@@ -147,6 +147,14 @@ Every profile selects skills only. The repository defines no custom agents.
 - purpose: browser automation and web/travel research
 - skills: `agent-browser`, `google-hotels`, `nix-config`
 
+### `work-web`
+
+- base: `work-web`
+- purpose: work frontend engineering and web design
+- skills: `work-default` skills plus `agent-browser`, all 16 skills from `emilkowalski/skills`, `impeccable`, and `design-taste-frontend`
+- package surface: the lean set with the `pi-herdr-agents` replacement and `agenticos`
+
+The web design skills use pinned GitHub inputs and are not selected by other profiles.
 Full and factory profiles no longer exist for any target.
 Old runtime directories and sessions are not deleted by sync; removed profile names fail selection.
 Authentication is shared only within the matching personal/work scope, while settings and sessions stay separate.

@@ -21,9 +21,15 @@ let
     "npm:@lunarway/pi-lunar-statusline@0.7.0"
   ];
 
+  # Work-only extras: context decision tracking rides the default and browser
+  # work profiles; the minimal fallback set replaces `packages` wholesale, so
+  # additions here never reach work-fallback or the personal scopes.
+  piWorkExtraPackageRefs = [
+    "npm:pi-context-decisions@2.2.0"
+  ];
+
   piPackageRefs = [
     "npm:context-mode@1.0.169"
-    "npm:pi-cost@0.1.1"
     piHerdrPackage
     "npm:@tintinweb/pi-subagents@0.14.3"
     "npm:pi-observational-memory@3.0.3"
@@ -45,7 +51,7 @@ let
     ++ [ piLitellmProviderPackage ];
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
-  ) (piPackageRefs ++ piLunarPackageRefs ++ [ agenticOSPackage ]);
+  ) (piPackageRefs ++ piLunarPackageRefs ++ piWorkExtraPackageRefs ++ [ agenticOSPackage ]);
   # Minimal profile package set: web access, output verbosity, and LiteLLM models.
   # The fallback profiles use this set and deliberately omit subagents, MCP
   # tooling, tracing, permission enforcement, and to-do tracking.
@@ -55,11 +61,11 @@ let
     piLitellmProviderPackage
   ];
   mkPiMinimalSettings =
-    defaults:
+    defaults: packages:
     builtins.toJSON (
       (builtins.removeAttrs defaults [ "subagents" ])
       // {
-        packages = piMinimalPackageRefs;
+        inherit packages;
       }
     );
   mkPiHerdrSettings =
@@ -178,8 +184,8 @@ let
   };
 
   piPersonalModelDefaults = {
-    defaultProvider = "zai";
-    defaultModel = "glm-5.2";
+    defaultProvider = "litellm";
+    defaultModel = "openai/gpt-6-sol";
     defaultThinkingLevel = "medium";
     enabledModels = [
       "litellm/openai/gpt-6-astra"
@@ -201,22 +207,7 @@ let
       packages = piPersonalPackageRefs;
     };
 
-  piMlxDsparkProvider = {
-    baseUrl = "http://127.0.0.1:18080";
-    api = "anthropic-messages";
-    apiKey = "mlx-dspark";
-    models = [
-      {
-        id = "Qwen3-8B-4bit";
-        contextWindow = 131072;
-        maxTokens = 8192;
-      }
-    ];
-  };
-
-  piPersonalModels = builtins.toJSON {
-    providers.mlx-dspark = piMlxDsparkProvider;
-  };
+  piPersonalModels = builtins.toJSON { providers = { }; };
 
   piWorkModelDefaults = {
     defaultProvider = "lunar";
@@ -236,12 +227,7 @@ let
       subagents.disableBuiltins = true;
     };
 
-  piWorkModels = builtins.toJSON {
-    providers = {
-      openai.baseUrl = "https://eu.api.openai.com/v1";
-      mlx-dspark = piMlxDsparkProvider;
-    };
-  };
+  piWorkModels = builtins.toJSON { providers = { }; };
 
   piWorkMcpServers = {
     "1password" = {
@@ -316,33 +302,20 @@ let
       export AGENTICOS_INSTANCE="lunarOS"
       export AGENTICOS_TOOL_MODE="${agenticosToolMode}"
       export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/${base}/settings/mcporter.json"
-      if [ -n "''${LUNAR_OPENAI_API_KEY:-}" ]; then
-        export OPENAI_API_KEY="$LUNAR_OPENAI_API_KEY"
-      fi
-      export AWS_PROFILE="lw-employee-ai"
-      export AWS_REGION="eu-west-1"
-      export AWS_SDK_LOAD_CONFIG=1
     '';
 
   piWorkEnv = mkPiWorkEnv {
     base = "work";
     agenticosToolMode = "lazy";
   };
-  piWorkAuth = builtins.toJSON {
-    openai = {
-      type = "api_key";
-      key = "$OPENAI_API_KEY";
-    };
-  };
-
 in
 {
-  inherit piPersonalPackageRefs piWorkAuth;
+  inherit piPersonalPackageRefs;
 
   targets = {
     pi = {
       personal = {
-        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs;
+        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs piMinimalPackageRefs;
         "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
@@ -350,7 +323,10 @@ in
       work = {
         "mcporter.json" = piWorkMcporter;
         "models.json" = piWorkModels;
-        "settings.json" = mkPiMinimalSettings piWorkSettingsAttrs;
+        "settings.json" = mkPiMinimalSettings piWorkSettingsAttrs (
+          builtins.filter (package: package != piLitellmProviderPackage) piMinimalPackageRefs
+          ++ [ "npm:@lunarway/pi-lunar-litellm@0.2.1" ]
+        );
         "env" = piWorkEnv;
       };
       personal-default = {
@@ -382,6 +358,21 @@ in
         "env" = mkPiPersonalEnv "personal-browser" + ''
           export AFFINE_MCP_SOPS_FILE="${self}/secrets/assistants/affine-mcp.yaml"
         '';
+      };
+      personal-web = {
+        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
+        "models.json" = piPersonalModels;
+        "mcporter.json" = piEmptyMcporter;
+        "env" = mkPiPersonalEnv "personal-web";
+      };
+      work-web = {
+        "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
+        "models.json" = piWorkModels;
+        "mcporter.json" = piWorkMcporter;
+        "env" = mkPiWorkEnv {
+          base = "work-web";
+          agenticosToolMode = "lazy";
+        };
       };
       work-browser = {
         "settings.json" = mkPiHerdrSettings (

@@ -16,6 +16,8 @@
   boot.loader.efi.canTouchEfiVariables = true;
   # Avoid deep CPU idle states while diagnosing unexplained hard resets.
   boot.kernelParams = [ "processor.max_cstate=1" ];
+  boot.kernelModules = [ "amdgpu" ];
+  hardware.graphics.enable = true;
   networking.hostName = "nixos-ry6b";
   networking.networkmanager.enable = true;
 

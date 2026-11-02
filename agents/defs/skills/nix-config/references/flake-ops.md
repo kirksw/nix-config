@@ -21,13 +21,8 @@ nix flake show --all-systems 2>/dev/null | rg 'sync'
 
 ## Check Suite
 
-`nix flake check --no-build` evaluates:
-
-- Home Manager and nix-darwin configurations
-- flake apps
-- package outputs
-- deploy schema checks
-- repository pre-commit check
+`nix flake check --no-build` evaluates flake apps, package outputs, deploy schema checks, and the repository pre-commit check.
+It does not evaluate the Lunar nix-darwin toplevel or its Home Manager activation; validate that separately before switching.
 
 Expected non-fatal warnings in this repo:
 
@@ -78,7 +73,7 @@ profiles, and tier mappings; `agents/pi-assets.nix` packages them.
 
 ## Other Repository Commands
 
-- `nix flake update [input]` updates flake inputs.
+- `nix flake update [input]` updates flake inputs. After an input update that affects Lunar, run `nix build .#darwinConfigurations.lunar.config.system.build.toplevel --no-link` before switching; `nix flake check --no-build` alone will not catch missing host package attributes.
 - `nix run .#update-packages` updates entries under `packages/` that define `passthru.updateScript`.
   Entries without an update script are intentionally treated as pinned and reported as skipped.
   Herdr is included and advances to the latest stable GitHub release together with its coupled source, dependency, and Pi integration hashes.
