@@ -49,9 +49,44 @@ in
       python3
       go
       self.packages.${pkgs.stdenv.hostPlatform.system}.codex
+      self.packages.${system}.claude-code
     ];
   };
-  programs.home-manager.enable = true;
+  programs = {
+    home-manager.enable = true;
+    starship = {
+      enable = true;
+      enableZshIntegration = true;
+      settings = builtins.fromTOML (builtins.readFile "${self}/config/zsh/starship/presets/pure.toml");
+    };
+    fzf.enable = true;
+    zoxide.enable = true;
+    yazi = {
+      enable = true;
+      enableZshIntegration = true;
+      shellWrapperName = "yy";
+    };
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+    zsh = {
+      enable = true;
+      autocd = true;
+      enableCompletion = true;
+      defaultKeymap = "viins";
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+      history = {
+        size = 10000;
+        path = "${config.xdg.dataHome}/zsh/history";
+      };
+      shellAliases = {
+        la = "ls -la";
+        ll = "ls -l";
+      };
+    };
+  };
   launchd.agents.sops-nix.domain = "user";
   sops.age.keyFile = "${config.home.homeDirectory}/.config/age/keys.txt";
   sops.secrets = {

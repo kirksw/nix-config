@@ -48,6 +48,9 @@
         shell = pkgs.zsh;
         description = "Unattended development agent";
         createHome = true;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRojqfJdEXsAAXK4+5G6YLHQ5QpZOsiwwXAb5txy11Z kirk@cntd.io"
+        ];
       };
     };
   };
