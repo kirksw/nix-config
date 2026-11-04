@@ -248,6 +248,11 @@ let
       url = "https://mcp-grafana.lunar.tech/mcp";
       lifecycle = "lazy";
     };
+    google-workspace = {
+      url = "https://google-workspace-mcp.prod.lunar.tech/";
+      auth = "oauth";
+      lifecycle = "lazy";
+    };
     linear = {
       url = "https://mcp.linear.app/mcp";
       auth = "oauth";
