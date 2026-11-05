@@ -40,6 +40,7 @@ in
       pi
       gh
       lazygit
+      inputs.ezgit.packages.${system}.default
       gitmux
       jq
       yq
