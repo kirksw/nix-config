@@ -121,8 +121,6 @@ in
     neovim.enable = true;
     tmux.enable = true;
     ghostty.enable = true;
-    wezterm.enable = true;
-    cmux.enable = true;
   };
 
   launchd.agents.sops-nix.domain = "user";
