@@ -74,8 +74,10 @@ let
       openclaw = {
         router = "home-llm-router";
         providerMode = "litellm";
-        modelPrimary = "litellm/openai/gpt-5.6-luna";
+        modelPrimary = "litellm/openai/gpt-6-luna";
         modelFallbacks = [
+          "litellm/openai/gpt-6.1-terra"
+          "litellm/openai/gpt-6.1-sol"
           "litellm/glm-5.2"
         ];
         modelAllowlist = [
@@ -131,8 +133,10 @@ let
           "litellm/glm-5.3-flash"
         ];
         fileTransferEnabled = false;
-        modelPrimary = "litellm/openai/gpt-5.6-luna";
+        modelPrimary = "litellm/openai/gpt-6-luna";
         modelFallbacks = [
+          "litellm/openai/gpt-6.1-terra"
+          "litellm/openai/gpt-6.1-sol"
           "litellm/glm-5.2"
         ];
         thinkingDefault = "medium";
