@@ -7,9 +7,18 @@
   imports = [
     ../../../modules/shared
     ../../../modules/darwin/services/tailscale.nix
+    ../../../modules/darwin/services/screen-sharing.nix
   ];
 
-  darwinModules.tailscale.enable = true;
+  darwinModules = {
+    tailscale.enable = true;
+    screenSharing = {
+      enable = true;
+      allowedUsers = [ "kirk" ];
+    };
+  };
+
+  home-manager.users.kirk = import ./kirk-home.nix;
 
   launchd.daemons.tailscale-ssh = {
     script = ''
