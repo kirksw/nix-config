@@ -96,6 +96,14 @@ let
                 IdentitiesOnly = true;
                 ForwardAgent = host.forwardAgent or true;
                 AddKeysToAgent = "yes";
+                # Tolerate Tailscale path changes (direct <-> DERP relay, VPN toggles)
+                ServerAliveInterval = 15;
+                ServerAliveCountMax = 6;
+                TCPKeepAlive = true;
+                ConnectTimeout = 15;
+                ControlMaster = "auto";
+                ControlPath = "~/.ssh/cm-%C";
+                ControlPersist = "10m";
               };
             }
           else
