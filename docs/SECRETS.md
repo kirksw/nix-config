@@ -13,7 +13,7 @@ secrets/
 ├── cloudflare/ry6a-tunnel-token.yaml
 ├── git/{kirksw,lunarway,pat}.yaml
 ├── k8s/{flux,homelab,node}.yaml
-├── ssh/{default,k8s,kirksw,lunarway,ry4a-root,ry4a,ry6a-root,ry6b-root,ry6b}.yaml
+├── ssh/{default,k8s,kirksw,kirksw-github-rsa,lunarway,ry4a-root,ry4a,ry6a-root,ry6b-root,ry6b}.yaml
 └── tailscale/agent-microvms.yaml
 ```
 
@@ -36,7 +36,7 @@ Recipient public keys are defined once in [`.sops.yaml`](../.sops.yaml).
 | Path | Recipients |
 | --- | --- |
 | `secrets/api/litellm.yaml` | `yubikey-main`, `yubikey-backup`, `manual`, `nix-mm1`, and `nix-mm1-kirk` |
-| `secrets/(git\|ssh)/kirksw.yaml` | `yubikey-main`, `yubikey-backup`, `manual`, and `nix-mm1-kirk` |
+| `secrets/(git/kirksw\|ssh/kirksw(-github-rsa)?).yaml` | `yubikey-main`, `yubikey-backup`, `manual`, and `nix-mm1-kirk` |
 | `secrets/k8s/homelab.yaml` | `yubikey-main`, `yubikey-backup`, `manual`, `k8s`, and `nix-mm1-kirk` |
 | `secrets/ssh/ry6b-root.yaml` | all four shared recipient groups plus `nixos-ry6b` |
 | `secrets/ssh/ry(4a\|6a)-root.yaml` | all four shared recipient groups |

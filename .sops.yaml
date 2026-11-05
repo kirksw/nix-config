@@ -16,7 +16,7 @@ creation_rules:
           - *manual
           - *nix-mm1
           - *nix-mm1-kirk
-  - path_regex: secrets/(git|ssh)/kirksw\.yaml$
+  - path_regex: secrets/(git/kirksw|ssh/kirksw(-github-rsa)?)\.yaml$
     key_groups:
       - age:
           - *yubikey-main
