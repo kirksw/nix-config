@@ -101,11 +101,18 @@ in
     ssh = {
       enable = true;
       enableDefaultConfig = false;
-      settings."github.com-kirksw" = {
-        HostName = "github.com";
-        User = "git";
-        IdentityFile = config.sops.secrets."ssh/kirksw/private".path;
-        IdentitiesOnly = true;
+      settings = {
+        "github.com" = {
+          User = "git";
+          IdentityFile = config.sops.secrets."ssh/kirksw-github-rsa/private".path;
+          IdentitiesOnly = true;
+        };
+        "github.com-kirksw" = {
+          HostName = "github.com";
+          User = "git";
+          IdentityFile = config.sops.secrets."ssh/kirksw-github-rsa/private".path;
+          IdentitiesOnly = true;
+        };
       };
     };
     zsh = {
@@ -143,6 +150,12 @@ in
       "ssh/kirksw/private" = {
         sopsFile = "${self}/secrets/ssh/kirksw.yaml";
         key = "private";
+        mode = "0400";
+      };
+      "ssh/kirksw-github-rsa/private" = {
+        sopsFile = "${self}/secrets/ssh/kirksw-github-rsa.yaml";
+        key = "private";
+        path = "${homeDir}/.ssh/id_rsa";
         mode = "0400";
       };
       "api/litellm/api-key" = {
