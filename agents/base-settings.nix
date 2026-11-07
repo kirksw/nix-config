@@ -298,6 +298,19 @@ let
     mcpServers = lib.mapAttrs (_: server: server // { lifecycle = "ephemeral"; }) piWorkMcpServers;
   };
 
+  piWorkNativeMcp = builtins.toJSON {
+    mcpServers = lib.mapAttrs (
+      _: server:
+      (builtins.removeAttrs server [
+        "auth"
+        "lifecycle"
+      ])
+      // {
+        exposure = "codemode";
+      }
+    ) piWorkMcpServers;
+  };
+
   mkPiPersonalEnv = base: ''
     export PI_CACHE_RETENTION="long"
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
@@ -362,6 +375,7 @@ in
       };
       work-default = {
         "mcporter.json" = piWorkMcporter;
+        "mcp.json" = piWorkNativeMcp;
         "models.json" = piWorkModels;
         "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
         "env" = mkPiWorkEnv {
@@ -394,6 +408,7 @@ in
         "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
         "models.json" = piWorkModels;
         "mcporter.json" = piWorkMcporter;
+        "mcp.json" = piWorkNativeMcp;
         "env" = mkPiWorkEnv {
           base = "work-web";
           agenticosToolMode = "lazy";

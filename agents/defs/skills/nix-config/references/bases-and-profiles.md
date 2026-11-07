@@ -90,7 +90,9 @@ It has no subagents, MCP tooling, tracing, to-do tracking, or permission enforce
 
 Browser profiles include `agent-browser`, `google-hotels`, and `nix-config` skills.
 The personal browser profile also includes `affine` and `home-mcp`.
-Browser profiles include the web-access package. The personal browser base configures the AFFiNE MCP server; the work browser base has no MCP servers.
+Browser profiles include the web-access package. The personal browser base configures the AFFiNE MCP server through MCPorter; the work browser base has no MCP servers.
+Work default and web connect directly to Pi's MCP servers with code-mode exposure and an approval gate for non-read-only calls.
+Work fallback retains the MCPorter wrappers, and personal profiles remain unchanged.
 The launcher uses installed Google Chrome on macOS when available; otherwise run `agent-browser install` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
 The launcher gives agent-browser separate persistent browser profiles and session names for personal and work use.
 Browser skills do not authorize bookings, payments, or other external commitments without user approval.
@@ -131,7 +133,7 @@ Every profile selects skills only. The repository defines no custom agents.
 
 - base: `work-default`
 - purpose: everyday work engineering with Herdr orchestration
-- skills: `1password`, `grafana`, `granola`, `hubble-mcp`, `lavish`, `linear`, `lunar-skills`, `nix-config`, `slack`, `sourcegraph`
+- skills: `doc-coauthoring`, `excalidraw-diagram`, `lavish`, `nix-config`, `work-mcp`; work web adds web-design skills and work fallback retains the dedicated MCPorter skills
 - package surface: the lean set with the `pi-herdr-agents` replacement and `agenticos`
 
 ### `work-fallback`
@@ -145,7 +147,7 @@ Every profile selects skills only. The repository defines no custom agents.
 
 - base: `work-browser`
 - purpose: browser automation and web/travel research
-- skills: `agent-browser`, `google-hotels`, `nix-config`
+- skills: `agent-browser`, `doc-coauthoring`, `excalidraw-diagram`, `google-hotels`, `nix-config`
 
 ### `work-web`
 

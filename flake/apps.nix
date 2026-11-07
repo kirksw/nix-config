@@ -231,7 +231,7 @@ let
           settingNames = builtins.filter (fileName: fileName != "settings.json") (builtins.attrNames files);
           fileCommands = lib.concatMapStringsSep "\n" (
             fileName:
-            if fileName == "config.toml" then
+            if fileName == "config.toml" || fileName == "mcp.json" then
               ''
                 sync_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}"
               ''

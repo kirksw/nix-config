@@ -19,7 +19,9 @@ let
     ./defs/skills/affine
     ./defs/skills/agent-browser
     ./defs/skills/codex-imagegen
+    ./defs/skills/doc-coauthoring
     ./defs/skills/domain-modeling
+    ./defs/skills/excalidraw-diagram
     ./defs/skills/fli
     ./defs/skills/google-flights
     ./defs/skills/google-hotels
@@ -43,11 +45,13 @@ let
     ./defs/skills/plan-x
     ./defs/skills/session-heuristics
     ./defs/skills/session-resume.nix
+    ./defs/skills/semantic-svg-diagrams
     ./defs/skills/skill-creator
     ./defs/skills/slack
     ./defs/skills/sourcegraph
     ./defs/skills/travel-search
     ./defs/skills/what-if
+    ./defs/skills/work-mcp
     ./defs/skills/web-design
     ./defs/skills/writing-great-skills
     ./defs/skills/xcode

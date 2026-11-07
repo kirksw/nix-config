@@ -143,6 +143,34 @@ for scope in ("personal", "work"):
     assert identities(default_settings) == sorted(herdr + extra), f"{scope}: unexpected default packages"
     assert tintinweb not in identities(default_settings), f"{scope}: default keeps Tintinweb"
     for profile in (fallback, default, browser, web):
+        svg_skill = profile / "skills/semantic-svg-diagrams"
+        assert (svg_skill / "SKILL.md").is_file(), (scope, profile)
+        assert (svg_skill / "scripts/validate_svg.py").is_file(), (scope, profile)
+        assert (svg_skill / "scripts/render_svg.py").is_file(), (scope, profile)
+        for rough_resource in (
+            "references/rough-style.md",
+            "assets/datamesh-reference.png",
+            "assets/datamesh-reference.svg",
+            "scripts/rough_svg.cjs",
+            "scripts/rough_svg.test.cjs",
+            "scripts/package.json",
+            "scripts/package-lock.json",
+        ):
+            assert (svg_skill / rough_resource).is_file(), (scope, profile, rough_resource)
+        assert (svg_skill / "assets/example.svg").is_file(), (scope, profile)
+        assert not (svg_skill / "agents/openai.yaml").exists(), (scope, profile)
+        doc_skill = profile / "skills/doc-coauthoring/SKILL.md"
+        diagram_skill = profile / "skills/excalidraw-diagram/SKILL.md"
+        if scope == "work":
+            assert doc_skill.is_file(), profile
+            assert "# Doc Co-Authoring Workflow" in doc_skill.read_text()
+            assert diagram_skill.is_file(), profile
+            assert (profile / "skills/excalidraw-diagram/references/render_excalidraw.py").is_file()
+            assert (profile / "skills/excalidraw-diagram/references/render_template.html").is_file()
+            assert "$PI_CODING_AGENT_DIR/skills/excalidraw-diagram/references" in diagram_skill.read_text()
+        else:
+            assert not doc_skill.exists(), profile
+            assert not diagram_skill.exists(), profile
         settings = json.loads((profile / "settings.json").read_text())
         base_dir = profile.parent.parent.name
         check_pins(scope, base_dir, settings)
@@ -205,9 +233,27 @@ for scope in ("personal", "work"):
         assert not (profile / "skills/affine").exists()
         assert "affine" not in json.loads((profile / "mcporter.json").read_text())["mcpServers"]
     if scope == "work":
-        assert not (default / "skills/work-mcp").exists()
+        assert (default / "skills/work-mcp/SKILL.md").is_file()
+        assert (web / "skills/work-mcp/SKILL.md").is_file()
+        assert not (fallback / "skills/work-mcp").exists()
+        assert not (browser / "skills/work-mcp").exists()
+        for profile in (default, web):
+            assert (profile / "extensions/work-mcp-approval/index.ts").is_file()
+            native_servers = json.loads((profile / "mcp.json").read_text())["mcpServers"]
+            assert set(native_servers) == {
+                "1password", "grafana", "google-workspace", "granola", "hubble-mcp",
+                "linear", "lunar-skills", "slack", "sourcegraph",
+            }
+            assert all(server["exposure"] == "codemode" for server in native_servers.values())
+            assert all("lifecycle" not in server and "auth" not in server for server in native_servers.values())
+            assert (profile / "mcp.json").is_symlink()
+            for skill in ("1password", "grafana", "granola", "hubble-mcp", "linear", "lunar-skills", "slack", "sourcegraph"):
+                assert not (profile / "skills" / skill).exists(), skill
+        for profile in (fallback, browser):
+            assert not (profile / "mcp.json").exists()
+            assert not (profile / "extensions/work-mcp-approval").exists()
         for skill in ("1password", "grafana", "granola", "hubble-mcp", "linear", "lunar-skills", "slack", "sourcegraph"):
-            assert (default / "skills" / skill / "scripts/run.mjs").is_file(), skill
+            assert (fallback / "skills" / skill / "scripts/run.mjs").is_file(), skill
     for skill in ("agent-browser", "google-hotels"):
         assert (browser / "skills" / skill / "SKILL.md").is_file(), (scope, skill)
     for profile in (fallback, default, browser, web):
