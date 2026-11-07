@@ -24,6 +24,7 @@
       url = "github:zhaofengli/nix-homebrew";
       inputs.brew-src.follows = "homebrew-brew";
     };
+
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
     flake-schemas.url = "https://flakehub.com/f/DeterminateSystems/flake-schemas/0";
     flake-utils.url = "github:numtide/flake-utils";
@@ -88,10 +89,12 @@
       url = "github:emilkowalski/skills/f1090bec277140d02ed202440185ad9d02ac1490";
       flake = false;
     };
+
     impeccable-skill = {
       url = "github:pbakaus/impeccable/e89e3ada3e875a89ac2c5d33d11e65ebef6fe285";
       flake = false;
     };
+
     taste-skill = {
       url = "github:Leonxlnx/taste-skill/12af471f627f866411b4bd785b19646d3672784c";
       flake = false;

@@ -7,9 +7,18 @@
   imports = [
     ../../../modules/shared
     ../../../modules/darwin/services/tailscale.nix
+    ../../../modules/darwin/services/screen-sharing.nix
   ];
 
-  darwinModules.tailscale.enable = true;
+  darwinModules = {
+    tailscale.enable = true;
+    screenSharing = {
+      enable = true;
+      allowedUsers = [ "kirk" ];
+    };
+  };
+
+  home-manager.users.kirk = import ./kirk-home.nix;
 
   launchd.daemons.tailscale-ssh = {
     script = ''
@@ -48,6 +57,9 @@
         shell = pkgs.zsh;
         description = "Unattended development agent";
         createHome = true;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRojqfJdEXsAAXK4+5G6YLHQ5QpZOsiwwXAb5txy11Z kirk@cntd.io"
+        ];
       };
     };
   };
@@ -64,6 +76,11 @@
   };
   programs.zsh.enable = true;
   services.openssh.enable = true;
+  system.activationScripts.postActivation.text = ''
+    if ! /usr/sbin/dseditgroup -o checkmember -m agent com.apple.access_ssh >/dev/null 2>&1; then
+      /usr/sbin/dseditgroup -o edit -a agent -t user com.apple.access_ssh
+    fi
+  '';
 
   determinateNix = {
     enable = true;

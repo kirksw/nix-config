@@ -371,6 +371,27 @@ in
                     reasoning = true;
                   }
                   {
+                    id = "openai/gpt-6-luna";
+                    name = "GPT-6 Luna";
+                    contextWindow = 500000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
+                    id = "openai/gpt-6.1-terra";
+                    name = "GPT-6.1 Terra";
+                    contextWindow = 500000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
+                    id = "openai/gpt-6.1-sol";
+                    name = "GPT-6.1 Sol";
+                    contextWindow = 500000;
+                    maxTokens = 128000;
+                    reasoning = true;
+                  }
+                  {
                     id = "deepseek-flash";
                     name = "DeepSeek Flash";
                     # The gateway alias currently omits capability metadata.

@@ -1,0 +1,12 @@
+{
+  "name": "semantic-svg-diagrams-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build-time Rough.js geometry for standalone semantic SVG diagrams",
+  "scripts": {
+    "test": "node --test rough_svg.test.cjs"
+  },
+  "dependencies": {
+    "roughjs": "4.6.6"
+  }
+}

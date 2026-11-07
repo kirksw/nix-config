@@ -14,7 +14,17 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+local lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json"
+if vim.fn.filewritable(lockfile) == 0 then
+  local writable_lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json"
+  if vim.fn.filereadable(writable_lockfile) == 0 and vim.fn.filereadable(lockfile) == 1 then
+    vim.fn.writefile(vim.fn.readfile(lockfile), writable_lockfile)
+  end
+  lockfile = writable_lockfile
+end
+
 require("lazy").setup({
+  lockfile = lockfile,
   spec = {
     -- add LazyVim and import its plugins
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },

@@ -231,7 +231,7 @@ let
           settingNames = builtins.filter (fileName: fileName != "settings.json") (builtins.attrNames files);
           fileCommands = lib.concatMapStringsSep "\n" (
             fileName:
-            if fileName == "config.toml" then
+            if fileName == "config.toml" || fileName == "mcp.json" then
               ''
                 sync_file "${storeSettingsDir}/${fileName}" "${settingsDir}/${fileName}"
               ''
@@ -432,6 +432,21 @@ let
       fi
     }
 
+    remove_legacy_work_aws_env() {
+      target_file="$1"
+      if [ ! -f "$target_file" ] || ! ${pkgs.gnugrep}/bin/grep -Eq '^export AWS_(PROFILE|REGION|SDK_LOAD_CONFIG)=' "$target_file"; then
+        return
+      fi
+      if [ "$DRY_RUN" -eq 1 ]; then
+        echo "DRY-RUN remove legacy AWS exports from $target_file"
+        return
+      fi
+      env_tmp="$(${pkgs.coreutils}/bin/mktemp)"
+      ${pkgs.gnugrep}/bin/grep -Ev '^export AWS_(PROFILE|REGION|SDK_LOAD_CONFIG)=' "$target_file" > "$env_tmp" || true
+      run ${pkgs.coreutils}/bin/install -m 0644 "$env_tmp" "$target_file"
+      run ${pkgs.coreutils}/bin/rm -f "$env_tmp"
+    }
+
     install_lines_once() {
       source_file="$1"
       target_file="$2"
@@ -482,6 +497,10 @@ let
     }
 
     ${allBaseSettingsCommands}
+
+    for work_base in work work-default work-browser work-web; do
+      remove_legacy_work_aws_env "$CONFIG_BASE/pi/bases/$work_base/settings/env"
+    done
 
     remove_legacy_pi_work_mcp "$CONFIG_BASE/pi/bases/work/settings/mcp.json"
     # Initialize the work login store without direct provider credentials.

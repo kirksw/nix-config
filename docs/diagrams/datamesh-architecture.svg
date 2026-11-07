@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 2000 1280" preserveAspectRatio="xMidYMid meet">
+<title>Data Mesh Architecture - editable recreation</title>
+<desc>Federated governance above domain data products and a self-serve data platform below. An enabling team supports the domains. Solid arrows represent data flow; dashed arrows represent usage.</desc>
+<metadata id="diagram-model"><![CDATA[{"schemaVersion":"1.0","title":"Data Mesh Architecture","description":"A faithful interpretive recreation of the referenced diagram. Domain membership is explicit; the remote domain is represented as a node to anchor its usage edge. Platform and governance offerings have no implied edges because the source draws none.","nodes":[{"id":"interoperability","label":"Interoperability Policy","type":"policy"},{"id":"documentation","label":"Documentation Policy","type":"policy"},{"id":"security","label":"Security Policy","type":"policy"},{"id":"privacy","label":"Privacy Policy","type":"policy"},{"id":"compliance","label":"Compliance Policy","type":"policy"},{"id":"governance-team","label":"Governance Group","type":"team"},{"id":"analytics","label":"Analytics","type":"capability"},{"id":"domain-team","label":"Domain Team","type":"team"},{"id":"operational-data","label":"Operational Data","type":"data-source"},{"id":"main-product","label":"Data Product","type":"data-product"},{"id":"data-contract","label":"Data Contract","type":"contract"},{"id":"other-product","label":"Data Product","type":"data-product"},{"id":"remote-domain","label":"Domain","type":"external-domain"},{"id":"consulting","label":"Consulting","type":"support"},{"id":"examples","label":"Examples","type":"support"},{"id":"best-practices","label":"Best Practices","type":"support"},{"id":"enabling-team","label":"Enabling Team","type":"team"},{"id":"storage-query","label":"Storage and Query Engine","type":"platform-capability"},{"id":"product-catalog","label":"Data Product Catalog","type":"platform-capability"},{"id":"contract-management","label":"Data Contract Management","type":"platform-capability"},{"id":"monitoring","label":"Monitoring","type":"platform-capability"},{"id":"policy-automation","label":"Policy Automation","type":"platform-capability"},{"id":"platform-team","label":"Data Platform Team","type":"team"}],"edges":[{"id":"analytics-input","from":"analytics","to":"main-product","type":"data-flow"},{"id":"ingest","from":"operational-data","to":"main-product","type":"data-flow","label":"ingest"},{"id":"publish","from":"main-product","to":"data-contract","type":"data-flow","label":"publish"},{"id":"cross-domain-product-use","from":"main-product","to":"other-product","type":"usage","label":"use"},{"id":"cross-domain-contract-use","from":"remote-domain","to":"data-contract","type":"usage","label":"use"}],"groups":[{"id":"governance","label":"Federated Governance","children":["interoperability","documentation","security","privacy","compliance","governance-team"]},{"id":"main-domain","label":"Domain","children":["analytics","domain-team","operational-data","main-product","data-contract"]},{"id":"left-domain","label":"Domain","children":["other-product"]},{"id":"enabling","label":"Enabling Team","children":["consulting","examples","best-practices","enabling-team"]},{"id":"platform","label":"Self-serve Data Platform","children":["storage-query","product-catalog","contract-management","monitoring","policy-automation","platform-team"]}]}]]></metadata>
+<defs>
+<pattern id="gov-hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><path d="M0 0 V10" stroke="#cde5d3" stroke-width="2"/></pattern>
+<pattern id="domain-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><path d="M0 0 V9" stroke="#f9eaaa" stroke-width="2"/></pattern>
+<pattern id="support-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><path d="M0 0 V9" stroke="#f4d7ee" stroke-width="2"/></pattern>
+<pattern id="platform-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><path d="M0 0 V9" stroke="#d3eafb" stroke-width="2"/></pattern>
+<marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L10 6 L1 11" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<rect x="0" y="0" width="2000" height="1280" fill="white"/>
+<g fill="#111" font-family="Chalkboard SE, Comic Sans MS, cursive" font-weight="400">
+<text x="1000" y="45" font-size="38" text-anchor="middle" >Data Mesh Architecture</text>
+<g id="group-governance" data-semantic-id="governance" data-kind="group"><rect x="8" y="82" width="1984" height="177" fill="url(#gov-hatch)" stroke="#a8d6ad" stroke-width="1.5"/>
+<text x="1000" y="117" font-size="22" text-anchor="middle" >Federated Governance</text>
+</g>
+<g id="group-main-domain" data-semantic-id="main-domain" data-kind="group"><ellipse cx="903" cy="630" rx="554" ry="307" fill="url(#domain-hatch)" stroke="#f3cd54" stroke-width="2.5"/>
+<text x="905" y="359" font-size="22" text-anchor="middle" >Domain</text>
+</g>
+<g id="group-left-domain" data-semantic-id="left-domain" data-kind="group"><ellipse cx="169" cy="760" rx="132" ry="96" fill="url(#domain-hatch)" stroke="#f3cd54" stroke-width="2"/>
+<text x="170" y="697" font-size="21" text-anchor="middle" >Domain</text>
+</g>
+<g id="group-enabling" data-semantic-id="enabling" data-kind="group"><rect x="1726" y="278" width="266" height="747" fill="url(#support-hatch)" stroke="#b522aa" stroke-width="2"/>
+</g>
+<g id="group-platform" data-semantic-id="platform" data-kind="group"><rect x="8" y="1043" width="1984" height="176" fill="url(#platform-hatch)" stroke="#a6d6f2" stroke-width="1.5"/>
+<text x="1000" y="1207" font-size="22" text-anchor="middle" >Self-serve Data Platform</text>
+</g>
+<g id="edge-analytics-input" data-semantic-id="analytics-input" data-kind="edge" data-from="analytics" data-to="main-product"><path d="M915 515 V569" fill="none" stroke="#1a1a1a" stroke-width="2.4" marker-end="url(#arrow)"/>
+</g>
+<g id="edge-ingest" data-semantic-id="ingest" data-kind="edge" data-from="operational-data" data-to="main-product"><path d="M642 630 H796" fill="none" stroke="#1a1a1a" stroke-width="2.4" marker-end="url(#arrow)"/>
+<text x="708" y="616" font-size="19" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="5">ingest</text>
+</g>
+<g id="edge-publish" data-semantic-id="publish" data-kind="edge" data-from="main-product" data-to="data-contract"><path d="M1034 630 H1163" fill="none" stroke="#1a1a1a" stroke-width="2.4" marker-end="url(#arrow)"/>
+<text x="1099" y="617" font-size="19" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="5">publish</text>
+</g>
+<g id="edge-cross-domain-product-use" data-semantic-id="cross-domain-product-use" data-kind="edge" data-from="main-product" data-to="other-product"><path d="M915 690 V759 H262" fill="none" stroke="#1a1a1a" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+<text x="540" y="746" font-size="19" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="5">use</text>
+</g>
+<g id="edge-cross-domain-contract-use" data-semantic-id="cross-domain-contract-use" data-kind="edge" data-from="remote-domain" data-to="data-contract"><path d="M1522 630 H1403" fill="none" stroke="#1a1a1a" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+<text x="1460" y="615" font-size="19" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="5">use</text>
+</g>
+<g id="node-interoperability" data-semantic-id="interoperability" data-kind="node">
+<rect x="140" y="141" width="255" height="89" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(154 157.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 C3 2 18 2 18 7 V18 C18 23 3 23 3 18 Z" fill="none"/><path d="M3 7 C6 11 15 11 18 7 M3 12 C6 16 15 16 18 12" fill="none"/><path d="M40 7 C40 2 55 2 55 7 V18 C55 23 40 23 40 18 Z" fill="none"/><path d="M40 7 C43 11 52 11 55 7 M40 12 C43 16 52 16 55 12" fill="none"/><path d="M3 42 C3 37 18 37 18 42 V53 C18 58 3 58 3 53 Z" fill="none"/><path d="M3 42 C6 46 15 46 18 42 M3 47 C6 51 15 51 18 47" fill="none"/><path d="M40 42 C40 37 55 37 55 42 V53 C55 58 40 58 40 53 Z" fill="none"/><path d="M40 42 C43 46 52 46 55 42 M40 47 C43 51 52 51 55 47" fill="none"/><path d="M22 21 L35 34 M35 21 L22 34" fill="none" stroke="#2995dd"/></g>
+<text x="222" y="179.0" font-size="20" text-anchor="start" >Interoperability</text>
+<text x="222" y="206.0" font-size="20" text-anchor="start" >Policy</text>
+</g>
+<g id="node-documentation" data-semantic-id="documentation" data-kind="node">
+<rect x="442" y="141" width="255" height="89" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(456 157.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10 Q31 7 49 12 L50 51 Q30 55 7 52 Z" fill="none"/><path d="M14 6 Q20 0 26 5 L25 29 L20 23 L15 30 Z" fill="white" stroke="#2995dd"/><path d="M29 17 Q33 22 37 17 L43 19 M29 29 L43 28 M14 41 Q29 39 43 40" fill="none"/></g>
+<text x="524" y="179.0" font-size="20" text-anchor="start" >Documentation</text>
+<text x="524" y="206.0" font-size="20" text-anchor="start" >Policy</text>
+</g>
+<g id="node-security" data-semantic-id="security" data-kind="node">
+<rect x="728" y="141" width="255" height="89" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(742 157.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 24 C8 -3 48 -3 48 24 M14 24 C14 4 42 4 42 24" fill="none"/><path d="M4 25 Q29 29 53 25 L52 50 Q28 56 4 50 Z" fill="none"/><path d="M4 37 L52 38 M7 24 Q26 29 52 24" fill="none" stroke="#2995dd"/><circle cx="11" cy="32" r="1" fill="white"/><circle cx="17" cy="32" r="1" fill="white"/><circle cx="11" cy="44" r="1" fill="white"/><circle cx="17" cy="44" r="1" fill="white"/></g>
+<text x="810" y="179.0" font-size="20" text-anchor="start" >Security</text>
+<text x="810" y="206.0" font-size="20" text-anchor="start" >Policy</text>
+</g>
+<g id="node-privacy" data-semantic-id="privacy" data-kind="node">
+<rect x="1031" y="141" width="255" height="89" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1045 157.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19 C12 -1 36 -1 35 19 M5 20 Q18 16 40 21 L39 49 Q23 52 5 47 Z" fill="none"/><circle cx="24" cy="29" r="5" fill="white" stroke="#2995dd"/><path d="M16 43 Q17 35 23 35 Q30 35 32 42" fill="none" stroke="#2995dd"/><path d="M40 32 L51 35 L54 43 Q51 53 44 56 Q35 53 34 43 Z M39 35 L48 51" fill="white"/></g>
+<text x="1113" y="179.0" font-size="20" text-anchor="start" >Privacy</text>
+<text x="1113" y="206.0" font-size="20" text-anchor="start" >Policy</text>
+</g>
+<g id="node-compliance" data-semantic-id="compliance" data-kind="node">
+<rect x="1318" y="141" width="255" height="89" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1332 157.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5 Q19 1 31 5 L44 17 L43 51 Q24 55 7 50 Z M30 5 L30 19 L44 17" fill="none"/><path d="M15 21 L23 21 M15 31 L24 31 M15 41 L24 40 M16 0 L36 0 L50 10 L50 25" fill="none" stroke="#2995dd"/><g transform="translate(32 27) scale(0.85)"><path d="M2 2 Q10 7 17 1 L26 5 L25 20 Q22 29 14 33 Q3 30 2 20 Z" fill="none"/><path d="M7 10 Q14 14 21 8 L20 20 Q17 25 14 26 Q8 24 7 19 Z" fill="none" stroke="#2995dd"/></g></g>
+<text x="1400" y="179.0" font-size="20" text-anchor="start" >Compliance</text>
+<text x="1400" y="206.0" font-size="20" text-anchor="start" >Policy</text>
+</g>
+<g id="node-governance-team" data-semantic-id="governance-team" data-kind="node">
+<g transform="translate(1835.5 93)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M27 4 Q17 1 15 12 Q12 23 24 27 Q37 31 42 19 Q43 8 32 4 L29 1 M28 28 L27 77 M0 37 Q28 39 56 38 M27 77 L0 115 M27 77 L57 115" fill="none"/></g>
+<text x="1863.5" y="246" font-size="21" text-anchor="middle" >Governance Group</text>
+</g>
+<g id="node-analytics" data-semantic-id="analytics" data-kind="node">
+<rect x="798" y="395" width="235" height="119" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(812 426.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 51 L6 36 L12 36 L12 51 Z M19 51 L19 29 L25 29 L25 51 Z M32 51 L32 36 L38 36 L38 51 Z M45 51 L45 19 L51 19 L51 51 Z" fill="none" stroke="#2995dd"/><path d="M8 23 Q13 13 21 10 Q27 8 33 23 Q41 27 48 3" fill="none"/><circle cx="8" cy="23" r="3" fill="white"/><circle cx="21" cy="10" r="3" fill="white"/><circle cx="33" cy="23" r="3" fill="white"/><circle cx="48" cy="3" r="3" fill="white"/></g>
+<text x="880" y="461.5" font-size="20" text-anchor="start" >Analytics</text>
+</g>
+<g id="node-domain-team" data-semantic-id="domain-team" data-kind="node">
+<g transform="translate(1124.5 393)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M27 4 Q17 1 15 12 Q12 23 24 27 Q37 31 42 19 Q43 8 32 4 L29 1 M28 28 L27 77 M0 37 Q28 39 56 38 M27 77 L0 115 M27 77 L57 115" fill="none"/></g>
+<text x="1152.5" y="546" font-size="21" text-anchor="middle" >Domain Team</text>
+</g>
+<g id="node-operational-data" data-semantic-id="operational-data" data-kind="node">
+<rect x="407" y="571" width="235" height="119" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(421 602.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22 Q19 18 35 22 L35 51 Q20 56 4 51 Z M5 29 Q19 34 35 29 M5 40 Q20 45 35 40" fill="none"/><path d="M8 27 L10 27 M14 27 L16 27 M8 38 L10 38 M14 38 L16 38 M8 48 L10 48 M14 48 L16 48" fill="none" stroke="#2995dd"/><path d="M39 8 Q34 0 40 1 L44 6 L46 0 Q52 -2 51 6 L56 7 Q61 12 53 14 L55 19 Q52 25 47 17 L43 21 Q37 22 40 15 L35 14 Q31 9 39 8 Z" fill="white"/></g>
+<text x="489" y="624.0" font-size="20" text-anchor="start" >Operational</text>
+<text x="489" y="651.0" font-size="20" text-anchor="start" >Data</text>
+</g>
+<g id="node-main-product" data-semantic-id="main-product" data-kind="node">
+<rect x="798" y="571" width="235" height="119" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(812 602.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L28 10 L52 20 L50 44 L28 53 L6 44 Z M28 31 L28 53" fill="none"/><path d="M4 20 L17 13 L29 22 L41 13 L53 20 L39 32 L28 25 L18 33 Z" fill="white"/><path d="M10 37 L20 40 M10 41 L17 43 M34 43 L38 37 L41 42 L46 35" fill="none" stroke="#2995dd"/></g>
+<text x="880" y="637.5" font-size="20" text-anchor="start" >Data Product</text>
+</g>
+<g id="node-data-contract" data-semantic-id="data-contract" data-kind="node">
+<rect x="1165" y="571" width="235" height="119" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1179 602.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 Q23 9 41 12 L41 43 Q24 46 4 43 Z M4 20 L41 20" fill="none"/><path d="M7 27 L38 26 M7 34 L37 33 M18 21 L18 41 M29 21 L29 40" fill="none" stroke="#2995dd"/><path d="M45 33 Q37 30 31 37 Q24 45 32 53 Q40 60 48 52 Q53 46 48 40" fill="white"/><path d="M33 44 L39 49 L48 34" fill="none"/></g>
+<text x="1247" y="624.0" font-size="20" text-anchor="start" >Data</text>
+<text x="1247" y="651.0" font-size="20" text-anchor="start" >Contract</text>
+</g>
+<g id="node-other-product" data-semantic-id="other-product" data-kind="node">
+<rect x="84" y="718" width="176" height="80" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(98 730.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L28 10 L52 20 L50 44 L28 53 L6 44 Z M28 31 L28 53" fill="none"/><path d="M4 20 L17 13 L29 22 L41 13 L53 20 L39 32 L28 25 L18 33 Z" fill="white"/><path d="M10 37 L20 40 M10 41 L17 43 M34 43 L38 37 L41 42 L46 35" fill="none" stroke="#2995dd"/></g>
+<text x="166" y="751.5" font-size="20" text-anchor="start" >Data</text>
+<text x="166" y="778.5" font-size="20" text-anchor="start" >Product</text>
+</g>
+<g id="node-remote-domain" data-semantic-id="remote-domain" data-kind="node">
+<ellipse cx="1607.0" cy="631.0" rx="85.0" ry="57.0" fill="url(#domain-hatch)" stroke="#efc64a" stroke-width="2"/>
+<text x="1607.0" y="638.0" font-size="21" text-anchor="middle" >Domain</text>
+</g>
+<g id="node-consulting" data-semantic-id="consulting" data-kind="node">
+<rect x="1755" y="415" width="221" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1769 431.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 5 Q25 1 42 4 Q49 5 48 20 Q47 26 40 25 L38 31 L31 25 Q16 27 16 20 Z" fill="none" stroke="#2995dd"/><circle cx="16" cy="38" r="6" fill="white"/><circle cx="47" cy="38" r="6" fill="white"/><path d="M7 55 Q8 44 16 44 Q24 44 25 55 M38 55 Q39 44 47 44 Q55 44 56 55 M11 35 Q16 40 21 37 M42 35 Q47 40 52 37" fill="none"/></g>
+<text x="1837" y="466.0" font-size="20" text-anchor="start" >Consulting</text>
+</g>
+<g id="node-examples" data-semantic-id="examples" data-kind="node">
+<rect x="1755" y="534" width="221" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1769 550.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8 Q5 8 5 17 L6 48 Q20 52 38 48 L38 9 Z" fill="none"/><path d="M13 5 C8 1 9 16 13 15 C17 16 17 0 13 5 M24 5 C19 1 20 16 24 15 C28 16 28 0 24 5 M34 5 C29 1 30 16 34 15 C38 16 38 0 34 5" fill="none"/><path d="M13 23 L31 23 M13 33 L28 33 M13 42 L24 42" fill="none" stroke="#2995dd"/><path d="M37 47 L48 34 Q53 29 57 34 Q61 38 56 42 L43 55 L35 57 Z M47 36 L54 43 M37 47 L43 53" fill="white"/></g>
+<text x="1837" y="585.0" font-size="20" text-anchor="start" >Examples</text>
+</g>
+<g id="node-best-practices" data-semantic-id="best-practices" data-kind="node">
+<rect x="1755" y="651" width="221" height="89" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1769 667.5)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 31 L13 29 Q19 24 21 16 Q24 11 28 15 L29 27 L40 27 Q47 28 46 34 L45 47 Q42 54 29 53 L14 49 M6 29 L11 30 L11 49 L6 50" fill="none"/><path d="M8 10 L8 18 M4 14 L12 14 M38 3 L42 8 L47 9 L42 13 L40 18 L36 13 L33 9 Z M51 24 L51 30 M48 27 L54 27" fill="none" stroke="#2995dd"/></g>
+<text x="1837" y="689.0" font-size="20" text-anchor="start" >Best</text>
+<text x="1837" y="716.0" font-size="20" text-anchor="start" >Practices</text>
+</g>
+<g id="node-enabling-team" data-semantic-id="enabling-team" data-kind="node">
+<g transform="translate(1838.0 803)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M27 4 Q17 1 15 12 Q12 23 24 27 Q37 31 42 19 Q43 8 32 4 L29 1 M28 28 L27 77 M0 37 Q28 39 56 38 M27 77 L0 115 M27 77 L57 115" fill="none"/></g>
+<text x="1866.0" y="958" font-size="21" text-anchor="middle" >Enabling Team</text>
+</g>
+<g id="node-storage-query" data-semantic-id="storage-query" data-kind="node">
+<rect x="140" y="1072" width="264" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(154 1088.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20 C17 15 43 15 43 20 V43 C43 48 17 48 17 43 Z" fill="none"/><path d="M17 20 C20 24 40 24 43 20 M17 25 C20 29 40 29 43 25" fill="none"/><path d="M11 10 L18 18 M44 18 L51 9 M17 44 L10 51 M44 44 L51 51" fill="none" stroke="#2995dd"/><circle cx="8" cy="7" r="4" fill="white" stroke="#2995dd"/><circle cx="53" cy="6" r="4" fill="white" stroke="#2995dd"/><circle cx="8" cy="54" r="4" fill="white" stroke="#2995dd"/><circle cx="53" cy="54" r="4" fill="white" stroke="#2995dd"/></g>
+<text x="222" y="1109.5" font-size="20" text-anchor="start" >Storage and</text>
+<text x="222" y="1136.5" font-size="20" text-anchor="start" >Query Engine</text>
+</g>
+<g id="node-product-catalog" data-semantic-id="product-catalog" data-kind="node">
+<rect x="442" y="1072" width="255" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(456 1088.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 7 L21 1 L43 3 L50 11 L45 46 L15 44 Z M19 3 L40 5 L37 16 L48 15 M19 17 L33 18 M19 25 L38 26" fill="none"/><path d="M22 10 L33 11 M22 20 L31 21 M22 29 L38 30 M52 24 L49 44" fill="none" stroke="#2995dd"/><path d="M4 25 L16 25 L21 32 L44 31 L45 53 L8 53 Z" fill="white"/></g>
+<text x="524" y="1109.5" font-size="20" text-anchor="start" >Data Product</text>
+<text x="524" y="1136.5" font-size="20" text-anchor="start" >Catalog</text>
+</g>
+<g id="node-contract-management" data-semantic-id="contract-management" data-kind="node">
+<rect x="728" y="1072" width="263" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(742 1088.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 L54 9 L55 33 L31 35 M4 13 L4 30 M47 16 L41 25 L36 22" fill="none" stroke="#2995dd"/><path d="M15 53 L11 40 Q8 32 12 31 Q16 30 18 40 L17 22 Q17 15 21 18 L24 34 Q28 29 31 35 Q35 30 38 37 Q43 34 43 42 L41 54" fill="white"/></g>
+<text x="810" y="1109.5" font-size="20" text-anchor="start" >Data Contract</text>
+<text x="810" y="1136.5" font-size="20" text-anchor="start" >Management</text>
+</g>
+<g id="node-monitoring" data-semantic-id="monitoring" data-kind="node">
+<rect x="1031" y="1072" width="244" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1045 1088.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4 Q28 2 53 4 L54 53 L4 54 Z" fill="none" stroke="#2995dd"/><path d="M8 21 Q12 27 15 20 T21 20 Q24 43 27 12 Q30 4 34 31 Q37 43 40 17 Q43 9 49 20 M8 43 Q13 36 18 43 T29 43 T40 43 T50 43" fill="none"/></g>
+<text x="1113" y="1123.0" font-size="20" text-anchor="start" >Monitoring</text>
+</g>
+<g id="node-policy-automation" data-semantic-id="policy-automation" data-kind="node">
+<rect x="1318" y="1072" width="251" height="88" fill="white" stroke="#111" stroke-width="2.4"/>
+<g transform="translate(1332 1088.0)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 29 L18 17" fill="none"/><circle cx="18" cy="12" r="5" fill="white"/><path d="M5 29 Q19 24 32 30 L32 47 Q29 54 7 51 Q2 49 5 29 Z" fill="none"/><circle cx="12" cy="35" r="1.5" fill="white" stroke="#2995dd"/><circle cx="25" cy="35" r="1.5" fill="white" stroke="#2995dd"/><path d="M13 44 Q18 47 24 43" fill="none" stroke="#2995dd"/><g transform="translate(32 0) scale(0.85)"><path d="M2 2 Q10 7 17 1 L26 5 L25 20 Q22 29 14 33 Q3 30 2 20 Z" fill="none"/><path d="M7 10 Q14 14 21 8 L20 20 Q17 25 14 26 Q8 24 7 19 Z" fill="none" stroke="#2995dd"/></g></g>
+<text x="1400" y="1109.5" font-size="20" text-anchor="start" >Policy</text>
+<text x="1400" y="1136.5" font-size="20" text-anchor="start" >Automation</text>
+</g>
+<g id="node-platform-team" data-semantic-id="platform-team" data-kind="node">
+<g transform="translate(1839.5 1051)" fill="none" stroke="#151b21" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M27 4 Q17 1 15 12 Q12 23 24 27 Q37 31 42 19 Q43 8 32 4 L29 1 M28 28 L27 77 M0 37 Q28 39 56 38 M27 77 L0 115 M27 77 L57 115" fill="none"/></g>
+<text x="1867.5" y="1209" font-size="21" text-anchor="middle" >Data Platform Team</text>
+</g>
+<g aria-label="Legend"><text x="1600" y="924" font-size="20" text-anchor="middle" >Data Flow</text><path d="M1524 938 H1678" fill="none" stroke="#111" stroke-width="2.4" marker-end="url(#arrow)"/><text x="1600" y="978" font-size="20" text-anchor="middle" >Usage</text><path d="M1524 990 H1678" fill="none" stroke="#111" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/></g>
+<text x="1990" y="1258" font-size="18" text-anchor="end" >datamesh-architecture.com</text>
+</g></svg>

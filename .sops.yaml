@@ -5,6 +5,7 @@ keys:
   - &k8s age1e4scgj83r7yddwk96sm8ghdes309e7lze2rq73ufmngkhpaa74vsqndxsx
   - &nixos-ry6b age1rq0nrc44pwvah7ddf42tsgpx7nd9qrl88a5c553yt0vk8g2kqpds5ft5qe
   - &nix-mm1 age1edtsafnqfzfxza533zlgz8dkq5h7pqcyqfdv3l6kcwxwg44p242qygcg7l
+  - &nix-mm1-kirk age1e74u3rf3dv7y0p57dek4x3w9k8gkuk7yz3w6dja27cxh8csrtq3qyfwgr8
 
 creation_rules:
   - path_regex: secrets/api/litellm\.yaml$
@@ -14,6 +15,14 @@ creation_rules:
           - *yubikey-backup
           - *manual
           - *nix-mm1
+          - *nix-mm1-kirk
+  - path_regex: secrets/(git/kirksw|ssh/kirksw(-github-rsa)?)\.yaml$
+    key_groups:
+      - age:
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
+          - *nix-mm1-kirk
   - path_regex: secrets/ssh/ry6b-root\.yaml$
     key_groups:
       - age:
@@ -29,6 +38,14 @@ creation_rules:
           - *yubikey-backup
           - *manual
           - *k8s
+  - path_regex: secrets/k8s/homelab\.yaml$
+    key_groups:
+      - age:
+          - *yubikey-main
+          - *yubikey-backup
+          - *manual
+          - *k8s
+          - *nix-mm1-kirk
   - path_regex: secrets/k8s/.*\.yaml$
     key_groups:
       - age:

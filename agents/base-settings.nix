@@ -9,6 +9,7 @@ let
   piTodoPackage = "${self}/agents/packages/pi-todo";
   piAgentJournalPackage = "${self}/agents/packages/pi-agent-journal";
   piLitellmProviderPackage = "${self}/agents/packages/pi-litellm-provider";
+  piClaudeBridgePackage = "npm:pi-claude-bridge@0.9.3";
   agenticOSPackage = "/Users/kisw/git/github.com/kirksw/agenticOS/main";
   piNpmCommand = "${self.packages.${system}.pi-npm}/bin/pi-npm";
 
@@ -48,7 +49,14 @@ let
     builtins.filter (
       package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
     ) piPackageRefs
-    ++ [ piLitellmProviderPackage ];
+    ++ [
+      piLitellmProviderPackage
+      piClaudeBridgePackage
+    ];
+  # The remote personal agent still uses piPersonalPackageRefs; Lunar omits the bridge.
+  piLunarPersonalPackageRefs = builtins.filter (
+    package: package != piClaudeBridgePackage
+  ) piPersonalPackageRefs;
   piWorkPackageRefs = builtins.filter (
     package: !(builtins.elem (packageSource package) piLeanExcludedPackageRefs)
   ) (piPackageRefs ++ piLunarPackageRefs ++ piWorkExtraPackageRefs ++ [ agenticOSPackage ]);
@@ -92,10 +100,7 @@ let
                 ])
               ) defaults.packages
             )
-          ++ [
-            "/Users/kisw/git/github.com/kirksw/pi-extensions/main"
-            "npm:@plannotator/pi-extension"
-          ];
+          ++ [ "/Users/kisw/git/github.com/kirksw/pi-extensions/main" ];
       }
     );
   # Rose Pine (main) — matches the Herdr terminal theme (`theme.name = "rose-pine"`).
@@ -196,6 +201,7 @@ let
       "litellm/glm-5.3-flash"
       "litellm/deepseek-flash"
       "litellm/deepseek-v4-pro"
+      "claude-bridge/*"
     ];
     subagents.disableBuiltins = true;
   };
@@ -206,6 +212,12 @@ let
     // {
       packages = piPersonalPackageRefs;
     };
+  piLunarPersonalSettingsAttrs = piPersonalSettingsAttrs // {
+    packages = piLunarPersonalPackageRefs;
+    enabledModels = builtins.filter (
+      model: model != "claude-bridge/*"
+    ) piPersonalModelDefaults.enabledModels;
+  };
 
   piPersonalModels = builtins.toJSON { providers = { }; };
 
@@ -241,6 +253,11 @@ let
     };
     grafana = {
       url = "https://mcp-grafana.lunar.tech/mcp";
+      lifecycle = "lazy";
+    };
+    google-workspace = {
+      url = "https://google-workspace-mcp.prod.lunar.tech/";
+      auth = "oauth";
       lifecycle = "lazy";
     };
     linear = {
@@ -281,6 +298,19 @@ let
     mcpServers = lib.mapAttrs (_: server: server // { lifecycle = "ephemeral"; }) piWorkMcpServers;
   };
 
+  piWorkNativeMcp = builtins.toJSON {
+    mcpServers = lib.mapAttrs (
+      _: server:
+      (builtins.removeAttrs server [
+        "auth"
+        "lifecycle"
+      ])
+      // {
+        exposure = "codemode";
+      }
+    ) piWorkMcpServers;
+  };
+
   mkPiPersonalEnv = base: ''
     export PI_CACHE_RETENTION="long"
     export MLFLOW_TRACKING_URI="https://mlflow.cntd.io"
@@ -302,6 +332,14 @@ let
       export AGENTICOS_INSTANCE="lunarOS"
       export AGENTICOS_TOOL_MODE="${agenticosToolMode}"
       export MCPORTER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/nix-agents/pi/bases/${base}/settings/mcporter.json"
+      # Do not expose ambient AWS authentication to Pi's built-in Bedrock provider.
+      unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_REGION AWS_DEFAULT_REGION
+      unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+      unset AWS_BEARER_TOKEN_BEDROCK AWS_WEB_IDENTITY_TOKEN_FILE AWS_ROLE_ARN
+      unset AWS_CONTAINER_CREDENTIALS_FULL_URI AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
+      unset AWS_CONTAINER_AUTHORIZATION_TOKEN AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+      export AWS_CONFIG_FILE=/dev/null AWS_SHARED_CREDENTIALS_FILE=/dev/null
+      export AWS_EC2_METADATA_DISABLED=true
     '';
 
   piWorkEnv = mkPiWorkEnv {
@@ -315,7 +353,7 @@ in
   targets = {
     pi = {
       personal = {
-        "settings.json" = mkPiMinimalSettings piPersonalSettingsAttrs piMinimalPackageRefs;
+        "settings.json" = mkPiMinimalSettings piLunarPersonalSettingsAttrs piMinimalPackageRefs;
         "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = piPersonalEnv;
@@ -332,11 +370,12 @@ in
       personal-default = {
         "mcporter.json" = piEmptyMcporter;
         "models.json" = piPersonalModels;
-        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
+        "settings.json" = mkPiHerdrSettings piLunarPersonalSettingsAttrs;
         "env" = mkPiPersonalEnv "personal-default";
       };
       work-default = {
         "mcporter.json" = piWorkMcporter;
+        "mcp.json" = piWorkNativeMcp;
         "models.json" = piWorkModels;
         "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
         "env" = mkPiWorkEnv {
@@ -345,7 +384,7 @@ in
         };
       };
       personal-browser = {
-        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
+        "settings.json" = mkPiHerdrSettings piLunarPersonalSettingsAttrs;
         "models.json" = piPersonalModels;
         "mcporter.json" = builtins.toJSON {
           imports = [ ];
@@ -360,7 +399,7 @@ in
         '';
       };
       personal-web = {
-        "settings.json" = mkPiHerdrSettings piPersonalSettingsAttrs;
+        "settings.json" = mkPiHerdrSettings piLunarPersonalSettingsAttrs;
         "models.json" = piPersonalModels;
         "mcporter.json" = piEmptyMcporter;
         "env" = mkPiPersonalEnv "personal-web";
@@ -369,6 +408,7 @@ in
         "settings.json" = mkPiHerdrSettings piWorkSettingsAttrs;
         "models.json" = piWorkModels;
         "mcporter.json" = piWorkMcporter;
+        "mcp.json" = piWorkNativeMcp;
         "env" = mkPiWorkEnv {
           base = "work-web";
           agenticosToolMode = "lazy";

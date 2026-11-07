@@ -197,6 +197,7 @@ in
   };
 
   # custom modules
+  nixosModules.kataK3s.enable = true;
   nixosModules.k3s = {
     enable = true;
     role = "server";

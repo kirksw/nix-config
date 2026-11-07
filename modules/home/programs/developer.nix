@@ -96,6 +96,14 @@ let
                 IdentitiesOnly = true;
                 ForwardAgent = host.forwardAgent or true;
                 AddKeysToAgent = "yes";
+                # Tolerate Tailscale path changes (direct <-> DERP relay, VPN toggles)
+                ServerAliveInterval = 15;
+                ServerAliveCountMax = 6;
+                TCPKeepAlive = true;
+                ConnectTimeout = 15;
+                ControlMaster = "auto";
+                ControlPath = "~/.ssh/cm-%C";
+                ControlPersist = "10m";
               };
             }
           else
@@ -314,15 +322,6 @@ in
         ]
       '';
     };
-
-    home.activation.herdrAnnotate = lib.mkIf pkgs.stdenv.isDarwin (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.herdr}/bin/herdr plugin link \
-          ${
-            self.packages.${pkgs.stdenv.hostPlatform.system}.herdr-annotate
-          }/share/herdr/plugins/annotate --enabled
-      ''
-    );
 
     xdg.configFile."herdr/config.toml" = {
       force = true;

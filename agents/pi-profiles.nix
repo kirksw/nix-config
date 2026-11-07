@@ -60,11 +60,14 @@ let
     "land"
     "lavish"
     "nix-config"
+    "semantic-svg-diagrams"
     "session-heuristics"
     "skill-creator"
   ];
   workSkills = [
     "1password"
+    "doc-coauthoring"
+    "excalidraw-diagram"
     "grafana"
     "granola"
     "hubble-mcp"
@@ -72,8 +75,17 @@ let
     "linear"
     "lunar-skills"
     "nix-config"
+    "semantic-svg-diagrams"
     "slack"
     "sourcegraph"
+  ];
+  workNativeMcpSkills = [
+    "doc-coauthoring"
+    "excalidraw-diagram"
+    "lavish"
+    "nix-config"
+    "semantic-svg-diagrams"
+    "work-mcp"
   ];
   personalBrowserSkills = [
     "affine"
@@ -81,11 +93,15 @@ let
     "google-hotels"
     "home-mcp"
     "nix-config"
+    "semantic-svg-diagrams"
   ];
   workBrowserSkills = [
     "agent-browser"
+    "doc-coauthoring"
+    "excalidraw-diagram"
     "google-hotels"
     "nix-config"
+    "semantic-svg-diagrams"
   ];
   webDesignSkills = [
     "animate-expo"
@@ -108,7 +124,7 @@ let
     "design-taste-frontend"
   ];
   personalWebSkills = personalSkills ++ webDesignSkills;
-  workWebSkills = workSkills ++ [ "agent-browser" ] ++ webDesignSkills;
+  workWebSkills = workNativeMcpSkills ++ [ "agent-browser" ] ++ webDesignSkills;
 
   personalTierMapping = {
     S = [ "litellm/openai/gpt-6-astra" ];
@@ -151,25 +167,29 @@ in
       base = "personal-default";
       skills = personalSkills;
       tierMapping = personalTierMapping;
+      excludeExtensions = [ "work-mcp-approval" ];
     };
     personal-fallback = {
       base = "personal";
       skills = personalSkills;
       tierMapping = personalTierMapping;
+      excludeExtensions = [ "work-mcp-approval" ];
     };
     personal-browser = {
       base = "personal-browser";
       skills = personalBrowserSkills;
       tierMapping = personalTierMapping;
+      excludeExtensions = [ "work-mcp-approval" ];
     };
     personal-web = {
       base = "personal-web";
       skills = personalWebSkills;
       tierMapping = personalTierMapping;
+      excludeExtensions = [ "work-mcp-approval" ];
     };
     work-default = {
       base = "work-default";
-      skills = workSkills;
+      skills = workNativeMcpSkills;
       tierMapping = workTierMapping;
       excludeExtensions = [ "minimal-mode" ];
     };
@@ -177,13 +197,19 @@ in
       base = "work";
       skills = workSkills;
       tierMapping = workTierMapping;
-      excludeExtensions = [ "minimal-mode" ];
+      excludeExtensions = [
+        "minimal-mode"
+        "work-mcp-approval"
+      ];
     };
     work-browser = {
       base = "work-browser";
       skills = workBrowserSkills;
       tierMapping = workTierMapping;
-      excludeExtensions = [ "minimal-mode" ];
+      excludeExtensions = [
+        "minimal-mode"
+        "work-mcp-approval"
+      ];
     };
     work-web = {
       base = "work-web";

@@ -609,6 +609,7 @@ in
       (lib.mkIf config.homeModules.piCodingAgent.enable [
         fliPackage
         pkgs.agent-browser
+        self.packages.${system}.claude-code
         (mkCredWrapper "pi" self.packages.${system}.pi ''
                     _pi_session_profile="''${NIX_AGENTS_PROFILE:-}"
                     # Herdr children pass the parent agent directory, not its profile selector.
@@ -718,6 +719,14 @@ in
                     case "$_pi_session_profile" in
                       work-default|work-fallback|work-browser|work-web)
                         unset OPENAI_API_KEY LUNAR_OPENAI_API_KEY
+                        # Keep AWS shell credentials out of Pi's built-in Bedrock provider.
+                        unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_REGION AWS_DEFAULT_REGION
+                        unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_SECURITY_TOKEN
+                        unset AWS_BEARER_TOKEN_BEDROCK AWS_WEB_IDENTITY_TOKEN_FILE AWS_ROLE_ARN
+                        unset AWS_CONTAINER_CREDENTIALS_FULL_URI AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
+                        unset AWS_CONTAINER_AUTHORIZATION_TOKEN AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+                        export AWS_CONFIG_FILE=/dev/null AWS_SHARED_CREDENTIALS_FILE=/dev/null
+                        export AWS_EC2_METADATA_DISABLED=true
                         ;;
                       personal-default|personal-fallback|personal-browser|personal-web)
                         if [ "$_pi_session_profile" = "personal-browser" ]; then
