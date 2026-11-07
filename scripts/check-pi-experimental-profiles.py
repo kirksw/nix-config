@@ -12,7 +12,6 @@ tintinweb = "npm:@tintinweb/pi-subagents"
 herdr_agents = "local:pi-herdr-agents"
 pi_extensions = "/Users/kisw/git/github.com/kirksw/pi-extensions/main"
 agenticos = "/Users/kisw/git/github.com/kirksw/agenticOS/main"
-plannotator = "npm:@plannotator/pi-extension"
 lunar = [
     "npm:@lunarway/pi-lunar-quiet-tools",
     "npm:@lunarway/pi-lunar-litellm",
@@ -25,7 +24,6 @@ excluded = {
     "npm:pi-observational-memory",
 }
 # Exact pins that vendored copies and npm sources must both carry.
-# @plannotator/pi-extension is deliberately unpinned.
 pins = {
     "pi-verbosity-control": "0.3.0",
     "pi-web-access": "0.13.0",
@@ -120,7 +118,7 @@ lean = [
 ]
 herdr = sorted(
     [package for package in lean if package not in excluded and package != tintinweb]
-    + [herdr_agents, pi_extensions, plannotator]
+    + [herdr_agents, pi_extensions]
 )
 
 for scope in ("personal", "work"):
