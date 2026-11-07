@@ -93,7 +93,7 @@ assert_jq "$personal_settings" "rose-pine" '.theme'
 assert_jq "$personal_settings" "litellm" '.defaultProvider'
 assert_jq "$personal_settings" "openai/gpt-6-sol" '.defaultModel'
 assert_jq "$personal_settings" "absent" '(.npmCommand // "absent")'
-test -f "$personal_set/node_modules/@plannotator/pi-extension/package.json"
+test -f "$personal_set/node_modules/pi-web-access/package.json"
 test -f "$personal_set/.gitignore"
 [ "$(npm_calls_for "$personal_set")" -eq 1 ]
 

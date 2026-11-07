@@ -323,15 +323,6 @@ in
       '';
     };
 
-    home.activation.herdrAnnotate = lib.mkIf pkgs.stdenv.isDarwin (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        run ${pkgs.herdr}/bin/herdr plugin link \
-          ${
-            self.packages.${pkgs.stdenv.hostPlatform.system}.herdr-annotate
-          }/share/herdr/plugins/annotate --enabled
-      ''
-    );
-
     xdg.configFile."herdr/config.toml" = {
       force = true;
       text = ''
