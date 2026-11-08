@@ -31,6 +31,8 @@ in
       services.k3s = {
         path = [ pkgs.kata-runtime ];
         serviceConfig.DeviceAllow = [
+          # Image layers can contain /dev/console; allow creation, not host access.
+          "/dev/console m"
           "/dev/kvm rwm"
           "/dev/kmsg r"
           "/dev/vhost-vsock rwm"
